@@ -1,0 +1,115 @@
+@if (isRefreshing()) {
+  <div class="table__refresh-bar" role="status" aria-label="Liste yenileniyor"></div>
+}
+
+@if (isLoading()) {
+  <app-loading-state variant="skeleton-table" [rows]="query().size > 10 ? 8 : query().size" />
+} @else if (hasError()) {
+  <app-error-state [error]="error()" title="Liste yüklenemedi" (retry)="retry.emit()" />
+} @else if (isEmpty()) {
+  <app-empty-state
+    [title]="emptyTitle()"
+    [description]="filtered() ? 'Seçili filtrelerle eşleşen kayıt bulunamadı.' : emptyDescription()"
+    [filtered]="filtered()"
+    (clearFilters)="clearFilters.emit()"
+  />
+} @else if (isCardMode()) {
+  <!-- Dar ekranda satırlar okunabilirlik için karta dönüşür. -->
+  <ul class="table__cards">
+    @for (row of rows(); track row.id) {
+      <li
+        class="table__card"
+        [class.is-selected]="row.id === selectedId()"
+        [class.is-mutating]="mutatingIds().has(row.id)"
+        [attr.tabindex]="rowClickable() ? 0 : null"
+        [attr.role]="rowClickable() ? 'button' : null"
+        (click)="onRowClick(row, $event)"
+        (keydown)="onRowKeydown($event, row)"
+      >
+        @for (column of columns(); track column.key) {
+          <div class="table__card-row">
+            <span class="table__card-label text-xs text-muted">{{ column.header }}</span>
+            <span class="table__card-value">
+              @if (column.cell) {
+                <ng-container
+                  [ngTemplateOutlet]="column.cell"
+                  [ngTemplateOutletContext]="{ $implicit: row }"
+                />
+              } @else {
+                {{ cellText(column, row) }}
+              }
+            </span>
+          </div>
+        }
+      </li>
+    }
+  </ul>
+} @else {
+  <div class="table__scroll">
+    <table class="table">
+      <thead class="table__head">
+        <tr>
+          @for (column of visibleColumns(); track column.key) {
+            <th
+              scope="col"
+              [style.width]="column.width"
+              [class]="'table__th table__th--' + (column.align ?? 'start')"
+              [class.is-sortable]="column.sortable"
+              [attr.aria-sort]="ariaSort(column)"
+            >
+              @if (column.sortable) {
+                <button type="button" class="table__sort" (click)="sortChange.emit(column.key)">
+                  <span>{{ column.header }}</span>
+                  <app-icon [name]="sortIcon(column)" [size]="13" />
+                </button>
+              } @else {
+                {{ column.header }}
+              }
+            </th>
+          }
+        </tr>
+      </thead>
+
+      <tbody>
+        @for (row of rows(); track row.id) {
+          <tr
+            class="table__row"
+            [class.is-clickable]="rowClickable()"
+            [class.is-selected]="row.id === selectedId()"
+            [class.is-mutating]="mutatingIds().has(row.id)"
+            [attr.tabindex]="rowClickable() ? 0 : null"
+            (click)="onRowClick(row, $event)"
+            (keydown)="onRowKeydown($event, row)"
+          >
+            @for (column of visibleColumns(); track column.key) {
+              <td
+                [class]="'table__td table__td--' + (column.align ?? 'start')"
+                [class.tabular]="column.numeric"
+              >
+                @if (column.cell) {
+                  <ng-container
+                    [ngTemplateOutlet]="column.cell"
+                    [ngTemplateOutletContext]="{ $implicit: row }"
+                  />
+                } @else {
+                  {{ cellText(column, row) }}
+                }
+              </td>
+            }
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+}
+
+@if (showPagination() && !isLoading() && !hasError() && !isEmpty()) {
+  <app-pagination
+    [page]="query().page"
+    [size]="query().size"
+    [total]="total()"
+    [disabled]="isRefreshing()"
+    (pageChange)="pageChange.emit($event)"
+    (sizeChange)="sizeChange.emit($event)"
+  />
+}

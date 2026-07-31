@@ -1,0 +1,62 @@
+:host {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 3px 8px;
+  border-radius: var(--radius-full);
+  border: var(--border-width) solid transparent;
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-strong);
+  white-space: nowrap;
+  max-width: 100%;
+}
+
+.badge__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.badge__dot {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--radius-full);
+  background: currentcolor;
+  flex: none;
+}
+
+@mixin tone($subtle, $border, $text) {
+  background: var($subtle);
+  border-color: var($border);
+  color: var($text);
+}
+
+:host(.badge--neutral) {
+  @include tone(--color-neutral-subtle, --color-neutral-border, --color-neutral-text);
+}
+
+:host(.badge--info) {
+  @include tone(--color-info-subtle, --color-info-border, --color-info-text);
+}
+
+:host(.badge--success) {
+  @include tone(--color-success-subtle, --color-success-border, --color-success-text);
+}
+
+:host(.badge--warning) {
+  @include tone(--color-warning-subtle, --color-warning-border, --color-warning-text);
+}
+
+:host(.badge--danger) {
+  @include tone(--color-danger-subtle, --color-danger-border, --color-danger-text);
+}
+
+:host(.badge--primary) {
+  @include tone(--color-primary-subtle, --color-primary-border, --color-primary);
+}
+
+:host(.is-subtle) {
+  background: transparent;
+  border-color: transparent;
+  padding-inline: 0;
+}

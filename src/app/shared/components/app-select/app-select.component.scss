@@ -1,0 +1,54 @@
+:host {
+  display: block;
+}
+
+.select {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 38px;
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  transition:
+    border-color var(--duration-fast) var(--ease-in-out),
+    box-shadow var(--duration-fast) var(--ease-in-out);
+
+  &:focus-within {
+    border-color: var(--color-border-focus);
+    box-shadow: var(--shadow-focus);
+  }
+
+  &.is-invalid {
+    border-color: var(--color-danger);
+  }
+
+  &.is-disabled {
+    background: var(--color-surface-muted);
+  }
+}
+
+.select__control {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  padding: 0 var(--space-8) 0 var(--space-3);
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: var(--fs-body);
+  color: var(--color-text);
+  appearance: none;
+  cursor: pointer;
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}
+
+.select__chevron {
+  position: absolute;
+  inset-inline-end: var(--space-3);
+  pointer-events: none;
+  color: var(--color-text-tertiary);
+}

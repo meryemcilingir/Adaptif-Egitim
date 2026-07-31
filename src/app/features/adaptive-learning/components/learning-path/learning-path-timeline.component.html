@@ -1,0 +1,80 @@
+@let data = path();
+
+<div class="path">
+  @for (section of sections(); track section.outcomeId) {
+    <section class="path__section">
+      <header class="path__section-head">
+        <div class="path__section-titles">
+          <span class="text-overline text-muted">{{ section.outcomeCode }}</span>
+          <h4 class="text-h3">{{ section.outcomeTitle }}</h4>
+        </div>
+
+        <div class="path__section-meta">
+          <app-status-badge
+            [label]="stateLabel(section.state)"
+            [tone]="stateTone(section.state)"
+            [dot]="true"
+          />
+          <span class="text-xs text-subtle tabular">
+            {{ section.completedSteps }} / {{ section.totalSteps }} adım
+            @if (section.masteryScore !== null) {
+              · ustalık %{{ section.masteryScore }}
+            }
+          </span>
+        </div>
+      </header>
+
+      @if (section.steps.length === 0) {
+        <p class="text-sm text-subtle">Bu kazanım için henüz yayınlanmış içerik yok.</p>
+      } @else {
+        <ol class="path__steps">
+          @for (step of section.steps; track step.contentId) {
+            <li class="path__step" [class]="'is-' + step.state">
+              <span class="path__marker" aria-hidden="true">
+                <app-icon [name]="stepIcon(step)" [size]="14" />
+              </span>
+
+              <button
+                type="button"
+                class="path__card"
+                [disabled]="step.state === 'locked'"
+                (click)="onSelect(step)"
+              >
+                <div class="path__card-head">
+                  <span class="text-sm text-body-strong clamp-2">{{ step.title }}</span>
+                  <span class="text-xs text-subtle">
+                    {{ typeLabel(step) }} · {{ step.estimatedDurationMinutes }} dk
+                  </span>
+                </div>
+
+                @if (step.state === 'in_progress') {
+                  <app-progress-bar
+                    [value]="step.completionPercent"
+                    tone="primary"
+                    label="Adım ilerlemesi"
+                  />
+                }
+
+                @for (reason of step.reasons; track reason.rule) {
+                  <p class="path__reason text-xs">
+                    <app-icon [name]="step.state === 'locked' ? 'lock' : 'lightbulb'" [size]="12" />
+                    {{ reason.explanation }}
+                  </p>
+                }
+              </button>
+            </li>
+          }
+        </ol>
+      }
+    </section>
+  }
+</div>
+
+@if (!compact()) {
+  <footer class="path__footer">
+    <span class="text-xs text-subtle">
+      {{ data.completedMinutes }} / {{ data.totalMinutes }} dk tamamlandı
+    </span>
+    <span class="text-xs text-subtle tabular">%{{ data.completionPercent }}</span>
+  </footer>
+}

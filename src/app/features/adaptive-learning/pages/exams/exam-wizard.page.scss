@@ -1,0 +1,185 @@
+@use '../../../../../styles/breakpoints' as t;
+
+.wizard {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--space-4);
+  align-items: start;
+
+  @media (max-width: t.$bp-xl) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.wizard__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* Dar ekranda panel içeriğin üstüne alınır — kurallar gözden kaçmasın. */
+.wizard__panel {
+  @media (max-width: t.$bp-xl) {
+    order: -1;
+  }
+}
+
+.wizard__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-block-start: var(--space-3);
+  border-block-start: var(--border-width) solid var(--color-border);
+}
+
+/* ── Otomatik kayıt göstergesi ───────────────────────────────────────────── */
+
+.autosave {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 4px var(--space-3);
+  border-radius: var(--radius-full);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-surface-subtle);
+  font-size: var(--fs-xs);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+
+  &.is-saving {
+    color: var(--color-info-text);
+    background: var(--color-info-subtle);
+    border-color: var(--color-info-border);
+
+    app-icon {
+      animation: spin 1s linear infinite;
+    }
+  }
+
+  &.is-saved {
+    color: var(--color-success-text);
+    background: var(--color-success-subtle);
+    border-color: var(--color-success-border);
+  }
+
+  &.is-error {
+    color: var(--color-danger-text);
+    background: var(--color-danger-subtle);
+    border-color: var(--color-danger-border);
+  }
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .autosave.is-saving app-icon {
+    animation: none;
+  }
+}
+
+/* ── Tarih girişi ────────────────────────────────────────────────────────── */
+
+.datetime {
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-size: var(--fs-body);
+  font-family: inherit;
+  color: var(--color-text-primary);
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-border-focus);
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+/* ── Doğrulama listesi ───────────────────────────────────────────────────── */
+
+.issues {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.issue {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+
+  &.is-error {
+    border-color: var(--color-danger-border);
+    background: var(--color-danger-subtle);
+    color: var(--color-danger-text);
+  }
+
+  &.is-warning {
+    border-color: var(--color-warning-border);
+    background: var(--color-warning-subtle);
+    color: var(--color-warning-text);
+  }
+}
+
+.issue__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* ── Yayın özeti ─────────────────────────────────────────────────────────── */
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+
+  dt {
+    font-size: var(--fs-xs);
+    color: var(--color-text-subtle);
+  }
+
+  dd {
+    margin: 0;
+    font-size: var(--fs-body-strong);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+}
+
+.note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 0 var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+
+  &.is-ready {
+    background: var(--color-success-subtle);
+    color: var(--color-success-text);
+  }
+
+  &.is-blocked {
+    background: var(--color-danger-subtle);
+    color: var(--color-danger-text);
+  }
+}

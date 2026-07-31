@@ -1,0 +1,106 @@
+:host {
+  display: block;
+}
+
+.quick {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: var(--space-3);
+}
+
+.quick__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  transition:
+    border-color var(--duration-fast) var(--ease-in-out),
+    box-shadow var(--duration-fast) var(--ease-in-out);
+
+  &:hover {
+    border-color: var(--color-border-strong);
+    box-shadow: var(--shadow-sm);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.quick__icon {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+}
+
+.quick__item--primary .quick__icon {
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+}
+
+.quick__item--success .quick__icon {
+  background: var(--color-success-subtle);
+  color: var(--color-success-text);
+}
+
+.quick__item--warning .quick__icon {
+  background: var(--color-warning-subtle);
+  color: var(--color-warning-text);
+}
+
+.quick__item--danger .quick__icon {
+  background: var(--color-danger-subtle);
+  color: var(--color-danger-text);
+}
+
+.quick__item--info .quick__icon {
+  background: var(--color-info-subtle);
+  color: var(--color-info-text);
+}
+
+.quick__text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+
+  > span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+.quick__badge {
+  flex: none;
+  min-width: 22px;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  text-align: center;
+}
+
+.quick__item--warning .quick__badge {
+  background: var(--color-warning);
+}
+
+.quick__item--danger .quick__badge {
+  background: var(--color-danger);
+}
+
+.quick__arrow {
+  color: var(--color-text-tertiary);
+  flex: none;
+}

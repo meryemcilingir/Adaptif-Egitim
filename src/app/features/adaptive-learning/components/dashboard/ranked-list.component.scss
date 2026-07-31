@@ -1,0 +1,79 @@
+:host {
+  display: block;
+}
+
+.ranked {
+  display: flex;
+  flex-direction: column;
+}
+
+.ranked__button {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  width: 100%;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  text-align: start;
+
+  &:not(:disabled):hover {
+    background: var(--color-surface-subtle);
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.ranked__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.ranked__value {
+  flex: none;
+}
+
+.ranked__track {
+  display: block;
+  height: 5px;
+  margin-top: var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-muted);
+  overflow: hidden;
+}
+
+.ranked__fill {
+  display: block;
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width var(--duration-slow) var(--ease-out);
+}
+
+.ranked__fill--danger {
+  background: var(--color-danger);
+}
+
+.ranked__fill--warning {
+  background: var(--color-warning);
+}
+
+.ranked__fill--info {
+  background: var(--color-info);
+}
+
+.ranked__fill--success {
+  background: var(--color-success);
+}
+
+.ranked__fill--neutral {
+  background: var(--color-text-tertiary);
+}

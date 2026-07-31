@@ -1,0 +1,191 @@
+@use '../../../../../styles/breakpoints' as t;
+
+.detail-title {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-warning-border);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-subtle);
+  color: var(--color-warning-text);
+}
+
+/* Kısıt paneli, sihirbazdaki ile aynı genişlikte kalsın ki alışkanlık bozulmasın. */
+.detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--space-4);
+  align-items: start;
+
+  @media (max-width: t.$bp-xl) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.detail-grid__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.detail-grid__side {
+  @media (max-width: t.$bp-xl) {
+    order: -1;
+  }
+}
+
+/* ── Bilgi listeleri ─────────────────────────────────────────────────────── */
+
+.meta {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+
+  dt {
+    margin-block-end: 2px;
+    font-size: var(--fs-xs);
+    color: var(--color-text-subtle);
+  }
+
+  dd {
+    margin: 0;
+    font-size: var(--fs-body);
+    color: var(--color-text-primary);
+  }
+}
+
+/* Açıklama gibi uzun alanlar satırı tek başına kullanır. */
+.meta__wide {
+  grid-column: 1 / -1;
+}
+
+.instructions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-block-start: var(--space-4);
+  padding-block-start: var(--space-3);
+  border-block-start: var(--border-width) solid var(--color-border);
+
+  p {
+    margin: 0;
+    color: var(--color-text-secondary);
+    white-space: pre-line;
+  }
+}
+
+/* ── Kazanımlar ──────────────────────────────────────────────────────────── */
+
+.outcomes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.outcomes__item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+/* ── Soru listesi ────────────────────────────────────────────────────────── */
+
+.questions {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.question {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.question__order {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-subtle);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.question__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* ── Yayın geçmişi ───────────────────────────────────────────────────────── */
+
+.history {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history__item {
+  display: flex;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+
+  & + .history__item {
+    border-block-start: var(--border-width) solid var(--color-border);
+  }
+}
+
+.history__dot {
+  flex: none;
+  inline-size: 8px;
+  block-size: 8px;
+  margin-block-start: 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-border-strong);
+}
+
+.history__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.history__reason {
+  margin-block-start: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+}

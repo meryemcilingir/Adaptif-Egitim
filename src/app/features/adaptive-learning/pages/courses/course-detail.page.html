@@ -1,0 +1,188 @@
+<div class="page">
+  @if (facade.isDetailLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="3" />
+  } @else if (facade.hasDetailError()) {
+    <app-error-state
+      [error]="facade.detailError()"
+      title="Ders yüklenemedi"
+      (retry)="facade.loadDetail(id())"
+    />
+  } @else if (facade.detail(); as course) {
+    <header class="page-header">
+      <div class="detail__intro">
+        <app-button variant="ghost" size="sm" icon="arrow-left" (pressed)="goBack()">
+          Dersler
+        </app-button>
+
+        <div class="detail__title">
+          <span class="text-overline text-muted">{{ course.code }}</span>
+          <h1 class="text-h1">{{ course.name }}</h1>
+        </div>
+      </div>
+
+      <div class="detail__actions">
+        @if (canPublish()) {
+          <app-publish-actions
+            [state]="course.state"
+            [disabled]="facade.isSaving()"
+            [pendingTarget]="pendingTarget()"
+            (transitionRequested)="onTransition($event)"
+          />
+        } @else {
+          <app-status-badge
+            [label]="toneFor(course.state).label"
+            [tone]="toneFor(course.state).tone"
+            [icon]="toneFor(course.state).icon"
+          />
+        }
+
+        @if (canEdit()) {
+          <app-button variant="secondary" icon="pencil-line" (pressed)="openForm()">
+            Düzenle
+          </app-button>
+        }
+        @if (canWrite() && course.state === 'DRAFT') {
+          <app-button variant="ghost" icon="x" (pressed)="confirmDelete()">Sil</app-button>
+        }
+      </div>
+    </header>
+
+    <section class="grid grid-4" aria-label="Ders özeti">
+      <app-card padding="compact">
+        <div class="stat">
+          <span class="text-overline text-muted">Kazanım</span>
+          <span class="text-metric">{{ course.outcomeCount }}</span>
+        </div>
+      </app-card>
+      <app-card padding="compact">
+        <div class="stat">
+          <span class="text-overline text-muted">İçerik</span>
+          <span class="text-metric">{{ course.contentCount }}</span>
+          <app-button
+            variant="ghost"
+            size="sm"
+            trailingIcon="arrow-right"
+            (pressed)="openContentList(course)"
+          >
+            İçerikleri yönet
+          </app-button>
+        </div>
+      </app-card>
+      <app-card padding="compact">
+        <div class="stat">
+          <span class="text-overline text-muted">Öğrenci</span>
+          <span class="text-metric">{{ course.enrolledCount }}</span>
+        </div>
+      </app-card>
+      <app-card padding="compact">
+        <div class="stat">
+          <span class="text-overline text-muted">Tahmini süre</span>
+          <span class="text-metric">{{ course.estimatedDurationHours }} sa</span>
+        </div>
+      </app-card>
+    </section>
+
+    <section class="grid grid-2-1" aria-label="Ders bilgileri">
+      <app-card title="Açıklama" padding="default">
+        @if (course.description) {
+          <p class="text-body">{{ course.description }}</p>
+        } @else {
+          <p class="text-sm text-muted">Bu ders için açıklama girilmemiş.</p>
+        }
+      </app-card>
+
+      <app-card title="Künye" padding="default">
+        <dl class="meta">
+          <div class="meta__row">
+            <dt class="text-sm text-muted">Eğitmen</dt>
+            <dd class="text-body-strong">{{ course.instructorName || '—' }}</dd>
+          </div>
+          <div class="meta__row">
+            <dt class="text-sm text-muted">Kategori</dt>
+            <dd class="text-body-strong">{{ labels.category[course.category] }}</dd>
+          </div>
+          <div class="meta__row">
+            <dt class="text-sm text-muted">Seviye</dt>
+            <dd class="text-body-strong">{{ labels.level[course.level] }}</dd>
+          </div>
+          <div class="meta__row">
+            <dt class="text-sm text-muted">Son güncelleme</dt>
+            <dd class="text-body-strong">{{ course.updatedAt | appRelativeTime }}</dd>
+          </div>
+        </dl>
+      </app-card>
+    </section>
+
+    <section aria-label="Derse bağlı kazanımlar">
+      <app-card
+        title="Kazanımlar"
+        [description]="course.outcomeCount + ' kazanım bu derse bağlı'"
+        [hasActions]="true"
+        padding="none"
+      >
+        <div card-actions class="row gap-2">
+          <app-button variant="ghost" size="sm" icon="workflow" (pressed)="openGraph(course)">
+            Haritada gör
+          </app-button>
+          <app-button
+            variant="secondary"
+            size="sm"
+            icon="external-link"
+            (pressed)="openOutcomeList(course)"
+          >
+            Tümünü yönet
+          </app-button>
+        </div>
+
+        @if (isOutcomesLoading()) {
+          <app-loading-state variant="skeleton-table" [rows]="4" />
+        } @else if (courseOutcomes().length === 0) {
+          <app-empty-state
+            icon="target"
+            title="Bu derste kazanım yok"
+            description="Derse kazanım eklendiğinde burada listelenir."
+            actionLabel="Kazanım ekle"
+            (action)="openOutcomeList(course)"
+          />
+        } @else {
+          <ul class="outcomes">
+            @for (outcome of courseOutcomes(); track outcome.id) {
+              <li>
+                <button type="button" class="outcomes__row" (click)="openOutcome(outcome)">
+                  <span class="outcomes__title">
+                    <span class="text-body-strong">{{ outcome.code }}</span>
+                    <span class="text-xs text-muted truncate">{{ outcome.title }}</span>
+                  </span>
+
+                  <span class="text-sm text-muted">{{ labels.cognitive[outcome.level] }}</span>
+                  <span class="text-sm text-muted">{{
+                    labels.difficulty[outcome.difficulty]
+                  }}</span>
+                  <span class="text-sm tabular">{{ outcome.prerequisiteIds.length }} önkoşul</span>
+
+                  <app-status-badge
+                    [label]="toneFor(outcome.state).label"
+                    [tone]="toneFor(outcome.state).tone"
+                  />
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </app-card>
+    </section>
+
+    @if (isFormOpen()) {
+      <app-course-form
+        #form
+        [course]="course"
+        [programs]="programOptions()"
+        [terms]="termOptions()"
+        [instructors]="instructorOptions()"
+        [saving]="facade.isSaving()"
+        (save)="onSave($event, form)"
+        (cancel)="closeForm()"
+      />
+    }
+  }
+</div>

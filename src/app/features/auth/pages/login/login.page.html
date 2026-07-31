@@ -1,0 +1,120 @@
+<div class="login">
+  <!-- Sol: tanıtım paneli -->
+  <aside class="login__aside">
+    <div class="login__brand">
+      <span class="login__logo"
+        ><app-icon name="graduation-cap" [size]="20" [strokeWidth]="2"
+      /></span>
+      <span class="text-h3">Adaptif Eğitim</span>
+    </div>
+
+    <div class="login__pitch">
+      <h1 class="text-display">Kazanım odaklı öğrenme analitiği</h1>
+      <p class="text-body">
+        Öğrencinin kazanım performansına göre içerik öneren, sınav oturumlarını yöneten ve soru
+        kalitesini ölçen kurumsal değerlendirme platformu.
+      </p>
+
+      <ul class="login__features">
+        <li><app-icon name="target" [size]="15" /> Açıklanabilir, kural tabanlı öneri motoru</li>
+        <li>
+          <app-icon name="shield-check" [size]="15" /> Rol ve veri kapsamı bazlı yetkilendirme
+        </li>
+        <li><app-icon name="chart-line" [size]="15" /> Madde analizi ve cohort karşılaştırması</li>
+        <li><app-icon name="scroll-text" [size]="15" /> Tüm kritik işlemler için denetim kaydı</li>
+      </ul>
+    </div>
+
+    <p class="text-xs login__footnote">
+      Demo ortamı · Veriler tarayıcıda saklanır, sunucuya gönderilmez.
+    </p>
+  </aside>
+
+  <!-- Sağ: form -->
+  <main class="login__main">
+    <div class="login__panel">
+      <header class="login__header">
+        <h2 class="text-h1">Giriş yap</h2>
+        <p class="text-sm text-muted">Devam etmek için hesap bilgilerinizi girin.</p>
+      </header>
+
+      @if (errorMessage(); as message) {
+        <div class="login__alert" role="alert">
+          <app-icon name="circle-alert" [size]="16" />
+          <span class="text-sm">{{ message }}</span>
+        </div>
+      }
+
+      <form class="login__form" [formGroup]="form" (ngSubmit)="submit()">
+        <app-form-field
+          fieldId="login-email"
+          label="E-posta"
+          [required]="true"
+          [control]="emailControl"
+          [forceShowError]="submitted()"
+        >
+          <app-input
+            inputId="login-email"
+            type="email"
+            icon="user-round"
+            placeholder="ornek@adaptif.dev"
+            autocomplete="username"
+            formControlName="email"
+            [invalid]="emailControl.invalid && (emailControl.touched || submitted())"
+          />
+        </app-form-field>
+
+        <app-form-field
+          fieldId="login-password"
+          label="Parola"
+          hint="Demo hesapların parolası: demo1234"
+          [required]="true"
+          [control]="passwordControl"
+          [forceShowError]="submitted()"
+        >
+          <app-input
+            inputId="login-password"
+            type="password"
+            icon="lock"
+            autocomplete="current-password"
+            formControlName="password"
+            [invalid]="passwordControl.invalid && (passwordControl.touched || submitted())"
+          />
+        </app-form-field>
+
+        <app-button
+          type="submit"
+          variant="primary"
+          size="lg"
+          [fullWidth]="true"
+          [loading]="isSubmitting()"
+        >
+          Giriş yap
+        </app-button>
+      </form>
+
+      <div class="login__divider">
+        <span class="text-xs text-subtle">veya demo rolle devam et</span>
+      </div>
+
+      <ul class="login__accounts">
+        @for (account of demoAccounts; track account.email) {
+          <li>
+            <button
+              type="button"
+              class="login__account"
+              [disabled]="isSubmitting()"
+              (click)="useDemoAccount(account)"
+            >
+              <span class="login__account-role text-body-strong">{{
+                roleLabels[account.role]
+              }}</span>
+              <span class="login__account-desc text-xs text-muted">{{ account.description }}</span>
+              <app-icon class="login__account-arrow" name="arrow-right" [size]="15" />
+            </button>
+          </li>
+        }
+      </ul>
+    </div>
+  </main>
+</div>

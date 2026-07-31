@@ -1,0 +1,86 @@
+<app-dialog
+  [open]="true"
+  size="lg"
+  [title]="title()"
+  description="Program bilgileri. Yeni programlar taslak olarak oluşturulur."
+  [closeOnBackdrop]="false"
+  (closed)="onCancel()"
+>
+  <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="form__row">
+      <app-form-field
+        fieldId="program-code"
+        label="Program kodu"
+        hint="Kısaltma, benzersiz olmalıdır."
+        [required]="true"
+        [control]="codeControl"
+        [maxLength]="limits.code.max"
+        [forceShowError]="submitted()"
+      >
+        <app-input
+          inputId="program-code"
+          placeholder="Örn. YZM"
+          formControlName="code"
+          [invalid]="codeControl.invalid && (codeControl.touched || submitted())"
+        />
+      </app-form-field>
+
+      <app-form-field
+        fieldId="program-coordinator"
+        label="Koordinatör"
+        [required]="true"
+        [control]="coordinatorControl"
+        [forceShowError]="submitted()"
+      >
+        <app-select
+          selectId="program-coordinator"
+          [options]="coordinators()"
+          placeholder="Koordinatör seçin"
+          formControlName="coordinatorId"
+          [invalid]="coordinatorControl.invalid && (coordinatorControl.touched || submitted())"
+        />
+      </app-form-field>
+    </div>
+
+    <app-form-field
+      fieldId="program-name"
+      label="Program adı"
+      [required]="true"
+      [control]="nameControl"
+      [maxLength]="limits.name.max"
+      [forceShowError]="submitted()"
+    >
+      <app-input
+        inputId="program-name"
+        placeholder="Örn. Yazılım Mühendisliği"
+        formControlName="name"
+        [invalid]="nameControl.invalid && (nameControl.touched || submitted())"
+      />
+    </app-form-field>
+
+    <app-form-field
+      fieldId="program-description"
+      label="Açıklama"
+      hint="Programın kapsamını kısaca anlatın."
+      [control]="descriptionControl"
+      [maxLength]="limits.description.max"
+      [forceShowError]="submitted()"
+    >
+      <app-textarea
+        inputId="program-description"
+        placeholder="Programın amacı ve kapsamı…"
+        [rows]="4"
+        [maxLength]="limits.description.max"
+        formControlName="description"
+        [invalid]="descriptionControl.invalid && (descriptionControl.touched || submitted())"
+      />
+    </app-form-field>
+  </form>
+
+  <div dialog-footer>
+    <app-button variant="ghost" [disabled]="saving()" (pressed)="onCancel()">Vazgeç</app-button>
+    <app-button variant="primary" [loading]="saving()" (pressed)="submit()">
+      {{ isEditMode() ? 'Değişiklikleri kaydet' : 'Programı oluştur' }}
+    </app-button>
+  </div>
+</app-dialog>

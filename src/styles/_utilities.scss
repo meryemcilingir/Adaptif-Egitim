@@ -1,0 +1,246 @@
+@use 'breakpoints' as t;
+
+/**
+ * Sınırlı sayıda yardımcı sınıf. Tailwind değil — yalnızca sürekli tekrar eden
+ * layout kalıpları burada; görsel stil bileşenlerin kendi SCSS dosyasında kalır.
+ */
+
+/* ── Yerleşim ─────────────────────────────────────────────────── */
+.stack {
+  display: flex;
+  flex-direction: column;
+}
+
+.row {
+  display: flex;
+  align-items: center;
+}
+
+.row-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.row-wrap {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.grow {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.gap-1 {
+  gap: var(--space-1);
+}
+.gap-2 {
+  gap: var(--space-2);
+}
+.gap-3 {
+  gap: var(--space-3);
+}
+.gap-4 {
+  gap: var(--space-4);
+}
+.gap-5 {
+  gap: var(--space-5);
+}
+.gap-6 {
+  gap: var(--space-6);
+}
+.gap-8 {
+  gap: var(--space-8);
+}
+
+/* ── Duyarlı kart ızgarası ────────────────────────────────────── */
+.grid {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.grid-4 {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.grid-3 {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.grid-2 {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.grid-2-1 {
+  grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+}
+
+.grid-1-2 {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 2fr);
+}
+
+@media (max-width: t.$bp-xl) {
+  .grid-4 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: t.$bp-lg) {
+  .grid-3,
+  .grid-2-1,
+  .grid-1-2 {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: t.$bp-md) {
+  .grid-4,
+  .grid-3,
+  .grid-2,
+  .grid-2-1,
+  .grid-1-2 {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── Yüzey ────────────────────────────────────────────────────── */
+.surface {
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+}
+
+.divider {
+  height: var(--border-width);
+  background: var(--color-border);
+  border: none;
+}
+
+.divider-v {
+  width: var(--border-width);
+  align-self: stretch;
+  background: var(--color-border);
+}
+
+/* ── Erişilebilirlik ──────────────────────────────────────────── */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--space-2);
+  top: -100px;
+  z-index: var(--z-tooltip);
+  padding: var(--space-2) var(--space-4);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-md);
+  transition: top var(--duration-fast) var(--ease-out);
+
+  &:focus {
+    top: var(--space-2);
+  }
+}
+
+/* ── Sayfa iskeleti ───────────────────────────────────────────── */
+.page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+  max-width: var(--content-max-width);
+  margin-inline: auto;
+  width: 100%;
+}
+
+.page-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+  flex-wrap: wrap;
+}
+
+.page-section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ── Form yerleşimi ───────────────────────────────────────────── */
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.form__row {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+}
+
+.form__row--three {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+@media (max-width: t.$bp-md) {
+  .form__row,
+  .form__row--three {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── Tablo hücresi kalıpları ──────────────────────────────────── */
+/*
+ * Liste ekranlarının tamamı aynı iki hücre kalıbını kullanır: iki satırlık
+ * metin yığını ve etiket rozeti. Her sayfada tekrar tanımlanmasın diye burada.
+ */
+.cell-stack {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.cell-tags {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.cell-tag {
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-surface-subtle);
+  font-size: var(--fs-xs);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+/* ── Diğer ────────────────────────────────────────────────────── */
+.scroll-x {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+}
+
+.full-width {
+  width: 100%;
+}
+
+.pointer {
+  cursor: pointer;
+}

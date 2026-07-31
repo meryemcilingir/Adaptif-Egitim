@@ -1,0 +1,199 @@
+@use '../../../styles/breakpoints' as t;
+
+:host {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  height: var(--header-height);
+  padding-inline: var(--space-5);
+  background: var(--color-surface);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.header__progress {
+  position: absolute;
+  inset-inline: 0;
+  bottom: -1px;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+  background-size: 40% 100%;
+  animation: app-shimmer 1.1s ease-in-out infinite;
+}
+
+.header__start {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.header__menu-toggle {
+  display: none;
+}
+
+.header__search {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 34px;
+  flex: 1 1 auto;
+  max-width: 380px;
+  margin-inline: auto;
+  padding-inline: var(--space-3);
+  background: var(--color-surface-subtle);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-tertiary);
+
+  &:focus-within {
+    background: var(--color-surface);
+    border-color: var(--color-border-focus);
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.header__search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: var(--fs-sm);
+
+  &::placeholder {
+    color: var(--color-text-tertiary);
+  }
+}
+
+.header__end {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-inline-start: auto;
+}
+
+/* ── Bildirim merkezi ─────────────────────────────────────────── */
+.header__notifications {
+  position: relative;
+}
+
+.header__bell {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+
+  &:hover {
+    background: var(--color-surface-muted);
+    color: var(--color-text);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.header__bell-badge {
+  position: absolute;
+  top: 1px;
+  inset-inline-end: 1px;
+  min-width: 15px;
+  padding: 0 4px;
+  border-radius: var(--radius-full);
+  background: var(--color-danger);
+  color: var(--color-text-inverse);
+  font-size: 10px;
+  font-weight: var(--fw-semibold);
+  line-height: 15px;
+  text-align: center;
+}
+
+.header__panel {
+  position: absolute;
+  top: calc(100% + 8px);
+  inset-inline-end: 0;
+  z-index: var(--z-dropdown);
+  width: min(360px, calc(100vw - var(--space-6)));
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  animation: app-scale-in var(--duration-fast) var(--ease-out);
+  overflow: hidden;
+}
+
+.header__panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border);
+}
+
+.header__panel-action {
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+  color: var(--color-primary);
+
+  &:hover {
+    text-decoration: underline;
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+    border-radius: var(--radius-sm);
+  }
+}
+
+.header__panel-body {
+  max-height: 420px;
+  overflow-y: auto;
+  padding: var(--space-2);
+}
+
+.header__user {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding-inline-start: var(--space-2);
+  border-inline-start: var(--border-width) solid var(--color-border);
+  min-width: 0;
+}
+
+.header__user-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.25;
+  min-width: 0;
+  max-width: 160px;
+}
+
+@media (max-width: t.$bp-lg) {
+  .header__search {
+    display: none;
+  }
+}
+
+@media (max-width: t.$bp-md) {
+  :host {
+    padding-inline: var(--space-3);
+    gap: var(--space-2);
+  }
+
+  .header__menu-toggle {
+    display: inline-flex;
+  }
+
+  .header__user-text {
+    display: none;
+  }
+}

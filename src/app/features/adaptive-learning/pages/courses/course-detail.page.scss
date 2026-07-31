@@ -1,0 +1,92 @@
+@use '../../../../../styles/breakpoints' as t;
+
+.detail__intro {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.detail__title {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.detail__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+}
+
+.meta {
+  display: flex;
+  flex-direction: column;
+}
+
+.meta__row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: var(--border-width) solid var(--color-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.outcomes {
+  display: flex;
+  flex-direction: column;
+}
+
+.outcomes__row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) auto auto auto auto;
+  align-items: center;
+  gap: var(--space-4);
+  width: 100%;
+  padding: var(--space-3) var(--space-5);
+  border-bottom: var(--border-width) solid var(--color-border);
+  text-align: start;
+
+  &:hover {
+    background: var(--color-surface-subtle);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.outcomes li:last-child .outcomes__row {
+  border-bottom: none;
+}
+
+.outcomes__title {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+@media (max-width: t.$bp-lg) {
+  .outcomes__row {
+    grid-template-columns: minmax(0, 1fr) auto;
+    row-gap: var(--space-2);
+  }
+
+  .outcomes__title {
+    grid-column: 1 / -1;
+  }
+}

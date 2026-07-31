@@ -1,0 +1,111 @@
+/** Tipografi ölçeği — hiyerarşi boyuttan çok ağırlık + renk ile kurulur. */
+
+.text-display {
+  font-size: var(--fs-display);
+  line-height: var(--lh-display);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.02em;
+}
+
+.text-h1 {
+  font-size: var(--fs-h1);
+  line-height: var(--lh-h1);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.018em;
+}
+
+.text-h2 {
+  font-size: var(--fs-h2);
+  line-height: var(--lh-h2);
+  font-weight: var(--fw-semibold);
+  letter-spacing: -0.012em;
+}
+
+.text-h3 {
+  font-size: var(--fs-h3);
+  line-height: var(--lh-h3);
+  font-weight: var(--fw-semibold);
+  letter-spacing: -0.006em;
+}
+
+.text-body {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+}
+
+.text-body-strong {
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+  font-weight: var(--fw-strong);
+}
+
+.text-sm {
+  font-size: var(--fs-sm);
+  line-height: var(--lh-sm);
+}
+
+.text-xs {
+  font-size: var(--fs-xs);
+  line-height: var(--lh-xs);
+  font-weight: var(--fw-medium);
+}
+
+.text-metric {
+  font-size: var(--fs-metric);
+  line-height: var(--lh-metric);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+}
+
+.text-overline {
+  font-size: var(--fs-overline);
+  line-height: var(--lh-overline);
+  font-weight: var(--fw-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.text-muted {
+  color: var(--color-text-secondary);
+}
+
+.text-subtle {
+  color: var(--color-text-tertiary);
+}
+
+.text-danger {
+  color: var(--color-danger-text);
+}
+
+.text-success {
+  color: var(--color-success-text);
+}
+
+.text-warning {
+  color: var(--color-warning-text);
+}
+
+.text-mono {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+}
+
+/* Sayısal kolonlar hizalı görünsün */
+.tabular {
+  font-variant-numeric: tabular-nums;
+}
+
+.truncate {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}

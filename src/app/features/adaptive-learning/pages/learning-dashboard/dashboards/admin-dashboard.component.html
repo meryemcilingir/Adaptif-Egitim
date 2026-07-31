@@ -1,0 +1,83 @@
+@let dashboard = data();
+
+<app-kpi-grid [cards]="dashboard.kpis" />
+
+<app-quick-actions [actions]="dashboard.quickActions" />
+
+<section aria-label="Sistem sağlığı">
+  <app-card title="Sistem sağlığı" description="Veri bütünlüğü ve işlem durumu" padding="compact">
+    <div class="health">
+      @for (entry of dashboard.systemHealth; track entry.label) {
+        <div class="health__item">
+          <span class="text-overline text-muted">{{ entry.label }}</span>
+          <app-status-badge [label]="entry.value" [tone]="badgeTone(entry.tone)" />
+          <span class="text-xs text-subtle">{{ entry.hint }}</span>
+        </div>
+      }
+    </div>
+  </app-card>
+</section>
+
+<section class="grid grid-1-2" aria-label="Kullanıcı ve denetim dağılımı">
+  <app-chart-card
+    title="Rol dağılımı"
+    description="Kullanıcıların rollere göre dağılımı"
+    type="donut"
+    [series]="rolesSeries()"
+    [labels]="rolesLabels()"
+    [height]="300"
+  />
+
+  <app-chart-card
+    title="Denetim kaydı trendi"
+    description="Günlük denetim kaydı sayısı"
+    type="area"
+    [series]="auditTrendSeries()"
+    [categories]="auditTrendCategories()"
+    [height]="300"
+    [showLegend]="false"
+    emptyMessage="Denetim kaydı bulunmuyor."
+  />
+</section>
+
+<section class="grid grid-2" aria-label="İşlem türleri ve veri hacmi">
+  <app-chart-card
+    title="En sık işlemler"
+    description="Denetim kaydına göre işlem türleri"
+    type="bar"
+    [series]="auditActionSeries()"
+    [categories]="auditActionCategories()"
+    [height]="300"
+    [showLegend]="false"
+    [horizontal]="true"
+  />
+
+  <app-card title="Veri hacmi" description="Koleksiyon bazlı kayıt sayıları" padding="compact">
+    <app-ranked-list
+      [entries]="dashboard.storageBreakdown"
+      emptyTitle="Veri yok"
+      emptyDescription="Veritabanı boş görünüyor."
+    />
+  </app-card>
+</section>
+
+<section aria-label="Son denetim kayıtları">
+  <app-card
+    title="Son denetim kayıtları"
+    description="Kim, ne zaman, neyi değiştirdi"
+    [hasActions]="true"
+    padding="compact"
+  >
+    <div card-actions>
+      <button type="button" class="link" (click)="openAuditLog()">Tümünü gör</button>
+    </div>
+    <app-timeline [items]="auditTimeline()" emptyMessage="Denetim kaydı bulunmuyor." />
+  </app-card>
+</section>
+
+<app-dashboard-common
+  [activity]="dashboard.recentActivity"
+  [notifications]="dashboard.notifications"
+  [statistics]="dashboard.statistics"
+  (notificationRead)="notificationRead.emit($event)"
+/>

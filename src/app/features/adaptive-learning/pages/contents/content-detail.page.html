@@ -1,0 +1,274 @@
+@if (facade.isRichDetailLoading()) {
+  <app-loading-state variant="skeleton-card" [rows]="4" message="İçerik yükleniyor…" />
+} @else if (facade.hasRichDetailError()) {
+  <app-error-state
+    [error]="facade.richDetailError()"
+    title="İçerik yüklenemedi"
+    (retry)="reload()"
+  />
+} @else if (detail(); as view) {
+  <div class="page">
+    <app-breadcrumb [items]="breadcrumbs()" />
+
+    <header class="detail-header">
+      <div class="detail-header__main">
+        <div class="detail-header__icon">
+          <app-icon [name]="typeIcon()" [size]="22" />
+        </div>
+
+        <div class="detail-header__titles">
+          <div class="row-wrap gap-2">
+            <app-status-badge
+              [label]="statusView().label"
+              [tone]="statusView().tone"
+              [icon]="statusView().icon"
+            />
+            <span class="chip">{{ typeLabel() }}</span>
+            <span class="chip">{{ view.content.estimatedDurationMinutes }} dk</span>
+            <span class="chip">{{ difficultyLabel() }}</span>
+          </div>
+
+          <h1 class="text-h1">{{ view.content.title }}</h1>
+          <p class="text-sm text-muted">
+            {{ view.courseCode }} · {{ view.courseName }}
+            @if (view.outcome) {
+              — {{ view.outcome.code }} {{ view.outcome.title }}
+            }
+          </p>
+        </div>
+      </div>
+
+      <div class="detail-header__actions">
+        @if (canWrite()) {
+          <app-publish-actions
+            [state]="view.content.state"
+            [disabled]="facade.isSaving()"
+            [pendingTarget]="pendingTarget()"
+            (transitionRequested)="onTransition($event)"
+          />
+          @if (canEdit()) {
+            <app-button variant="secondary" icon="pencil-line" (pressed)="openForm()">
+              Düzenle
+            </app-button>
+          }
+          @if (view.content.state === 'DRAFT') {
+            <app-button variant="ghost" icon="trash-2" (pressed)="confirmDelete()">Sil</app-button>
+          }
+        }
+      </div>
+    </header>
+
+    <div class="detail-grid">
+      <div class="detail-grid__main">
+        <app-card title="İçerik bilgisi">
+          @if (view.content.thumbnailUrl; as thumbnail) {
+            <img class="detail-image" [src]="thumbnail" [alt]="view.content.title" />
+          }
+
+          @if (view.content.description) {
+            <p class="text-sm">{{ view.content.description }}</p>
+          } @else {
+            <p class="text-sm text-subtle">Bu içerik için açıklama girilmemiş.</p>
+          }
+
+          @if (view.content.tags.length > 0) {
+            <div class="row-wrap gap-1 tag-row">
+              @for (tag of view.content.tags; track tag) {
+                <span class="chip">{{ tag }}</span>
+              }
+            </div>
+          }
+
+          @if (view.content.resourceUrl; as url) {
+            <a class="detail-link text-sm" [href]="url" target="_blank" rel="noopener noreferrer">
+              <app-icon name="link" [size]="14" />
+              Kaynağı yeni sekmede aç
+            </a>
+          }
+        </app-card>
+
+        @if (isStudent()) {
+          <app-card title="İlerlemem" description="Çalışma durumun bu içerik için kaydedilir.">
+            @if (view.locked) {
+              <div class="locked-note">
+                <app-icon name="lock" [size]="16" />
+                <div>
+                  <p class="text-sm text-body-strong">Bu içerik henüz kilitli</p>
+                  <p class="text-sm text-muted">
+                    Önce {{ view.lockedByLabel }} kazanımını tamamlamalısınız.
+                  </p>
+                </div>
+              </div>
+            } @else {
+              <div class="progress-block">
+                <div class="row-between">
+                  <app-status-badge
+                    [label]="progressLabel()"
+                    [tone]="progressTone()"
+                    [dot]="true"
+                  />
+                  <span class="text-sm tabular">%{{ view.progress.completionPercent }}</span>
+                </div>
+
+                <app-progress-bar
+                  [value]="view.progress.completionPercent"
+                  [tone]="view.progress.state === 'completed' ? 'success' : 'primary'"
+                  label="Tamamlanma"
+                />
+
+                <dl class="progress-meta">
+                  <div>
+                    <dt>Harcanan süre</dt>
+                    <dd>{{ view.progress.spentMinutes }} dk</dd>
+                  </div>
+                  <div>
+                    <dt>Son erişim</dt>
+                    <dd>
+                      {{
+                        view.progress.lastAccessedAt
+                          ? (view.progress.lastAccessedAt | appRelativeTime)
+                          : '—'
+                      }}
+                    </dd>
+                  </div>
+                  @if (view.progress.scorePercent !== null) {
+                    <div>
+                      <dt>Son puan</dt>
+                      <dd>%{{ view.progress.scorePercent }}</dd>
+                    </div>
+                  }
+                </dl>
+
+                <div class="row gap-2">
+                  @if (view.progress.state !== 'completed') {
+                    <app-button
+                      variant="primary"
+                      icon="circle-play"
+                      [loading]="isSavingProgress()"
+                      (pressed)="startStudy()"
+                    >
+                      {{ view.progress.state === 'in_progress' ? 'Devam et' : 'Çalışmaya başla' }}
+                    </app-button>
+                    <app-button
+                      variant="secondary"
+                      icon="circle-check-big"
+                      [loading]="isSavingProgress()"
+                      (pressed)="completeStudy()"
+                    >
+                      Tamamladım
+                    </app-button>
+                  } @else {
+                    <span class="completed-note text-sm">
+                      <app-icon name="circle-check-big" [size]="15" />
+                      Bu içeriği tamamladın.
+                    </span>
+                  }
+                </div>
+              </div>
+            }
+          </app-card>
+        }
+
+        <app-card title="Aynı kazanımdaki diğer içerikler">
+          @if (view.relatedContents.length === 0) {
+            <app-empty-state
+              icon="library"
+              title="Başka içerik yok"
+              description="Bu kazanım için tanımlı başka yayında içerik bulunmuyor."
+            />
+          } @else {
+            <ul class="related-list">
+              @for (item of view.relatedContents; track item.id) {
+                <li>
+                  <button type="button" class="related-item" (click)="open(item.id)">
+                    <app-icon [name]="relatedIcon(item.type)" [size]="16" />
+                    <span class="related-item__title text-sm">{{ item.title }}</span>
+                    <span class="text-xs text-subtle">
+                      {{ relatedTypeLabel(item.type) }} · {{ item.estimatedDurationMinutes }} dk
+                    </span>
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+      </div>
+
+      <aside class="detail-grid__side">
+        <app-card title="Özellikler">
+          <dl class="meta-list">
+            <div>
+              <dt>Ders</dt>
+              <dd>{{ view.courseCode }} · {{ view.courseName }}</dd>
+            </div>
+            <div>
+              <dt>Kazanım</dt>
+              <dd>{{ view.outcome ? view.outcome.code + ' · ' + view.outcome.title : '—' }}</dd>
+            </div>
+            <div>
+              <dt>Tür</dt>
+              <dd>{{ typeLabel() }}</dd>
+            </div>
+            <div>
+              <dt>Zorluk</dt>
+              <dd>{{ difficultyLabel() }}</dd>
+            </div>
+            <div>
+              <dt>Bilişsel seviye</dt>
+              <dd>{{ levelLabel() }}</dd>
+            </div>
+            <div>
+              <dt>Tahmini süre</dt>
+              <dd>{{ view.content.estimatedDurationMinutes }} dk</dd>
+            </div>
+            <div>
+              <dt>Yazar</dt>
+              <dd>{{ view.content.authorName }}</dd>
+            </div>
+            <div>
+              <dt>Oluşturulma</dt>
+              <dd>{{ view.content.createdAt | appRelativeTime }}</dd>
+            </div>
+            <div>
+              <dt>Son güncelleme</dt>
+              <dd>{{ view.content.updatedAt | appRelativeTime }}</dd>
+            </div>
+          </dl>
+        </app-card>
+
+        <app-card title="Önkoşullar" description="Bu içeriğe erişim için gereken kazanımlar.">
+          @if (view.prerequisiteOutcomes.length === 0) {
+            <p class="text-sm text-subtle">Bu içeriğin bağlı olduğu kazanımın önkoşulu yok.</p>
+          } @else {
+            <ul class="prerequisite-list">
+              @for (outcome of view.prerequisiteOutcomes; track outcome.id) {
+                <li>
+                  <span class="text-sm text-body-strong">{{ outcome.code }}</span>
+                  <span class="text-xs text-subtle">{{ outcome.title }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+      </aside>
+    </div>
+  </div>
+
+  @if (isFormOpen()) {
+    <app-content-form
+      #form
+      [content]="view.content"
+      [courses]="courseOptions()"
+      [outcomes]="outcomeList()"
+      [saving]="facade.isSaving()"
+      (save)="onSave($event, form)"
+      (cancel)="closeForm()"
+    />
+  }
+} @else {
+  <app-empty-state
+    icon="inbox"
+    title="İçerik bulunamadı"
+    description="Aradığınız içerik silinmiş veya kapsamınız dışında olabilir."
+  />
+}

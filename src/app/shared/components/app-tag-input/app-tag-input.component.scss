@@ -1,0 +1,115 @@
+:host {
+  display: block;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-1);
+  min-height: 38px;
+  padding: 5px var(--space-2);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  transition:
+    border-color var(--duration-fast) var(--ease-in-out),
+    box-shadow var(--duration-fast) var(--ease-in-out);
+
+  &:focus-within {
+    border-color: var(--color-border-focus);
+    box-shadow: var(--shadow-focus);
+  }
+
+  &.is-invalid {
+    border-color: var(--color-danger);
+  }
+
+  &.is-disabled {
+    background: var(--color-surface-muted);
+  }
+}
+
+.tags__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 3px 4px 3px 9px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-subtle);
+  border: var(--border-width) solid var(--color-primary-border);
+  color: var(--color-primary);
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-strong);
+}
+
+.tags__remove {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: var(--radius-full);
+  color: inherit;
+
+  &:hover:not(:disabled) {
+    background: var(--color-primary-border);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.tags__input {
+  flex: 1;
+  min-width: 140px;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: var(--fs-body);
+  color: var(--color-text);
+  padding: 2px 0;
+
+  &::placeholder {
+    color: var(--color-text-tertiary);
+  }
+}
+
+.tags__meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  margin-top: var(--space-1);
+}
+
+.tags__suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+
+.tags__suggestion {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  padding: 3px 9px;
+  border-radius: var(--radius-full);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-surface);
+  font-size: var(--fs-xs);
+  color: var(--color-text-secondary);
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-primary-border);
+    background: var(--color-primary-subtle);
+    color: var(--color-primary);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}

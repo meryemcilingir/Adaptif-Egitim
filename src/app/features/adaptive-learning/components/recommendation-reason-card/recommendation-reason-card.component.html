@@ -1,0 +1,42 @@
+@let item = recommendation();
+
+<header class="reason__header">
+  <div class="reason__titles">
+    <span class="text-overline text-muted">{{ item.outcomeCode || 'Öneri' }}</span>
+    <h4 class="text-h3 clamp-2">{{ item.targetTitle }}</h4>
+  </div>
+  <app-status-badge [label]="priorityLabel()" [tone]="priorityTone()" [dot]="true" />
+</header>
+
+<ul class="reason__list">
+  @for (reason of item.reasons; track reason.rule) {
+    <li class="reason__item">
+      <app-icon class="reason__icon" name="lightbulb" [size]="14" />
+
+      <div class="reason__body">
+        <p class="text-sm">
+          <span class="reason__rule">{{ ruleLabels[reason.rule] }}</span>
+          {{ reason.explanation }}
+        </p>
+
+        <div class="reason__evidence">
+          @for (entry of evidenceEntries(reason.evidence); track entry.key) {
+            <span class="reason__chip">
+              {{ entry.key }}: <strong class="tabular">{{ entry.value }}</strong>
+            </span>
+          }
+        </div>
+      </div>
+    </li>
+  }
+</ul>
+
+<footer class="reason__footer">
+  <span class="text-xs text-subtle">
+    <app-icon name="clock" [size]="12" />
+    Tahmini süre {{ item.estimatedMinutes | appDuration }}
+  </span>
+  <app-button variant="secondary" size="sm" trailingIcon="arrow-right" (pressed)="start.emit(item)">
+    Çalışmaya başla
+  </app-button>
+</footer>

@@ -1,0 +1,54 @@
+:host {
+  display: block;
+}
+
+.input {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 38px;
+  padding: 0 var(--space-3);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  color: var(--color-text-tertiary);
+  transition:
+    border-color var(--duration-fast) var(--ease-in-out),
+    box-shadow var(--duration-fast) var(--ease-in-out);
+
+  &:focus-within {
+    border-color: var(--color-border-focus);
+    box-shadow: var(--shadow-focus);
+  }
+
+  &.is-invalid {
+    border-color: var(--color-danger);
+
+    &:focus-within {
+      box-shadow: var(--shadow-focus-danger);
+    }
+  }
+
+  &.is-disabled {
+    background: var(--color-surface-muted);
+    cursor: not-allowed;
+  }
+}
+
+.input__control {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  outline: none;
+  background: transparent;
+  font-size: var(--fs-body);
+  color: var(--color-text);
+
+  &::placeholder {
+    color: var(--color-text-tertiary);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+  }
+}

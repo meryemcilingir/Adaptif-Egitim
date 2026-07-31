@@ -1,0 +1,98 @@
+:host {
+  display: block;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+}
+
+.timeline__item {
+  position: relative;
+  display: flex;
+  gap: var(--space-3);
+  padding-bottom: var(--space-5);
+
+  /* Bağlantı çizgisi */
+  &::before {
+    content: '';
+    position: absolute;
+    inset-inline-start: 11px;
+    top: 24px;
+    bottom: 0;
+    width: 1px;
+    background: var(--color-border);
+  }
+
+  &:last-child {
+    padding-bottom: 0;
+
+    &::before {
+      display: none;
+    }
+  }
+}
+
+.timeline__marker {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  width: 23px;
+  height: 23px;
+  flex: none;
+  border-radius: var(--radius-full);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-tertiary);
+}
+
+.timeline__marker--info {
+  background: var(--color-info-subtle);
+  border-color: var(--color-info-border);
+  color: var(--color-info-text);
+}
+
+.timeline__marker--success {
+  background: var(--color-success-subtle);
+  border-color: var(--color-success-border);
+  color: var(--color-success-text);
+}
+
+.timeline__marker--warning {
+  background: var(--color-warning-subtle);
+  border-color: var(--color-warning-border);
+  color: var(--color-warning-text);
+}
+
+.timeline__marker--danger {
+  background: var(--color-danger-subtle);
+  border-color: var(--color-danger-border);
+  color: var(--color-danger-text);
+}
+
+.timeline__marker--primary {
+  background: var(--color-primary-subtle);
+  border-color: var(--color-primary-border);
+  color: var(--color-primary);
+}
+
+.timeline__content {
+  min-width: 0;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.timeline__head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.timeline__empty {
+  padding: var(--space-6) 0;
+  text-align: center;
+}

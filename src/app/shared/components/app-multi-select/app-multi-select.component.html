@@ -1,0 +1,91 @@
+<button
+  type="button"
+  class="select"
+  [class.is-invalid]="invalid()"
+  [class.is-disabled]="isDisabled()"
+  [id]="inputId()"
+  [disabled]="isDisabled()"
+  [attr.aria-expanded]="isOpen()"
+  aria-haspopup="listbox"
+  (click)="toggle()"
+  (keydown)="onKeydown($event)"
+>
+  @if (selectedOptions().length === 0) {
+    <span class="select__placeholder">{{ placeholder() }}</span>
+  } @else {
+    <span class="select__chips">
+      @for (option of selectedOptions(); track option.value) {
+        <span class="select__chip">
+          {{ option.label }}
+          <span
+            class="select__remove"
+            role="button"
+            tabindex="-1"
+            [attr.aria-label]="option.label + ' seçimini kaldır'"
+            (click)="remove(option.value, $event)"
+          >
+            <app-icon name="x" [size]="11" [strokeWidth]="2.5" />
+          </span>
+        </span>
+      }
+    </span>
+  }
+
+  <app-icon class="select__chevron" name="chevron-down" [size]="15" />
+</button>
+
+@if (isOpen()) {
+  <div class="select__menu" role="listbox" (keydown)="onKeydown($event)">
+    <div class="select__search">
+      <app-icon name="search" [size]="14" />
+      <input
+        type="search"
+        [placeholder]="searchPlaceholder()"
+        [value]="search()"
+        (input)="onSearchInput($event)"
+      />
+    </div>
+
+    @if (visibleOptions().length === 0) {
+      <p class="select__empty text-sm text-muted">{{ emptyMessage() }}</p>
+    } @else {
+      <ul>
+        @for (option of visibleOptions(); track option.value) {
+          <li>
+            <button
+              type="button"
+              class="select__option"
+              role="option"
+              [class.is-locked]="isOptionLocked(option)"
+              [attr.aria-selected]="isSelected(option.value)"
+              [disabled]="isOptionLocked(option)"
+              [title]="option.disabledReason ?? ''"
+              (click)="select(option)"
+            >
+              <span class="select__check" [class.is-checked]="isSelected(option.value)">
+                @if (isSelected(option.value)) {
+                  <app-icon name="check" [size]="11" [strokeWidth]="2.5" />
+                }
+              </span>
+
+              <span class="select__labels">
+                <span class="truncate">{{ option.label }}</span>
+                @if (option.disabledReason && isOptionLocked(option)) {
+                  <span class="text-xs text-danger">{{ option.disabledReason }}</span>
+                } @else if (option.hint) {
+                  <span class="text-xs text-subtle truncate">{{ option.hint }}</span>
+                }
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+
+    @if (maxSelected() !== null) {
+      <footer class="select__footer text-xs text-subtle">
+        {{ selected().length }} / {{ maxSelected() }} seçildi
+      </footer>
+    }
+  </div>
+}

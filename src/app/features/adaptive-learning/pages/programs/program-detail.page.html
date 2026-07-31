@@ -1,0 +1,161 @@
+<div class="page">
+  @if (facade.isDetailLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="3" />
+  } @else if (facade.hasDetailError()) {
+    <app-error-state
+      [error]="facade.detailError()"
+      title="Program yüklenemedi"
+      (retry)="facade.loadDetail(id())"
+    />
+  } @else if (facade.detail(); as program) {
+    <header class="page-header">
+      <div class="detail__intro">
+        <app-button variant="ghost" size="sm" icon="arrow-left" (pressed)="goBack()">
+          Programlar
+        </app-button>
+
+        <div class="detail__title">
+          <span class="text-overline text-muted">{{ program.code }}</span>
+          <h1 class="text-h1">{{ program.name }}</h1>
+        </div>
+      </div>
+
+      <div class="detail__actions">
+        @if (canPublish()) {
+          <app-publish-actions
+            [state]="program.state"
+            [disabled]="facade.isSaving()"
+            [pendingTarget]="pendingTarget()"
+            (transitionRequested)="onTransition($event)"
+          />
+        } @else {
+          <app-status-badge
+            [label]="toneFor(program.state).label"
+            [tone]="toneFor(program.state).tone"
+            [icon]="toneFor(program.state).icon"
+          />
+        }
+
+        @if (canEdit()) {
+          <app-button variant="secondary" icon="pencil-line" (pressed)="openForm()">
+            Düzenle
+          </app-button>
+        }
+        @if (canWrite() && program.state === 'DRAFT') {
+          <app-button variant="ghost" icon="x" (pressed)="confirmDelete()">Sil</app-button>
+        }
+      </div>
+    </header>
+
+    <section class="grid grid-4" aria-label="Program özeti">
+      <app-card padding="compact">
+        <div class="stat">
+          <span class="text-overline text-muted">Ders</span>
+          <span class="text-metric">{{ program.courseCount }}</span>
+        </div>
+      </app-card>
+      <app-card padding="compact">
+        <div class="stat">
+          <span class="text-overline text-muted">Kazanım</span>
+          <span class="text-metric">{{ program.outcomeCount }}</span>
+        </div>
+      </app-card>
+      <app-card padding="compact">
+        <div class="stat">
+          <span class="text-overline text-muted">Öğrenci</span>
+          <span class="text-metric">{{ program.studentCount }}</span>
+        </div>
+      </app-card>
+      <app-card padding="compact">
+        <div class="stat">
+          <span class="text-overline text-muted">Sürüm</span>
+          <span class="text-metric">v{{ program.version }}</span>
+        </div>
+      </app-card>
+    </section>
+
+    <section class="grid grid-2-1" aria-label="Program bilgileri">
+      <app-card title="Açıklama" padding="default">
+        @if (program.description) {
+          <p class="text-body">{{ program.description }}</p>
+        } @else {
+          <p class="text-sm text-muted">Bu program için açıklama girilmemiş.</p>
+        }
+      </app-card>
+
+      <app-card title="Künye" padding="default">
+        <dl class="meta">
+          <div class="meta__row">
+            <dt class="text-sm text-muted">Koordinatör</dt>
+            <dd class="text-body-strong">{{ program.coordinatorName || '—' }}</dd>
+          </div>
+          <div class="meta__row">
+            <dt class="text-sm text-muted">Oluşturulma</dt>
+            <dd class="text-body-strong">{{ program.createdAt | appRelativeTime }}</dd>
+          </div>
+          <div class="meta__row">
+            <dt class="text-sm text-muted">Son güncelleme</dt>
+            <dd class="text-body-strong">{{ program.updatedAt | appRelativeTime }}</dd>
+          </div>
+          <div class="meta__row">
+            <dt class="text-sm text-muted">Yayın tarihi</dt>
+            <dd class="text-body-strong">
+              {{ program.publishedAt ? (program.publishedAt | appRelativeTime) : '—' }}
+            </dd>
+          </div>
+        </dl>
+      </app-card>
+    </section>
+
+    <section aria-label="Programa bağlı dersler">
+      <app-card
+        title="Dersler"
+        [description]="program.courseCount + ' ders bu programa bağlı'"
+        padding="none"
+      >
+        @if (isCoursesLoading()) {
+          <app-loading-state variant="skeleton-table" [rows]="4" />
+        } @else if (programCourses().length === 0) {
+          <app-empty-state
+            icon="library"
+            title="Bu programda ders yok"
+            description="Programa ders eklendiğinde burada listelenir."
+          />
+        } @else {
+          <ul class="courses">
+            @for (course of programCourses(); track course.id) {
+              <li>
+                <button type="button" class="courses__row" (click)="openCourse(course)">
+                  <span class="courses__title">
+                    <span class="text-body-strong">{{ course.code }}</span>
+                    <span class="text-xs text-muted truncate">{{ course.name }}</span>
+                  </span>
+
+                  <span class="text-sm text-muted truncate">{{ course.instructorName }}</span>
+                  <span class="text-sm tabular">{{ course.outcomeCount }} kazanım</span>
+                  <span class="text-sm tabular">{{ course.enrolledCount }} öğrenci</span>
+
+                  <app-status-badge
+                    [label]="toneFor(course.state).label"
+                    [tone]="toneFor(course.state).tone"
+                  />
+                </button>
+              </li>
+            }
+          </ul>
+        }
+      </app-card>
+    </section>
+
+    @if (isFormOpen()) {
+      <app-program-form
+        #form
+        [program]="program"
+        [coordinators]="coordinators()"
+        [saving]="facade.isSaving()"
+        (save)="onSave($event, form)"
+        (cancel)="closeForm()"
+      />
+    }
+  }
+</div>

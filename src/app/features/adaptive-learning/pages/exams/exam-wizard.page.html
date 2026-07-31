@@ -1,0 +1,424 @@
+@if (isLoading()) {
+  <app-loading-state variant="skeleton-card" [rows]="4" message="Sınav yükleniyor…" />
+} @else if (loadError(); as error) {
+  <app-error-state [error]="error" title="Sınav yüklenemedi" />
+} @else {
+  @let draft = facade.draft();
+  @let step = facade.step();
+
+  <div class="page">
+    <app-breadcrumb [items]="breadcrumbs()" />
+
+    <header class="page-header">
+      <div>
+        <h1 class="text-h1">{{ draft.title || 'Yeni sınav' }}</h1>
+        <p class="text-sm text-muted">{{ stepHints[step] }}</p>
+      </div>
+
+      <div class="row-wrap gap-2">
+        <span class="autosave" [class]="'is-' + facade.saveState()">
+          <app-icon
+            [name]="facade.saveState() === 'saving' ? 'loader-circle' : 'check'"
+            [size]="13"
+          />
+          {{ saveLabel() }}
+        </span>
+        <app-button variant="ghost" (pressed)="exit()">Çık</app-button>
+      </div>
+    </header>
+
+    <app-wizard-steps
+      [current]="step"
+      [availability]="facade.stepAvailability()"
+      (stepSelect)="onStepSelect($event)"
+    />
+
+    <div class="wizard">
+      <div class="wizard__main">
+        @switch (step) {
+          <!-- 1. Sınav bilgisi -->
+          @case ('information') {
+            <app-card title="Sınav bilgisi" description="Ad, takvim, süre ve yönerge">
+              <div class="form" [formGroup]="form">
+                <app-form-field
+                  fieldId="exam-title"
+                  label="Sınav adı"
+                  [hint]="'Aynı derste benzersiz olmalıdır. En az ' + limits.title.min + ' karakter.'"
+                  [required]="true"
+                  [maxLength]="limits.title.max"
+                  [control]="titleControl"
+                >
+                  <app-input
+                    inputId="exam-title"
+                    placeholder="Örn. MAT101 1. Ara Sınav"
+                    formControlName="title"
+                    [invalid]="titleControl.invalid && titleControl.touched"
+                  />
+                </app-form-field>
+
+                <app-form-field
+                  fieldId="exam-description"
+                  label="Açıklama"
+                  [maxLength]="limits.description.max"
+                  [control]="descriptionControl"
+                >
+                  <app-textarea
+                    inputId="exam-description"
+                    [rows]="2"
+                    [maxLength]="limits.description.max"
+                    placeholder="Sınavın kapsamı…"
+                    formControlName="description"
+                  />
+                </app-form-field>
+
+                <div class="form__row">
+                  <app-form-field
+                    fieldId="exam-opens"
+                    label="Açılış"
+                    hint="Sınavın öğrencilere açılacağı an."
+                    [required]="true"
+                    [control]="opensControl"
+                  >
+                    <input
+                      id="exam-opens"
+                      type="datetime-local"
+                      class="datetime"
+                      formControlName="opensAt"
+                    />
+                  </app-form-field>
+
+                  <app-form-field
+                    fieldId="exam-closes"
+                    label="Kapanış"
+                    hint="Pencere, sınav süresinden uzun olmalıdır."
+                    [required]="true"
+                    [control]="closesControl"
+                  >
+                    <input
+                      id="exam-closes"
+                      type="datetime-local"
+                      class="datetime"
+                      formControlName="closesAt"
+                    />
+                  </app-form-field>
+                </div>
+
+                <div class="form__row">
+                  <app-form-field
+                    fieldId="exam-duration"
+                    label="Sınav süresi"
+                    [hint]="limits.durationMinutes.min + '–' + limits.durationMinutes.max + ' dakika'"
+                    [required]="true"
+                    [control]="durationControl"
+                  >
+                    <app-number-input
+                      inputId="exam-duration"
+                      suffix="dk"
+                      [min]="limits.durationMinutes.min"
+                      [max]="limits.durationMinutes.max"
+                      formControlName="durationMinutes"
+                      [invalid]="durationControl.invalid && durationControl.touched"
+                    />
+                  </app-form-field>
+
+                  <app-form-field
+                    fieldId="exam-cohorts"
+                    label="Gruplar"
+                    hint="Sınav en az bir gruba atanmalıdır."
+                    [required]="true"
+                    [control]="cohortsControl"
+                  >
+                    <app-multi-select
+                      inputId="exam-cohorts"
+                      [options]="cohortOptions()"
+                      placeholder="Grup seçin"
+                      searchPlaceholder="Grup ara…"
+                      emptyMessage="Bu derse atanmış grup yok."
+                      formControlName="cohortIds"
+                    />
+                  </app-form-field>
+                </div>
+
+                <app-form-field
+                  fieldId="exam-instructions"
+                  label="Yönerge"
+                  hint="Öğrenciye sınav başında gösterilir."
+                  [maxLength]="limits.instructions.max"
+                  [control]="instructionsControl"
+                >
+                  <app-textarea
+                    inputId="exam-instructions"
+                    [rows]="3"
+                    [maxLength]="limits.instructions.max"
+                    formControlName="instructions"
+                  />
+                </app-form-field>
+              </div>
+            </app-card>
+          }
+
+          <!-- 2. Blueprint -->
+          @case ('blueprint') {
+            <app-card
+              title="Blueprint"
+              description="Sorular bu ölçme planına göre seçilecek. Gruba özel planlar da listelenir."
+            >
+              <div class="form" [formGroup]="form">
+                <app-form-field
+                  fieldId="exam-blueprint"
+                  label="Ölçme planı"
+                  [required]="true"
+                  hint="Plan değişince kısıt paneli hedefleri anında güncellenir."
+                  [control]="blueprintControl"
+                >
+                  <app-select
+                    selectId="exam-blueprint"
+                    [options]="blueprintOptions()"
+                    placeholder="Blueprint seçin"
+                    formControlName="blueprintId"
+                  />
+                </app-form-field>
+              </div>
+
+              @if (selectedBlueprint(); as blueprint) {
+                <app-blueprint-editor
+                  [rows]="blueprint.rows"
+                  [outcomes]="outcomes()"
+                  [targetTotalPoints]="blueprint.targetTotalPoints"
+                  [targetDurationMinutes]="blueprint.targetDurationMinutes"
+                  [readonlyMode]="true"
+                />
+              } @else {
+                <app-empty-state
+                  icon="file-text"
+                  title="Plan seçilmedi"
+                  description="Bir blueprint seçtiğinizde kazanım × zorluk tablosu burada görünecek."
+                />
+              }
+            </app-card>
+          }
+
+          <!-- 3. Kısıtlar -->
+          @case ('constraints') {
+            <app-card
+              title="Kısıtlar"
+              description="Blueprint hedefleri ile sınavın mevcut durumu"
+            >
+              @if (selectedBlueprint(); as blueprint) {
+                <app-blueprint-editor
+                  [rows]="blueprint.rows"
+                  [outcomes]="outcomes()"
+                  [targetTotalPoints]="blueprint.targetTotalPoints"
+                  [targetDurationMinutes]="blueprint.targetDurationMinutes"
+                  [readonlyMode]="true"
+                />
+              }
+
+              <p class="note text-sm">
+                <app-icon name="info" [size]="14" />
+                Hedefler blueprint tarafından belirlenir. Değiştirmek için Blueprint ekranından
+                planı düzenleyin; sağdaki panel her değişiklikte anında güncellenir.
+              </p>
+            </app-card>
+          }
+
+          <!-- 4. Soru seçimi -->
+          @case ('questions') {
+            <app-card
+              title="Soru seçimi"
+              description="Blueprint'e uygun soruları otomatik seçin veya elle düzenleyin"
+              [hasActions]="true"
+            >
+              <div card-actions class="row gap-2">
+                <app-button
+                  variant="secondary"
+                  size="sm"
+                  icon="refresh-cw"
+                  [loading]="facade.isBusy()"
+                  (pressed)="autoSelect(false)"
+                >
+                  Eksikleri tamamla
+                </app-button>
+                <app-button
+                  variant="primary"
+                  size="sm"
+                  icon="sparkles"
+                  [loading]="facade.isBusy()"
+                  (pressed)="autoSelect(true)"
+                >
+                  Otomatik seç
+                </app-button>
+              </div>
+
+              <app-question-picker
+                [selected]="facade.questions()"
+                [pool]="pool()"
+                [busy]="facade.isBusy()"
+                (add)="onAdd($event)"
+                (remove)="onRemove($event)"
+                (move)="onMove($event)"
+              />
+            </app-card>
+          }
+
+          <!-- 5. Doğrulama -->
+          @case ('validation') {
+            <app-card
+              title="Doğrulama"
+              description="Yayına almadan önce giderilmesi gereken kurallar"
+            >
+              @if (facade.validation().issues.length === 0) {
+                <app-empty-state
+                  icon="circle-check-big"
+                  title="Tüm kurallar sağlanıyor"
+                  description="Sınav yayına alınmaya hazır. Önizleme adımına geçebilirsiniz."
+                />
+              } @else {
+                <ul class="issues">
+                  @for (issue of facade.validation().issues; track issue.rule + issue.message) {
+                    <li class="issue" [class]="'is-' + issue.severity">
+                      <app-icon
+                        [name]="issue.severity === 'error' ? 'circle-alert' : 'triangle-alert'"
+                        [size]="16"
+                      />
+                      <div class="issue__body">
+                        <span class="text-sm">{{ issue.message }}</span>
+                        <span class="text-xs text-subtle">
+                          {{ issue.severity === 'error' ? 'Yayına engel' : 'Uyarı' }} ·
+                          {{ stepLabels[issue.step] }} adımı
+                        </span>
+                      </div>
+                      <app-button
+                        variant="ghost"
+                        size="sm"
+                        trailingIcon="arrow-right"
+                        (pressed)="onStepSelect(issue.step)"
+                      >
+                        Düzelt
+                      </app-button>
+                    </li>
+                  }
+                </ul>
+              }
+            </app-card>
+          }
+
+          <!-- 6. Önizleme -->
+          @case ('preview') {
+            <app-card
+              title="Önizleme"
+              description="Öğrencinin göreceği hâle yakın gösterim (sayaç örnektir)"
+            >
+              <app-exam-preview
+                [title]="draft.title"
+                [courseCode]="courseCode()"
+                [instructions]="draft.instructions"
+                [durationMinutes]="draft.durationMinutes"
+                [totalPoints]="facade.constraints().totalPoints"
+                [questions]="facade.questions()"
+              />
+            </app-card>
+          }
+
+          <!-- 7. Yayınla -->
+          @case ('publish') {
+            <app-card title="Yayınla" description="Son kontrol ve yayına alma">
+              <dl class="summary">
+                <div>
+                  <dt>Sınav</dt>
+                  <dd>{{ draft.title }}</dd>
+                </div>
+                <div>
+                  <dt>Soru / puan</dt>
+                  <dd class="tabular">
+                    {{ facade.constraints().totalQuestions }} soru ·
+                    {{ facade.constraints().totalPoints }} puan
+                  </dd>
+                </div>
+                <div>
+                  <dt>Süre</dt>
+                  <dd class="tabular">{{ draft.durationMinutes }} dk</dd>
+                </div>
+                <div>
+                  <dt>Grup sayısı</dt>
+                  <dd class="tabular">{{ draft.cohortIds.length }}</dd>
+                </div>
+              </dl>
+
+              @if (facade.publishReady()) {
+                @if (nextPublishAction(); as action) {
+                  <p class="note is-ready text-sm">
+                    <app-icon name="circle-check-big" [size]="15" />
+                    Tüm kurallar sağlanıyor. {{ action.description }}
+                  </p>
+
+                  @if (canRunPublishAction()) {
+                    <app-button
+                      variant="primary"
+                      [icon]="action.icon"
+                      [loading]="isPublishing()"
+                      (pressed)="publish()"
+                    >
+                      {{ action.label }}
+                    </app-button>
+                  } @else {
+                    <p class="note text-sm">
+                      <app-icon name="lock" [size]="15" />
+                      Sınav hazır, ancak "{{ action.label }}" yetkisi rolünüzde yok. Yetkili bir
+                      kullanıcı bu adımı tamamlamalıdır.
+                    </p>
+                  }
+                } @else {
+                  <p class="note is-ready text-sm">
+                    <app-icon name="circle-check-big" [size]="15" />
+                    Sınav yayında; yapılacak başka bir iş akışı adımı yok.
+                  </p>
+                }
+              } @else {
+                <p class="note is-blocked text-sm">
+                  <app-icon name="circle-alert" [size]="15" />
+                  {{ facade.validation().errorCount }} kural ihlali giderilmeden sınav yayına
+                  alınamaz.
+                </p>
+                <app-button
+                  variant="secondary"
+                  trailingIcon="arrow-right"
+                  (pressed)="onStepSelect('validation')"
+                >
+                  Doğrulamaya git
+                </app-button>
+              }
+            </app-card>
+          }
+        }
+
+        <!-- Adım gezinme -->
+        <footer class="wizard__footer">
+          <app-button
+            variant="secondary"
+            icon="chevron-left"
+            [disabled]="step === 'information'"
+            (pressed)="previous()"
+          >
+            Geri
+          </app-button>
+
+          <app-button
+            variant="primary"
+            trailingIcon="chevron-right"
+            [disabled]="step === 'publish'"
+            (pressed)="next()"
+          >
+            İleri
+          </app-button>
+        </footer>
+      </div>
+
+      <app-constraint-panel
+        class="wizard__panel"
+        [snapshot]="facade.constraints()"
+        (issueSelect)="onStepSelect($event)"
+      />
+    </div>
+  </div>
+}

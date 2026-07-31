@@ -1,0 +1,500 @@
+import {
+  ChangeDetectionStrategy,
+  Component,
+  OnInit,
+  TemplateRef,
+  computed,
+  inject,
+  input,
+  signal,
+  viewChild,
+} from '@angular/core';
+import { Router } from '@angular/router';
+import { forkJoin } from 'rxjs';
+
+import { createPageRequest } from '../../../../core/api/page-request';
+import { PermissionService } from '../../../../core/auth/permission.service';
+import { AppButtonComponent } from '../../../../shared/components/app-button/app-button.component';
+import { DialogService } from '../../../../shared/components/app-dialog/dialog.service';
+import {
+  AppDropdownComponent,
+  DropdownItem,
+} from '../../../../shared/components/app-dropdown/app-dropdown.component';
+import { AppFilterBarComponent } from '../../../../shared/components/app-filter-bar/app-filter-bar.component';
+import { FilterDefinition } from '../../../../shared/components/app-filter-bar/filter-definition';
+import { AppIconComponent } from '../../../../shared/components/app-icon/app-icon.component';
+import { SelectOption } from '../../../../shared/components/app-select/app-select.component';
+import { AppTableComponent } from '../../../../shared/components/app-table/app-table.component';
+import { ColumnDef } from '../../../../shared/components/app-table/column-def';
+import { toPlainText } from '../../../../shared/utils/rich-text.util';
+import {
+  COGNITIVE_LEVELS,
+  COGNITIVE_LEVEL_LABELS,
+  DIFFICULTIES,
+  DIFFICULTY_LABELS,
+  PUBLISH_STATES,
+  PUBLISH_STATE_LABELS,
+  PublishState,
+} from '../../models/common.model';
+import { LearningOutcome } from '../../models/learning-outcome.model';
+import {
+  QUESTION_TYPES,
+  QUESTION_TYPE_LABELS,
+  Question,
+  QuestionBulkAction,
+} from '../../models/question.model';
+import { availableActions } from '../../domain/publish-workflow';
+import { canCreateNewVersion } from '../../domain/question.rules';
+import { QuestionBadgesComponent } from '../../components/question/question-badges.component';
+import { QuestionPreviewDialogComponent } from '../../components/question/question-preview-dialog.component';
+import { CourseRepository, OutcomeRepository } from '../../data-access/catalog.repository';
+import { QuestionFacade } from '../../data-access/question.facade';
+
+/** Kolon görünürlüğü menüsündeki anahtarlanabilir kolonlar. */
+const TOGGLEABLE_COLUMNS = [
+  { key: 'badges', label: 'Rozetler' },
+  { key: 'outcome', label: 'Kazanım' },
+  { key: 'points', label: 'Puan' },
+  { key: 'estimatedSolveTimeSeconds', label: 'Süre' },
+  { key: 'usageCount', label: 'Kullanım' },
+  { key: 'updatedAt', label: 'Güncelleme' },
+] as const;
+
+/**
+ * Soru bankası listesi.
+ *
+ * Binlerce kayıt varsayımıyla kurulmuştur: filtreleme, arama, sıralama ve
+ * sayfalama **sunucuda** yapılır; istemci yalnızca görünen sayfayı tutar.
+ * Kolon görünürlüğü kullanıcı tercihidir ve sorguyu etkilemez.
+ */
+@Component({
+  selector: 'app-question-list-page',
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    AppButtonComponent,
+    AppDropdownComponent,
+    AppFilterBarComponent,
+    AppIconComponent,
+    AppTableComponent,
+    QuestionBadgesComponent,
+    QuestionPreviewDialogComponent,
+  ],
+  templateUrl: './question-list.page.html',
+  styleUrl: './question-list.page.scss',
+})
+export class QuestionListPage implements OnInit {
+  protected readonly facade = inject(QuestionFacade);
+  private readonly courses = inject(CourseRepository);
+  private readonly outcomes = inject(OutcomeRepository);
+  private readonly dialogs = inject(DialogService);
+  private readonly permissions = inject(PermissionService);
+  private readonly router = inject(Router);
+
+  /** Route'tan gelen ders filtresi. */
+  readonly courseId = input<string | null>(null);
+
+  private readonly selectCell =
+    viewChild.required<TemplateRef<{ $implicit: Question }>>('selectCell');
+  private readonly titleCell =
+    viewChild.required<TemplateRef<{ $implicit: Question }>>('titleCell');
+  private readonly badgesCell =
+    viewChild.required<TemplateRef<{ $implicit: Question }>>('badgesCell');
+  private readonly outcomeCell =
+    viewChild.required<TemplateRef<{ $implicit: Question }>>('outcomeCell');
+  private readonly favoriteCell =
+    viewChild.required<TemplateRef<{ $implicit: Question }>>('favoriteCell');
+  private readonly actionsCell =
+    viewChild.required<TemplateRef<{ $implicit: Question }>>('actionsCell');
+
+  private readonly courseOptionsState = signal<readonly SelectOption[]>([]);
+  private readonly outcomeListState = signal<readonly LearningOutcome[]>([]);
+  private readonly previewState = signal<Question | null>(null);
+  private readonly hiddenColumnsState = signal<ReadonlySet<string>>(new Set());
+
+  readonly courseOptions = this.courseOptionsState.asReadonly();
+  readonly preview = this.previewState.asReadonly();
+  readonly canWrite = computed(() => this.permissions.can('question:write'));
+
+  readonly toggleableColumns = TOGGLEABLE_COLUMNS;
+
+  private readonly outcomeById = computed(
+    () => new Map(this.outcomeListState().map((outcome) => [outcome.id, outcome] as const)),
+  );
+
+  readonly tagPool = computed(() =>
+    [...new Set(this.facade.items().flatMap((question) => question.tags))].sort((a, b) =>
+      a.localeCompare(b, 'tr-TR'),
+    ),
+  );
+
+  /* ── Kolonlar ────────────────────────────────────────────────────────── */
+
+  readonly columnMenu = computed<readonly DropdownItem[]>(() =>
+    TOGGLEABLE_COLUMNS.map((column) => ({
+      id: `col:${column.key}`,
+      label: column.label,
+      icon: this.hiddenColumnsState().has(column.key) ? 'eye' : 'check',
+    })),
+  );
+
+  readonly columns = computed<readonly ColumnDef<Question>[]>(() => {
+    const hidden = this.hiddenColumnsState();
+    const all: (ColumnDef<Question> & { toggleKey?: string })[] = [];
+
+    if (this.canWrite()) {
+      all.push({ key: 'select', header: '', width: '44px', cell: this.selectCell() });
+    }
+
+    all.push(
+      { key: 'favorite', header: '', width: '44px', cell: this.favoriteCell() },
+      { key: 'title', header: 'Soru', sortable: true, cell: this.titleCell() },
+      {
+        key: 'badges',
+        header: 'Etiketler',
+        width: '260px',
+        cell: this.badgesCell(),
+        toggleKey: 'badges',
+      },
+      {
+        key: 'outcome',
+        header: 'Kazanım',
+        width: '150px',
+        hideBelow: 'laptop',
+        cell: this.outcomeCell(),
+        toggleKey: 'outcome',
+      },
+      {
+        key: 'points',
+        header: 'Puan',
+        sortable: true,
+        align: 'end',
+        numeric: true,
+        width: '80px',
+        hideBelow: 'tablet',
+        value: (row) => row.points,
+        toggleKey: 'points',
+      },
+      {
+        key: 'estimatedSolveTimeSeconds',
+        header: 'Süre',
+        sortable: true,
+        align: 'end',
+        numeric: true,
+        width: '90px',
+        hideBelow: 'tablet',
+        value: (row) => `${Math.round(row.estimatedSolveTimeSeconds / 60)} dk`,
+        toggleKey: 'estimatedSolveTimeSeconds',
+      },
+      {
+        key: 'usageCount',
+        header: 'Kullanım',
+        sortable: true,
+        align: 'end',
+        numeric: true,
+        width: '100px',
+        hideBelow: 'laptop',
+        value: (row) => row.usageCount,
+        toggleKey: 'usageCount',
+      },
+      {
+        key: 'updatedAt',
+        header: 'Güncelleme',
+        sortable: true,
+        width: '130px',
+        hideBelow: 'laptop',
+        value: (row) => new Date(row.updatedAt).toLocaleDateString('tr-TR'),
+        toggleKey: 'updatedAt',
+      },
+      { key: 'actions', header: '', align: 'end', width: '60px', cell: this.actionsCell() },
+    );
+
+    return all.filter((column) => !column.toggleKey || !hidden.has(column.toggleKey));
+  });
+
+  readonly filters = computed<readonly FilterDefinition[]>(() => [
+    {
+      key: 'state',
+      label: 'Durum',
+      kind: 'multi',
+      options: PUBLISH_STATES.map((state) => ({
+        value: state,
+        label: PUBLISH_STATE_LABELS[state],
+      })),
+    },
+    {
+      key: 'type',
+      label: 'Tür',
+      kind: 'multi',
+      options: QUESTION_TYPES.map((value) => ({ value, label: QUESTION_TYPE_LABELS[value] })),
+    },
+    {
+      key: 'difficulty',
+      label: 'Zorluk',
+      kind: 'multi',
+      options: DIFFICULTIES.map((value) => ({ value, label: DIFFICULTY_LABELS[value] })),
+    },
+    {
+      key: 'level',
+      label: 'Bloom seviyesi',
+      kind: 'multi',
+      options: COGNITIVE_LEVELS.map((value) => ({ value, label: COGNITIVE_LEVEL_LABELS[value] })),
+    },
+    {
+      key: 'courseId',
+      label: 'Ders',
+      kind: 'single',
+      options: this.courseOptionsState().map((option) => ({
+        value: option.value,
+        label: option.label,
+      })),
+    },
+    {
+      key: 'outcomeId',
+      label: 'Kazanım',
+      kind: 'single',
+      options: this.outcomeListState().map((outcome) => ({
+        value: outcome.id,
+        label: `${outcome.code} · ${outcome.title}`,
+      })),
+    },
+    {
+      key: 'tags',
+      label: 'Etiket',
+      kind: 'multi',
+      options: this.tagPool().map((tag) => ({ value: tag, label: tag })),
+    },
+    {
+      key: 'favoriteOnly',
+      label: 'Yalnızca favorilerim',
+      kind: 'boolean',
+    },
+    {
+      key: 'flaggedOnly',
+      label: 'İnceleme bayrağı olanlar',
+      kind: 'boolean',
+    },
+  ]);
+
+  ngOnInit(): void {
+    const courseId = this.courseId();
+    if (courseId) this.facade.setFilter('courseId', courseId);
+    else this.facade.load();
+
+    this.loadReferences();
+  }
+
+  /* ── Görünüm yardımcıları ────────────────────────────────────────────── */
+
+  plainStem(html: string): string {
+    return toPlainText(html).slice(0, 120);
+  }
+
+  outcomeCode(question: Question): string {
+    const first = question.outcomeIds[0];
+    return first ? (this.outcomeById().get(first)?.code ?? '—') : '—';
+  }
+
+  isFavorite(question: Question): boolean {
+    return this.facade.isFavoriteFor(question);
+  }
+
+  onColumnToggle(item: DropdownItem): void {
+    const key = item.id.replace('col:', '');
+    this.hiddenColumnsState.update((current) => {
+      const next = new Set(current);
+      if (!next.delete(key)) next.add(key);
+      return next;
+    });
+  }
+
+  /* ── Satır işlemleri ─────────────────────────────────────────────────── */
+
+  rowActions(question: Question): readonly DropdownItem[] {
+    const items: DropdownItem[] = [
+      { id: 'preview', label: 'Önizle', icon: 'eye' },
+      { id: 'detail', label: 'Detayı aç', icon: 'external-link' },
+    ];
+
+    if (this.canWrite()) {
+      items.push(
+        {
+          id: 'edit',
+          label: 'Düzenle',
+          icon: 'square-pen',
+          disabled: question.state === 'PUBLISHED' || question.state === 'ARCHIVED',
+        },
+        { id: 'duplicate', label: 'Kopyala', icon: 'copy' },
+      );
+
+      if (canCreateNewVersion(question.state)) {
+        items.push({ id: 'version', label: 'Yeni versiyon oluştur', icon: 'history' });
+      }
+
+      for (const action of availableActions(question.state)) {
+        items.push({ id: `state:${action.target}`, label: action.label, icon: action.icon });
+      }
+
+      items.push({
+        id: 'delete',
+        label: 'Sil',
+        icon: 'trash-2',
+        tone: 'danger',
+        separatorBefore: true,
+        disabled: question.state === 'PUBLISHED',
+      });
+    }
+
+    return items;
+  }
+
+  onRowAction(question: Question, item: DropdownItem): void {
+    switch (item.id) {
+      case 'preview':
+        return this.previewState.set(question);
+      case 'detail':
+        return this.openDetail(question);
+      case 'edit':
+        return this.openEditor(question);
+      case 'duplicate':
+        return void this.facade.duplicate(question).subscribe({ error: () => undefined });
+      case 'version':
+        return void this.askNewVersion(question);
+      case 'delete':
+        return void this.confirmDelete(question);
+      default:
+        if (item.id.startsWith('state:')) {
+          void this.runTransition(question, item.id.slice('state:'.length) as PublishState);
+        }
+    }
+  }
+
+  openDetail(question: Question): void {
+    void this.router.navigate(['/questions', question.id]);
+  }
+
+  openEditor(question: Question | null): void {
+    void this.router.navigate(question ? ['/questions', question.id, 'edit'] : ['/questions/new']);
+  }
+
+  closePreview(): void {
+    this.previewState.set(null);
+  }
+
+  toggleFavorite(question: Question): void {
+    this.facade
+      .toggleFavorite(question, !this.isFavorite(question))
+      .subscribe({ error: () => undefined });
+  }
+
+  /* ── Toplu işlemler ──────────────────────────────────────────────────── */
+
+  readonly bulkActions: readonly DropdownItem[] = [
+    { id: 'publish', label: 'Yayına al', icon: 'circle-check-big' },
+    { id: 'archive', label: 'Arşivle', icon: 'archive' },
+    { id: 'restore', label: 'Taslağa al', icon: 'rotate-ccw' },
+    { id: 'export', label: 'Dışa aktar', icon: 'download', separatorBefore: true },
+    { id: 'delete', label: 'Sil', icon: 'trash-2', tone: 'danger', separatorBefore: true },
+  ];
+
+  async onBulkAction(item: DropdownItem): Promise<void> {
+    if (item.id === 'export') return this.facade.exportSelected();
+
+    const action = item.id as QuestionBulkAction;
+    const count = this.facade.selectedCount();
+
+    const confirmed = await this.dialogs.confirm({
+      title: `${item.label} · ${count} soru`,
+      message:
+        action === 'delete'
+          ? `Seçili ${count} soru silinecek. Kayıtlar korunur ancak listelerden kaldırılır.`
+          : `Seçili ${count} soru için "${item.label}" işlemi uygulanacak. Uygun olmayanlar atlanır.`,
+      confirmLabel: item.label,
+      tone: action === 'delete' ? 'danger' : 'primary',
+    });
+
+    if (confirmed) this.facade.runBulk(action).subscribe({ error: () => undefined });
+  }
+
+  /* ── İçe aktarma (mock) ──────────────────────────────────────────────── */
+
+  async openImport(): Promise<void> {
+    await this.dialogs.confirm({
+      title: 'İçe aktarma',
+      message:
+        'İçe aktarma sözleşmesi hazır; dosya yükleme akışı sınav modülüyle birlikte açılacak. Şimdilik örnek satırlarla önizleme yapılır.',
+      confirmLabel: 'Örnek önizlemeyi çalıştır',
+      tone: 'primary',
+    });
+  }
+
+  private async askNewVersion(question: Question): Promise<void> {
+    const result = await this.dialogs.ask({
+      title: 'Yeni versiyon oluştur',
+      message: `"${question.title}" yayından çıkarılmadan yeni bir taslak versiyona alınır. Mevcut sürüm sınav geçmişi için korunur.`,
+      confirmLabel: 'Versiyon oluştur',
+      tone: 'primary',
+      requireReason: true,
+      reasonLabel: 'Değişiklik notu',
+      reasonHint: 'Bu not versiyon geçmişinde görünür. En az 10 karakter girin.',
+    });
+
+    if (result.confirmed) {
+      this.facade.createVersion(question, result.reason).subscribe({
+        next: (updated) => this.openEditor(updated),
+        error: () => undefined,
+      });
+    }
+  }
+
+  private async confirmDelete(question: Question): Promise<void> {
+    const confirmed = await this.dialogs.confirm({
+      title: 'Soruyu sil',
+      message: `"${question.code} · ${question.title}" listelerden kaldırılacak. Kayıt korunur ve gerekirse geri alınabilir.`,
+      confirmLabel: 'Sil',
+      tone: 'danger',
+    });
+
+    if (confirmed) this.facade.softDelete(question).subscribe({ error: () => undefined });
+  }
+
+  private async runTransition(question: Question, state: PublishState): Promise<void> {
+    const action = availableActions(question.state).find((item) => item.target === state);
+    if (!action) return;
+
+    if (!action.requiresConfirmation) {
+      this.facade.transition(question, state).subscribe({ error: () => undefined });
+      return;
+    }
+
+    const result = await this.dialogs.ask({
+      title: action.label,
+      message: `"${question.title}" — ${action.description}`,
+      confirmLabel: action.label,
+      tone: action.tone === 'warning' ? 'warning' : 'primary',
+      requireReason: true,
+      reasonLabel: 'Gerekçe',
+      reasonHint: 'Bu açıklama denetim kaydına yazılır. En az 10 karakter girin.',
+    });
+
+    if (result.confirmed) {
+      this.facade.transition(question, state, result.reason).subscribe({ error: () => undefined });
+    }
+  }
+
+  private loadReferences(): void {
+    forkJoin({
+      courses: this.courses.list(createPageRequest({ size: 200 })),
+      outcomes: this.outcomes.list(createPageRequest({ size: 500 })),
+    }).subscribe({
+      next: ({ courses, outcomes }) => {
+        this.courseOptionsState.set(
+          courses.items.map((course) => ({
+            value: course.id,
+            label: `${course.code} · ${course.name}`,
+          })),
+        );
+        this.outcomeListState.set(outcomes.items);
+      },
+    });
+  }
+}

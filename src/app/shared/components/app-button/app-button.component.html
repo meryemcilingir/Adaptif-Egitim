@@ -1,0 +1,22 @@
+<button
+  class="btn"
+  [class]="'btn--' + variant() + ' btn--' + size()"
+  [class.is-loading]="loading()"
+  [type]="type()"
+  [disabled]="isDisabled()"
+  [attr.aria-label]="ariaLabel()"
+  [attr.aria-busy]="loading() ? 'true' : null"
+  (click)="onClick($event)"
+>
+  @if (loading()) {
+    <app-icon class="btn__spinner" name="loader-circle" [size]="iconSize()" />
+  } @else if (icon(); as leading) {
+    <app-icon [name]="leading" [size]="iconSize()" />
+  }
+
+  <span class="btn__label"><ng-content /></span>
+
+  @if (trailingIcon(); as trailing) {
+    <app-icon [name]="trailing" [size]="iconSize()" />
+  }
+</button>

@@ -1,0 +1,82 @@
+@let data = layout();
+
+<div class="graph" (mouseleave)="onHover(null)">
+  <svg
+    class="graph__canvas"
+    [attr.width]="data.width"
+    [attr.height]="data.height"
+    [attr.viewBox]="'0 0 ' + data.width + ' ' + data.height"
+    role="img"
+    aria-label="Kazanım önkoşul grafiği"
+  >
+    <defs>
+      <marker
+        id="graph-arrow"
+        viewBox="0 0 10 10"
+        refX="9"
+        refY="5"
+        markerWidth="6"
+        markerHeight="6"
+        orient="auto-start-reverse"
+      >
+        <path d="M0,0 L10,5 L0,10 z" fill="currentColor" />
+      </marker>
+    </defs>
+
+    <!-- Kenarlar düğümlerin altında kalmalı: önce çizilir. -->
+    <g class="graph__edges">
+      @for (edge of data.edges; track edge.from + '->' + edge.to) {
+        <path
+          class="graph__edge"
+          [class.is-cycle]="highlightCycles() && edge.partOfCycle"
+          [class.is-dimmed]="isEdgeDimmed(edge.from, edge.to)"
+          [attr.d]="edge.path"
+          marker-end="url(#graph-arrow)"
+        >
+          <title>{{ edge.fromLabel }} → {{ edge.toLabel }}</title>
+        </path>
+      }
+    </g>
+
+    <g class="graph__nodes">
+      @for (node of data.nodes; track node.id) {
+        <g
+          class="graph__node"
+          [class.is-dimmed]="isDimmed(node.id)"
+          [class.is-cycle]="isInCycle(node.id)"
+          [class.is-selected]="isSelected(node.id)"
+          [attr.transform]="'translate(' + node.x + ',' + node.y + ')'"
+          tabindex="0"
+          role="button"
+          [attr.aria-label]="node.code + ' ' + node.title"
+          (mouseenter)="onHover(node.id)"
+          (click)="onSelect(node)"
+          (keydown)="onKeydown($event, node)"
+        >
+          <rect
+            class="graph__node-box"
+            [attr.width]="nodeWidth"
+            [attr.height]="nodeHeight"
+            rx="10"
+          />
+
+          <text class="graph__node-code" x="12" y="22">{{ node.code }}</text>
+          <text class="graph__node-title" x="12" y="40">{{ shortTitle(node.title) }}</text>
+          <text class="graph__node-meta" x="12" y="55">
+            {{ node.prerequisiteCount }} önkoşul · {{ node.dependentCount }} bağımlı
+          </text>
+
+          <circle
+            class="graph__node-state"
+            [attr.cx]="nodeWidth - 14"
+            cy="18"
+            r="4"
+            [class]="'graph__node-state--' + node.state"
+          />
+
+          <title>{{ node.code }} · {{ node.title }} ({{ node.courseCode }})</title>
+        </g>
+      }
+    </g>
+  </svg>
+</div>

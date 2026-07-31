@@ -1,0 +1,265 @@
+@let dashboard = data();
+
+<!-- 1. Hero: karşılama + genel ilerleme + tek büyük eylem -->
+<section class="hero" aria-label="Karşılama">
+  <div class="hero__body">
+    <span class="text-overline hero__greeting">{{ dashboard.hero.greeting }}</span>
+    <h2 class="text-h2 hero__headline">{{ dashboard.hero.headline }}</h2>
+    <p class="hero__message text-sm">{{ dashboard.hero.message }}</p>
+
+    <div class="hero__progress">
+      <app-progress-bar
+        [value]="dashboard.hero.progressPercent"
+        tone="primary"
+        label="Ders ilerlemesi"
+      />
+      <span class="text-xs hero__percent tabular">%{{ dashboard.hero.progressPercent }}</span>
+    </div>
+  </div>
+
+  <div class="hero__actions">
+    @if (dashboard.hero.continueContentId; as contentId) {
+      <app-button variant="primary" size="lg" icon="circle-play" (pressed)="openContent(contentId)">
+        Öğrenmeye devam et
+      </app-button>
+    } @else {
+      <app-button variant="primary" size="lg" icon="library" (pressed)="openContents()">
+        İçerikleri keşfet
+      </app-button>
+    }
+    <app-button variant="secondary" size="lg" icon="workflow" (pressed)="openPath()">
+      Öğrenme yolum
+    </app-button>
+  </div>
+</section>
+
+@if (dashboard.isNewLearner) {
+  <app-empty-state
+    icon="sparkles"
+    title="Öğrenmeye başlayalım"
+    description="Henüz bir çalışma kaydın yok. Öğrenme yolundaki ilk adımı tamamladığında ilerlemen, önerilerin ve başarımların burada görünecek."
+    actionLabel="Öğrenme yolumu aç"
+    actionIcon="workflow"
+    (action)="openPath()"
+  />
+}
+
+<app-kpi-grid [cards]="dashboard.kpis" />
+
+<!-- 2. Devam et + günlük hedef + seri/XP -->
+<section class="grid grid-3" aria-label="Bugünkü çalışman">
+  <app-card title="Kaldığın yerden devam et" padding="compact">
+    @if (dashboard.continueLearning; as card) {
+      <app-continue-learning-card [card]="card" (continueStudy)="openContent($event)" />
+    } @else {
+      <app-empty-state
+        icon="circle-play"
+        title="Devam edilecek içerik yok"
+        description="Öğrenme yolundan yeni bir adım başlatabilirsin."
+        actionLabel="Öğrenme yolum"
+        actionIcon="workflow"
+        (action)="openPath()"
+      />
+    }
+  </app-card>
+
+  <app-card title="Bugünün hedefi" padding="compact">
+    <app-daily-goal-card [goal]="dashboard.dailyGoal" (taskSelect)="openTask($event)" />
+  </app-card>
+
+  <div class="stack gap-4">
+    <app-card title="Çalışma serisi" padding="compact">
+      <app-streak-card [streak]="dashboard.streak" />
+    </app-card>
+
+    <app-card title="Deneyim" padding="compact">
+      <app-xp-progress [experience]="dashboard.experience" />
+    </app-card>
+  </div>
+</section>
+
+<app-quick-actions [actions]="dashboard.quickActions" />
+
+<!-- 3. Öğrenme yolu + öneriler -->
+<section class="grid grid-2-1" aria-label="Öğrenme yolu ve öneriler">
+  <app-card
+    title="Öğrenme yolun"
+    description="Tamamlanan, devam eden, sıradaki ve kilitli adımların"
+    [hasActions]="true"
+  >
+    <app-button
+      card-actions
+      variant="ghost"
+      size="sm"
+      trailingIcon="arrow-right"
+      (pressed)="openPath()"
+    >
+      Tümünü gör
+    </app-button>
+
+    @if (dashboard.currentPath; as path) {
+      <app-learning-path-timeline [path]="path" [compact]="true" (stepSelect)="openStep($event)" />
+    } @else {
+      <app-empty-state
+        icon="workflow"
+        title="Öğrenme yolu oluşmadı"
+        description="Kayıtlı olduğun derslerde yayınlanmış içerik bulunmuyor."
+      />
+    }
+  </app-card>
+
+  <app-card
+    title="Sana özel öneriler"
+    description="Her öneri hangi kurala dayandığını açıklar"
+    padding="compact"
+  >
+    @if (dashboard.recommendations.length === 0) {
+      <app-empty-state
+        icon="sparkles"
+        title="Öneri yok"
+        description="Yeterli çalışma verisi biriktiğinde kişisel öneriler burada görünecek."
+      />
+    } @else {
+      <div class="recommendations">
+        @for (recommendation of dashboard.recommendations; track recommendation.id) {
+          <app-recommendation-reason-card
+            [recommendation]="recommendation"
+            (start)="recommendationStart.emit($event)"
+          />
+        }
+      </div>
+    }
+  </app-card>
+</section>
+
+<!-- 4. Haftalık ilerleme -->
+<section class="grid grid-2-1" aria-label="Haftalık ilerleme">
+  <app-chart-card
+    title="Haftalık ilerleme"
+    description="Son 7 gündeki çalışma süren ve tamamladığın içerikler"
+    type="bar"
+    [series]="weeklySeries()"
+    [categories]="weeklyCategories()"
+    [height]="290"
+    emptyMessage="Bu hafta henüz çalışma kaydın yok."
+  />
+
+  <app-card title="Bu haftanın özeti" padding="compact">
+    <dl class="week-summary">
+      <div>
+        <dt>Toplam çalışma</dt>
+        <dd class="tabular">{{ dashboard.weeklyProgress.totalMinutes }} dk</dd>
+      </div>
+      <div>
+        <dt>Tamamlanan içerik</dt>
+        <dd class="tabular">{{ dashboard.weeklyProgress.completedCount }}</dd>
+      </div>
+      <div>
+        <dt>Kısa sınav başarısı</dt>
+        <dd class="tabular">%{{ dashboard.weeklyProgress.quizSuccessPercent }}</dd>
+      </div>
+    </dl>
+
+    <app-progress-group [cards]="dashboard.progress" />
+  </app-card>
+</section>
+
+<!-- 5. Ustalık grafikleri -->
+<section class="grid grid-2-1" aria-label="Ustalık trendi ve dağılımı">
+  <app-chart-card
+    title="Ustalık trendi"
+    description="Zaman içindeki ortalama sınav başarın"
+    type="area"
+    [series]="masterySeries()"
+    [categories]="masteryCategories()"
+    valueSuffix="%"
+    [height]="290"
+    [showLegend]="false"
+    emptyMessage="Trend için henüz yeterli sınav sonucun yok."
+  />
+
+  <app-chart-card
+    title="Kazanım dağılımı"
+    description="Ustalık bandına göre kazanım sayısı"
+    type="donut"
+    [series]="distributionSeries()"
+    [labels]="distributionLabels()"
+    [height]="290"
+  />
+</section>
+
+<section aria-label="Kazanım ısı haritası">
+  <app-chart-card
+    title="Kazanım ısı haritası"
+    description="Kazanım × hafta kırılımında doğru cevap oranın"
+    type="heatmap"
+    [series]="heatmapSeries()"
+    [height]="360"
+    [showGrid]="false"
+    emptyMessage="Isı haritası için yeterli cevap verisi bulunmuyor."
+  />
+</section>
+
+<!-- 6. Zayıf / güçlü kazanımlar -->
+<section class="grid grid-2" aria-label="Kazanım kırılımı">
+  <app-card
+    title="Öncelikli kazanımların"
+    description="En düşük ustalık skorları ve ne yapman gerektiği"
+    padding="compact"
+  >
+    <app-outcome-highlight-list
+      [entries]="dashboard.weakOutcomes"
+      tone="warning"
+      emptyTitle="Zayıf kazanım yok"
+      emptyDescription="Kazanım ölçümlerin oluştuğunda öncelikli konuların burada listelenir."
+      (select)="openHighlight($event)"
+    />
+  </app-card>
+
+  <app-card
+    title="Güçlü kazanımların"
+    description="İyi durumda olduğun konular ve sıradaki adımın"
+    padding="compact"
+  >
+    <app-outcome-highlight-list
+      [entries]="dashboard.strongOutcomes"
+      tone="success"
+      emptyIcon="circle-check-big"
+      emptyTitle="Henüz güçlü kazanım yok"
+      emptyDescription="Kazanımlarda ustalaştıkça burada görünecekler."
+      (select)="openHighlight($event)"
+    />
+  </app-card>
+</section>
+
+<!-- 7. Sınavlar + son içerikler -->
+<section class="grid grid-2" aria-label="Sınavlar ve son içerikler">
+  <app-card title="Yaklaşan sınavların" padding="compact">
+    <app-upcoming-exams [exams]="dashboard.upcomingExams" (examSelect)="openExams()" />
+  </app-card>
+
+  <app-card
+    title="Son kullandığın içerikler"
+    description="Kaldığın yerden devam edebilirsin"
+    padding="compact"
+  >
+    <app-recent-content
+      [entries]="dashboard.recentContent"
+      (contentSelect)="openRecentContent($event)"
+    />
+  </app-card>
+</section>
+
+<!-- 8. Başarımlar -->
+<app-card title="Başarımların" description="Ölçülebilir kilometre taşları" padding="compact">
+  <app-achievement-grid [achievements]="dashboard.achievements" />
+</app-card>
+
+<app-dashboard-common
+  activityTitle="Son etkinliğin"
+  activityDescription="İzlediğin, okuduğun ve tamamladığın içerikler"
+  [activity]="dashboard.recentActivity"
+  [notifications]="dashboard.notifications"
+  [statistics]="dashboard.statistics"
+  (notificationRead)="notificationRead.emit($event)"
+/>

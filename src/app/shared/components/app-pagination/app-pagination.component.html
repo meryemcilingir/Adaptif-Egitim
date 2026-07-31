@@ -1,0 +1,56 @@
+<div class="pagination__info text-sm text-muted">
+  @if (total() === 0) {
+    Kayıt yok
+  } @else {
+    <span class="tabular">{{ firstItem() }}–{{ lastItem() }}</span> /
+    <span class="tabular">{{ total() }}</span> kayıt
+  }
+</div>
+
+<div class="pagination__size">
+  <label class="text-sm text-muted" for="page-size">Sayfa başına</label>
+  <select
+    id="page-size"
+    class="pagination__select"
+    [value]="size()"
+    [disabled]="disabled()"
+    (change)="onSizeChange($event)"
+  >
+    @for (option of sizeOptions; track option) {
+      <option [value]="option">{{ option }}</option>
+    }
+  </select>
+</div>
+
+<nav class="pagination__pages" aria-label="Sayfalama">
+  <app-button
+    variant="ghost"
+    size="sm"
+    icon="chevron-left"
+    ariaLabel="Önceki sayfa"
+    [disabled]="!canGoPrevious()"
+    (pressed)="pageChange.emit(page() - 1)"
+  />
+
+  @for (item of visiblePages(); track item) {
+    <button
+      type="button"
+      class="pagination__page"
+      [class.is-active]="item === page()"
+      [attr.aria-current]="item === page() ? 'page' : null"
+      [disabled]="disabled()"
+      (click)="pageChange.emit(item)"
+    >
+      {{ item }}
+    </button>
+  }
+
+  <app-button
+    variant="ghost"
+    size="sm"
+    icon="chevron-right"
+    ariaLabel="Sonraki sayfa"
+    [disabled]="!canGoNext()"
+    (pressed)="pageChange.emit(page() + 1)"
+  />
+</nav>

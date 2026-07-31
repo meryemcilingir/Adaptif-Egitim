@@ -1,12 +1,23 @@
-import { Component, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component } from '@angular/core';
 import { RouterOutlet } from '@angular/router';
 
+import { AppConfirmDialogComponent } from './shared/components/app-dialog/app-confirm-dialog.component';
+import { AppToastComponent } from './shared/components/app-toast/app-toast.component';
+
+/**
+ * Kök bileşen.
+ *
+ * Yalnızca yönlendirme çıkışını ve uygulama genelinde TEK örneği olması gereken
+ * katmanları (bildirim yığını, onay diyaloğu) barındırır.
+ */
 @Component({
   selector: 'app-root',
-  imports: [RouterOutlet],
-  templateUrl: './app.html',
-  styleUrl: './app.scss'
+  changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [AppConfirmDialogComponent, AppToastComponent, RouterOutlet],
+  template: `
+    <router-outlet />
+    <app-toast />
+    <app-confirm-dialog />
+  `,
 })
-export class App {
-  protected readonly title = signal('adaptif-egitim');
-}
+export class App {}

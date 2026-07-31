@@ -1,0 +1,29 @@
+<ol class="steps" aria-label="Sınav oluşturma adımları">
+  @for (entry of steps(); track entry.step) {
+    <li class="steps__item">
+      <button
+        type="button"
+        class="step"
+        [class.is-current]="entry.isCurrent"
+        [class.is-complete]="entry.isComplete"
+        [class.is-locked]="entry.isLocked"
+        [disabled]="entry.isLocked"
+        [attr.aria-current]="entry.isCurrent ? 'step' : null"
+        [title]="entry.isLocked ? 'Önceki adımları tamamlayın' : hints[entry.step]"
+        (click)="stepSelect.emit(entry.step)"
+      >
+        <span class="step__marker">
+          @if (entry.isComplete) {
+            <app-icon name="check" [size]="13" [strokeWidth]="2.5" />
+          } @else if (entry.isLocked) {
+            <app-icon name="lock" [size]="12" />
+          } @else {
+            <span class="tabular">{{ entry.number }}</span>
+          }
+        </span>
+
+        <span class="step__label text-sm">{{ labels[entry.step] }}</span>
+      </button>
+    </li>
+  }
+</ol>

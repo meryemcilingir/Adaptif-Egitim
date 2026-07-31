@@ -1,0 +1,61 @@
+:host {
+  display: block;
+}
+
+.exams {
+  display: flex;
+  flex-direction: column;
+}
+
+.exams__item {
+  border-bottom: var(--border-width) solid var(--color-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.exams__button {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  text-align: start;
+
+  &:hover {
+    background: var(--color-surface-subtle);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.exams__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  min-width: 0;
+}
+
+.exams__meta,
+.exams__cohorts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-3);
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
+}
+
+.exams__cohorts {
+  align-items: center;
+  gap: var(--space-1);
+}

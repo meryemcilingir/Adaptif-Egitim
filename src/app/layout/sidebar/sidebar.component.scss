@@ -1,0 +1,173 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  width: var(--sidebar-width);
+  flex: none;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+  background: var(--color-surface);
+  border-inline-end: var(--border-width) solid var(--color-border);
+  transition: width var(--duration-base) var(--ease-in-out);
+  z-index: var(--z-drawer);
+}
+
+:host(.is-collapsed) {
+  width: var(--sidebar-width-collapsed);
+}
+
+:host(.is-drawer) {
+  position: fixed;
+  inset-block: 0;
+  inset-inline-start: 0;
+  transform: translateX(-100%);
+  box-shadow: var(--shadow-lg);
+  transition: transform var(--duration-base) var(--ease-out);
+}
+
+:host(.is-drawer.is-open) {
+  transform: none;
+}
+
+/* ── Marka ────────────────────────────────────────────────────── */
+.sidebar__brand {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  height: var(--header-height);
+  padding-inline: var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border);
+  flex: none;
+}
+
+.sidebar__logo {
+  display: grid;
+  place-items: center;
+  width: 30px;
+  height: 30px;
+  flex: none;
+  border-radius: var(--radius-md);
+  background: var(--color-primary);
+  color: var(--color-text-inverse);
+}
+
+.sidebar__brand-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.sidebar__brand-name {
+  font-size: var(--fs-body);
+  font-weight: var(--fw-bold);
+  letter-spacing: -0.01em;
+}
+
+.sidebar__brand-sub {
+  font-size: var(--fs-overline);
+  color: var(--color-text-tertiary);
+}
+
+/* ── Menü ─────────────────────────────────────────────────────── */
+.sidebar__nav {
+  flex: 1;
+  overflow-y: auto;
+  padding: var(--space-4) var(--space-3);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.sidebar__group-title {
+  padding-inline: var(--space-2);
+  margin-bottom: var(--space-2);
+  color: var(--color-text-tertiary);
+}
+
+.sidebar__link {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-2);
+  margin-bottom: 2px;
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  font-weight: var(--fw-medium);
+  color: var(--color-text-secondary);
+  transition:
+    background-color var(--duration-fast) var(--ease-in-out),
+    color var(--duration-fast) var(--ease-in-out);
+
+  &:hover {
+    background: var(--color-surface-subtle);
+    color: var(--color-text);
+  }
+
+  &.is-active {
+    background: var(--color-primary-subtle);
+    color: var(--color-primary);
+    font-weight: var(--fw-strong);
+
+    /* Sol kenar göstergesi */
+    &::before {
+      content: '';
+      position: absolute;
+      inset-inline-start: calc(var(--space-3) * -1);
+      top: 50%;
+      transform: translateY(-50%);
+      width: 2px;
+      height: 18px;
+      border-radius: var(--radius-full);
+      background: var(--color-primary);
+    }
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+:host(.is-collapsed) .sidebar__link {
+  justify-content: center;
+}
+
+.sidebar__link-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ── Alt ──────────────────────────────────────────────────────── */
+.sidebar__footer {
+  padding: var(--space-3);
+  border-top: var(--border-width) solid var(--color-border);
+  flex: none;
+}
+
+.sidebar__collapse {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2);
+  border-radius: var(--radius-md);
+  font-size: var(--fs-sm);
+  color: var(--color-text-tertiary);
+
+  &:hover {
+    background: var(--color-surface-subtle);
+    color: var(--color-text);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+:host(.is-collapsed) .sidebar__collapse {
+  justify-content: center;
+}

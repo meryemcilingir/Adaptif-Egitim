@@ -1,0 +1,113 @@
+@let data = summary();
+
+<div class="editor">
+  <!-- Canlı özet -->
+  <section class="summary" aria-label="Blueprint özeti">
+    <div class="summary__stat">
+      <span class="text-overline text-muted">Toplam soru</span>
+      <span class="summary__value tabular">{{ data.totalQuestions }}</span>
+    </div>
+    <div class="summary__stat">
+      <span class="text-overline text-muted">Toplam puan</span>
+      <span class="summary__value tabular">{{ data.targetTotalPoints }}</span>
+    </div>
+    <div class="summary__stat">
+      <span class="text-overline text-muted">Süre</span>
+      <span class="summary__value tabular">{{ data.targetDurationMinutes }} dk</span>
+    </div>
+    <div class="summary__stat">
+      <span class="text-overline text-muted">Kazanım kapsaması</span>
+      <span class="summary__value tabular">
+        {{ data.coveredOutcomes }}/{{ data.totalOutcomes }}
+      </span>
+      <app-progress-bar
+        [value]="data.coveragePercent"
+        [tone]="data.coveragePercent >= 80 ? 'success' : 'warning'"
+        label="Kazanım kapsaması"
+      />
+    </div>
+  </section>
+
+  <section class="shares" aria-label="Zorluk dağılımı">
+    @for (share of data.difficultyShares; track share.difficulty) {
+      <span class="share" [class]="'share--' + share.difficulty">
+        {{ share.count }} soru · %{{ share.percent }}
+      </span>
+    }
+  </section>
+
+  <!-- Kazanım × zorluk tablosu -->
+  <div class="scroll-x">
+    <table class="grid">
+      <caption class="sr-only">
+        Kazanım başına zorluk dağılımı
+      </caption>
+      <thead>
+        <tr>
+          <th scope="col" class="grid__outcome">Kazanım</th>
+          <th scope="col" class="grid__cell">Kolay</th>
+          <th scope="col" class="grid__cell">Orta</th>
+          <th scope="col" class="grid__cell">Zor</th>
+          <th scope="col" class="grid__cell">Toplam</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (outcome of outcomes(); track outcome.id) {
+          <tr [class.is-empty]="isEmpty(outcome.id)">
+            <th scope="row" class="grid__outcome">
+              <span class="text-body-strong">{{ outcome.code }}</span>
+              <span class="text-xs text-subtle truncate">{{ outcome.title }}</span>
+            </th>
+
+            <td class="grid__cell">
+              <input
+                type="number"
+                class="cell-input"
+                [attr.aria-label]="outcome.code + ' kolay soru sayısı'"
+                [min]="limits.questionsPerCell.min"
+                [max]="limits.questionsPerCell.max"
+                [value]="rowFor(outcome.id).easy"
+                [disabled]="readonlyMode()"
+                (input)="onCellInput(outcome.id, 'easy', $any($event.target).value)"
+              />
+            </td>
+            <td class="grid__cell">
+              <input
+                type="number"
+                class="cell-input"
+                [attr.aria-label]="outcome.code + ' orta soru sayısı'"
+                [min]="limits.questionsPerCell.min"
+                [max]="limits.questionsPerCell.max"
+                [value]="rowFor(outcome.id).medium"
+                [disabled]="readonlyMode()"
+                (input)="onCellInput(outcome.id, 'medium', $any($event.target).value)"
+              />
+            </td>
+            <td class="grid__cell">
+              <input
+                type="number"
+                class="cell-input"
+                [attr.aria-label]="outcome.code + ' zor soru sayısı'"
+                [min]="limits.questionsPerCell.min"
+                [max]="limits.questionsPerCell.max"
+                [value]="rowFor(outcome.id).hard"
+                [disabled]="readonlyMode()"
+                (input)="onCellInput(outcome.id, 'hard', $any($event.target).value)"
+              />
+            </td>
+
+            <td class="grid__cell grid__total tabular">{{ totalFor(outcome.id) }}</td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+
+  @if (data.emptyOutcomeIds.length > 0) {
+    <p class="hint text-xs">
+      <app-icon name="info" [size]="13" />
+      {{ data.emptyOutcomeIds.length }} kazanımdan soru istenmiyor. Bu kazanımlar sınavda
+      ölçülmeyecek.
+    </p>
+  }
+</div>

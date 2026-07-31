@@ -1,0 +1,40 @@
+@switch (variant()) {
+  @case ('skeleton-table') {
+    <div class="loading__table">
+      @for (row of rowList(); track row) {
+        <div class="loading__row">
+          <app-skeleton width="22%" height="14px" />
+          <app-skeleton width="32%" height="14px" />
+          <app-skeleton width="16%" height="14px" />
+          <app-skeleton width="12%" height="20px" radius="var(--radius-full)" />
+        </div>
+      }
+    </div>
+  }
+
+  @case ('skeleton-card') {
+    <div class="loading__cards">
+      @for (row of rowList(); track row) {
+        <div class="loading__card">
+          <app-skeleton width="45%" height="12px" />
+          <app-skeleton width="65%" height="26px" />
+          <app-skeleton width="80%" height="10px" />
+        </div>
+      }
+    </div>
+  }
+
+  @case ('skeleton-chart') {
+    <div class="loading__chart">
+      <app-skeleton width="35%" height="14px" />
+      <app-skeleton width="100%" height="220px" radius="var(--radius-md)" />
+    </div>
+  }
+
+  @default {
+    <div class="loading__spinner">
+      <app-icon class="loading__icon" name="loader-circle" [size]="22" />
+      <span class="text-sm text-muted">{{ message() }}</span>
+    </div>
+  }
+}

@@ -1,0 +1,182 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.path {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.path__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.path__section-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+.path__section-titles {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  h4 {
+    margin: 0;
+  }
+}
+
+.path__section-meta {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* ── Adımlar ─────────────────────────────────────────────────────────────── */
+
+.path__steps {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.path__step {
+  position: relative;
+  display: flex;
+  align-items: stretch;
+  gap: var(--space-3);
+  padding-inline-start: var(--space-1);
+
+  /* Adımları birbirine bağlayan dikey çizgi. */
+  &:not(:last-child)::before {
+    content: '';
+    position: absolute;
+    inset-block-start: 28px;
+    inset-block-end: calc(var(--space-2) * -1);
+    inset-inline-start: 18px;
+    width: var(--border-width);
+    background: var(--color-border);
+  }
+}
+
+.path__marker {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  margin-block-start: var(--space-2);
+  border-radius: var(--radius-full);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-subtle);
+}
+
+.path__card {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color var(--motion-fast),
+    background var(--motion-fast);
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-border-strong);
+    background: var(--color-surface-subtle);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    background: var(--color-surface-subtle);
+  }
+}
+
+.path__card-head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.path__reason {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+/* ── Durum renkleri ──────────────────────────────────────────────────────── */
+
+.path__step.is-completed {
+  .path__marker {
+    border-color: var(--color-success-border);
+    background: var(--color-success-subtle);
+    color: var(--color-success-text);
+  }
+}
+
+.path__step.is-in_progress {
+  .path__marker {
+    border-color: var(--color-primary-border);
+    background: var(--color-primary-subtle);
+    color: var(--color-primary);
+  }
+
+  .path__card {
+    border-color: var(--color-primary-border);
+  }
+}
+
+.path__step.is-recommended {
+  .path__marker {
+    border-color: var(--color-info-border);
+    background: var(--color-info-subtle);
+    color: var(--color-info-text);
+  }
+}
+
+.path__step.is-locked {
+  .path__marker {
+    border-color: var(--color-warning-border);
+    background: var(--color-warning-subtle);
+    color: var(--color-warning-text);
+  }
+
+  .path__card {
+    opacity: 0.75;
+  }
+}
+
+.path__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding-block-start: var(--space-3);
+  border-block-start: var(--border-width) solid var(--color-border);
+}

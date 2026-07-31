@@ -1,0 +1,150 @@
+@use '../../../../../styles/breakpoints' as t;
+
+.detail-title {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+
+  h1,
+  p {
+    margin: 0;
+  }
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--color-warning-border);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-subtle);
+  color: var(--color-warning-text);
+
+  p {
+    margin: 0;
+  }
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(280px, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+
+  @media (max-width: t.$bp-lg) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.detail-grid__main,
+.detail-grid__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* ── Kullanım ────────────────────────────────────────────────────────────── */
+
+.usage {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.usage__item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.usage__state {
+  flex: none;
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+}
+
+/* ── İstatistikler ───────────────────────────────────────────────────────── */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+  margin: 0;
+
+  dt {
+    font-size: var(--fs-xs);
+    color: var(--color-text-subtle);
+  }
+
+  dd {
+    margin: 0;
+    font-size: var(--fs-lg);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+}
+
+.flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-block-start: var(--space-3);
+}
+
+.flag {
+  padding: 2px 8px;
+  border-radius: var(--radius-full);
+  border: var(--border-width) solid var(--color-warning-border);
+  background: var(--color-warning-subtle);
+  color: var(--color-warning-text);
+  font-size: var(--fs-xs);
+}
+
+/* ── Listeler ────────────────────────────────────────────────────────────── */
+
+.outcomes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-subtle);
+  }
+}
+
+.meta-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+
+  dt {
+    font-size: var(--fs-xs);
+    color: var(--color-text-subtle);
+  }
+
+  dd {
+    margin: 0;
+    font-size: var(--fs-sm);
+    color: var(--color-text-primary);
+  }
+}

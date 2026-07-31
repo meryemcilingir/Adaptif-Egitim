@@ -1,0 +1,172 @@
+:host {
+  display: block;
+  position: relative;
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-xs);
+  overflow: hidden;
+}
+
+/* Tazelenirken üstte ince ilerleme şeridi — mevcut veri kaybolmaz. */
+.table__refresh-bar {
+  position: absolute;
+  inset-inline: 0;
+  top: 0;
+  height: 2px;
+  background: linear-gradient(90deg, transparent, var(--color-primary), transparent);
+  background-size: 40% 100%;
+  animation: app-shimmer 1.1s ease-in-out infinite;
+  z-index: var(--z-sticky);
+}
+
+.table__scroll {
+  overflow-x: auto;
+  overscroll-behavior-x: contain;
+  max-height: 68vh;
+  overflow-y: auto;
+}
+
+.table {
+  width: 100%;
+  font-size: var(--fs-sm);
+}
+
+.table__head {
+  position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  background: var(--color-surface-subtle);
+}
+
+.table__th {
+  padding: var(--space-3) var(--space-4);
+  text-align: start;
+  font-size: var(--fs-xs);
+  font-weight: var(--fw-semibold);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+  border-bottom: var(--border-width) solid var(--color-border);
+  background: var(--color-surface-subtle);
+}
+
+.table__th--end {
+  text-align: end;
+}
+
+.table__th--center {
+  text-align: center;
+}
+
+.table__sort {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: inherit;
+  font: inherit;
+  border-radius: var(--radius-sm);
+  padding: 2px 4px;
+  margin: -2px -4px;
+
+  &:hover {
+    color: var(--color-text);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.table__row {
+  border-bottom: var(--border-width) solid var(--color-border);
+  transition: background-color var(--duration-fast) var(--ease-in-out);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: var(--color-surface-subtle);
+  }
+
+  &.is-clickable {
+    cursor: pointer;
+  }
+
+  &.is-selected {
+    background: var(--color-primary-subtle);
+  }
+
+  &.is-mutating {
+    opacity: 0.55;
+    pointer-events: none;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: -2px;
+  }
+}
+
+.table__td {
+  padding: var(--space-3) var(--space-4);
+  color: var(--color-text);
+  vertical-align: middle;
+}
+
+.table__td--end {
+  text-align: end;
+}
+
+.table__td--center {
+  text-align: center;
+}
+
+/* ── Dar ekran kart görünümü ─────────────────────────────────── */
+.table__cards {
+  display: flex;
+  flex-direction: column;
+}
+
+.table__card {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border-bottom: var(--border-width) solid var(--color-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &.is-selected {
+    background: var(--color-primary-subtle);
+  }
+
+  &.is-mutating {
+    opacity: 0.55;
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-border-focus);
+    outline-offset: -2px;
+  }
+}
+
+.table__card-row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.table__card-label {
+  flex: none;
+}
+
+.table__card-value {
+  text-align: end;
+  font-size: var(--fs-sm);
+  min-width: 0;
+}

@@ -1,0 +1,111 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Kazanımlar</h1>
+      <p class="text-sm text-muted">
+        Kazanımları tanımlayın, önkoşul ilişkilerini kurun ve yayın durumlarını yönetin.
+      </p>
+    </div>
+
+    <div class="row gap-2">
+      <app-button variant="secondary" icon="workflow" (pressed)="openGraph()">
+        Kazanım haritası
+      </app-button>
+      @if (canCreate()) {
+        <app-button variant="primary" icon="plus" (pressed)="openForm(null)">
+          Yeni kazanım
+        </app-button>
+      }
+    </div>
+  </header>
+
+  <app-filter-bar
+    [query]="facade.query()"
+    [filters]="filters()"
+    searchPlaceholder="Kazanım kodu, adı, açıklaması veya etiketinde ara…"
+    (searchChange)="facade.setSearch($event)"
+    (filterChange)="facade.setFilter($event.key, $event.value)"
+    (clearAll)="facade.clearFilters()"
+  />
+
+  <app-table
+    [columns]="columns()"
+    [rows]="facade.items()"
+    [query]="facade.query()"
+    [total]="facade.total()"
+    [status]="facade.status()"
+    [error]="facade.error()"
+    [filtered]="facade.isFiltered()"
+    [rowClickable]="true"
+    [mutatingIds]="facade.mutatingIds()"
+    emptyTitle="Kazanım bulunamadı"
+    emptyDescription="Bu kapsamda görüntülenecek kazanım yok."
+    (sortChange)="facade.toggleSort($event)"
+    (pageChange)="facade.goToPage($event)"
+    (sizeChange)="facade.setPageSize($event)"
+    (rowClick)="openDetail($event)"
+    (retry)="facade.load()"
+    (clearFilters)="facade.clearFilters()"
+  />
+</div>
+
+<ng-template #titleCell let-outcome>
+  <div class="cell-stack">
+    <span class="text-body-strong truncate">{{ outcome.title }}</span>
+    @if (outcome.description) {
+      <span class="text-xs text-subtle truncate">{{ outcome.description }}</span>
+    }
+  </div>
+</ng-template>
+
+<ng-template #metaCell let-outcome>
+  <div class="cell-stack">
+    <span class="text-sm">{{ levelLabel(outcome.level) }}</span>
+    <span class="text-xs text-subtle">{{ difficultyLabel(outcome.difficulty) }}</span>
+  </div>
+</ng-template>
+
+<ng-template #tagsCell let-outcome>
+  @if (outcome.tags.length === 0) {
+    <span class="text-xs text-subtle">—</span>
+  } @else {
+    <div class="cell-tags">
+      @for (tag of outcome.tags.slice(0, 2); track tag) {
+        <span class="cell-tag">{{ tag }}</span>
+      }
+      @if (outcome.tags.length > 2) {
+        <span class="text-xs text-subtle">+{{ outcome.tags.length - 2 }}</span>
+      }
+    </div>
+  }
+</ng-template>
+
+<ng-template #stateCell let-outcome>
+  <app-status-badge
+    [label]="toneFor(outcome.state).label"
+    [tone]="toneFor(outcome.state).tone"
+    [icon]="toneFor(outcome.state).icon"
+  />
+</ng-template>
+
+<ng-template #actionsCell let-outcome>
+  <app-dropdown
+    [items]="rowActions(outcome)"
+    triggerLabel="Kazanım işlemleri"
+    (itemSelect)="onRowAction(outcome, $event)"
+  />
+</ng-template>
+
+@if (isFormOpen()) {
+  <app-outcome-form
+    #form
+    [outcome]="editing()"
+    [courses]="courseOptions()"
+    [prerequisiteOptions]="prerequisiteOptions()"
+    [tagSuggestions]="tagPool()"
+    [defaultCourseId]="currentCourseFilter()"
+    [saving]="facade.isSaving()"
+    (save)="onSave($event, form)"
+    (cancel)="closeForm()"
+  />
+}

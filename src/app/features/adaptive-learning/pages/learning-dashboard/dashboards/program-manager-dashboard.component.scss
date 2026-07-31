@@ -1,0 +1,64 @@
+@use '../../../../../../styles/breakpoints' as t;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.health {
+  display: flex;
+  flex-direction: column;
+}
+
+.health__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1.6fr) auto repeat(3, minmax(0, 1fr)) minmax(0, 1.6fr);
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: var(--border-width) solid var(--color-border);
+  cursor: pointer;
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: var(--color-surface-subtle);
+  }
+}
+
+.health__title {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.health__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.health__progress {
+  min-width: 0;
+}
+
+@media (max-width: t.$bp-xl) {
+  .health__row {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .health__title,
+  .health__progress {
+    grid-column: 1 / -1;
+  }
+}
+
+@media (max-width: t.$bp-md) {
+  .health__row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

@@ -1,0 +1,46 @@
+.badges {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+}
+
+.badge {
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+  border: var(--border-width) solid var(--color-border);
+  background: var(--color-surface-subtle);
+  font-size: var(--fs-xs);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+/* Tür rozeti kısaltmadır; ayırt edilebilmesi için birincil tonda. */
+.badge--type {
+  border-color: var(--color-primary-border);
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+  font-weight: 600;
+}
+
+.badge--version {
+  font-variant-numeric: tabular-nums;
+}
+
+.badge--easy {
+  border-color: var(--color-success-border);
+  background: var(--color-success-subtle);
+  color: var(--color-success-text);
+}
+
+.badge--medium {
+  border-color: var(--color-warning-border);
+  background: var(--color-warning-subtle);
+  color: var(--color-warning-text);
+}
+
+.badge--hard {
+  border-color: var(--color-danger-border);
+  background: var(--color-danger-subtle);
+  color: var(--color-danger-text);
+}

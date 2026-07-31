@@ -1,0 +1,55 @@
+@if (versions().length === 0) {
+  <app-empty-state
+    icon="history"
+    title="Henüz versiyon yok"
+    description="Soru ilk kez yayına alındığında bu listede bir anlık görüntü oluşur."
+  />
+} @else {
+  <ol class="versions">
+    @for (version of versions(); track version.id) {
+      <li class="version" [class.is-selected]="isSelected(version.versionNumber)">
+        <label class="version__select">
+          <input
+            type="checkbox"
+            [checked]="isSelected(version.versionNumber)"
+            [attr.aria-label]="'v' + version.versionNumber + ' karşılaştırmaya ekle'"
+            (change)="toggle(version.versionNumber)"
+          />
+        </label>
+
+        <div class="version__marker" aria-hidden="true">
+          <span class="version__number tabular">v{{ version.versionNumber }}</span>
+        </div>
+
+        <div class="version__body">
+          <div class="version__head">
+            <span class="text-sm text-body-strong">{{ version.changeNote }}</span>
+            @if (version.versionNumber === publishedVersion()) {
+              <span class="version__badge">
+                <app-icon name="circle-check-big" [size]="12" />
+                Yayında
+              </span>
+            }
+          </div>
+
+          <span class="text-xs text-subtle">
+            {{ version.publishedByName }} · {{ version.publishedAt | appRelativeTime }}
+          </span>
+        </div>
+      </li>
+    }
+  </ol>
+
+  <footer class="versions__footer">
+    <span class="text-xs text-subtle"> {{ selection().length }} / 2 versiyon seçildi </span>
+    <app-button
+      variant="secondary"
+      size="sm"
+      icon="git-compare"
+      [disabled]="!canCompare()"
+      (pressed)="runCompare()"
+    >
+      Karşılaştır
+    </app-button>
+  </footer>
+}

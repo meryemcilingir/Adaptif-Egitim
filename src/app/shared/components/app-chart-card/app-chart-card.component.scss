@@ -1,0 +1,38 @@
+:host {
+  display: block;
+  min-width: 0;
+}
+
+app-card {
+  height: 100%;
+}
+
+.chart__placeholder {
+  width: 100%;
+}
+
+/* ApexCharts kendi tooltip/legend stillerini enjekte eder; tasarım diline uydurulur. */
+:host ::ng-deep {
+  .apexcharts-tooltip {
+    border: var(--border-width) solid var(--color-border) !important;
+    border-radius: var(--radius-md) !important;
+    box-shadow: var(--shadow-md) !important;
+    background: var(--color-surface) !important;
+  }
+
+  .apexcharts-tooltip-title {
+    background: var(--color-surface-subtle) !important;
+    border-bottom: var(--border-width) solid var(--color-border) !important;
+    font-weight: var(--fw-semibold) !important;
+  }
+
+  .apexcharts-legend-text {
+    color: var(--color-text-secondary) !important;
+    font-size: var(--fs-xs) !important;
+  }
+
+  .apexcharts-xaxistooltip,
+  .apexcharts-yaxistooltip {
+    display: none;
+  }
+}

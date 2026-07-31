@@ -1,0 +1,127 @@
+<div class="picker">
+  <!-- Seçili sorular -->
+  <section class="column" aria-label="Sınavdaki sorular">
+    <header class="column__head">
+      <h4 class="text-h3">Sınavdaki sorular</h4>
+      <span class="text-xs text-subtle tabular">
+        {{ selected().length }} soru · {{ totalPoints() }} puan
+      </span>
+    </header>
+
+    @if (selected().length === 0) {
+      <app-empty-state
+        icon="file-text"
+        title="Henüz soru yok"
+        description="Otomatik seçim yapın veya sağdaki bankadan soru ekleyin."
+      />
+    } @else {
+      <ol class="list">
+        @for (question of selected(); track question.questionId; let i = $index) {
+          <li class="row" [class.is-stale]="!question.isLatestVersion">
+            <span class="row__order tabular">{{ i + 1 }}</span>
+
+            <div class="row__body">
+              <span class="text-sm text-body-strong truncate">{{ question.title }}</span>
+              <span class="row__meta text-xs text-subtle">
+                {{ question.code }} · {{ question.difficultyLabel }} · {{ question.points }} puan
+                @if (question.outcomeCodes.length > 0) {
+                  · {{ question.outcomeCodes.join(', ') }}
+                }
+              </span>
+
+              @if (!question.isPublished) {
+                <span class="row__flag is-error">
+                  <app-icon name="circle-alert" [size]="12" />
+                  Bu soru yayında değil
+                </span>
+              } @else if (!question.isLatestVersion) {
+                <span class="row__flag is-warning">
+                  <app-icon name="triangle-alert" [size]="12" />
+                  Eski versiyona bağlı (v{{ question.versionNumber }})
+                </span>
+              }
+            </div>
+
+            <div class="row__actions">
+              <app-button
+                variant="ghost"
+                size="sm"
+                icon="arrow-up"
+                ariaLabel="Yukarı taşı"
+                [disabled]="i === 0 || busy()"
+                (pressed)="move.emit({ questionId: question.questionId, direction: -1 })"
+              />
+              <app-button
+                variant="ghost"
+                size="sm"
+                icon="arrow-down"
+                ariaLabel="Aşağı taşı"
+                [disabled]="i === selected().length - 1 || busy()"
+                (pressed)="move.emit({ questionId: question.questionId, direction: 1 })"
+              />
+              <app-button
+                variant="ghost"
+                size="sm"
+                icon="x"
+                ariaLabel="Sınavdan çıkar"
+                [disabled]="busy()"
+                (pressed)="remove.emit(question.questionId)"
+              />
+            </div>
+          </li>
+        }
+      </ol>
+    }
+  </section>
+
+  <!-- Aday sorular -->
+  <section class="column" aria-label="Soru bankası">
+    <header class="column__head">
+      <h4 class="text-h3">Soru bankası</h4>
+      <span class="text-xs text-subtle">{{ candidates().length }} aday</span>
+    </header>
+
+    <div class="search">
+      <app-icon name="search" [size]="15" />
+      <input
+        type="search"
+        class="search__input"
+        placeholder="Soru kodu veya başlığında ara…"
+        aria-label="Soru bankasında ara"
+        [value]="search()"
+        (input)="onSearch($any($event.target).value)"
+      />
+    </div>
+
+    @if (candidates().length === 0) {
+      <app-empty-state
+        icon="circle-help"
+        title="Aday soru yok"
+        description="Aramanıza uyan, henüz eklenmemiş yayında soru bulunmuyor."
+      />
+    } @else {
+      <ul class="list">
+        @for (question of candidates(); track question.id) {
+          <li class="row">
+            <div class="row__body">
+              <span class="text-sm text-body-strong truncate">{{ question.title }}</span>
+              <span class="row__meta text-xs text-subtle">
+                {{ question.code }} · {{ typeLabel(question) }} ·
+                {{ difficultyLabel(question) }} · {{ question.points }} puan
+              </span>
+            </div>
+
+            <app-button
+              variant="secondary"
+              size="sm"
+              icon="plus"
+              ariaLabel="Sınava ekle"
+              [disabled]="busy()"
+              (pressed)="add.emit(question.id)"
+            />
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</div>

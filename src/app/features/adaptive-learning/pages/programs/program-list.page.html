@@ -1,0 +1,83 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Programlar</h1>
+      <p class="text-sm text-muted">
+        Akademik programları oluşturun, yayın durumlarını yönetin ve kapsamlarını izleyin.
+      </p>
+    </div>
+
+    @if (canWrite()) {
+      <app-button variant="primary" icon="plus" (pressed)="openForm(null)">
+        Yeni program
+      </app-button>
+    }
+  </header>
+
+  <app-filter-bar
+    [query]="facade.query()"
+    [filters]="filters()"
+    searchPlaceholder="Program kodu, adı veya açıklamasında ara…"
+    (searchChange)="facade.setSearch($event)"
+    (filterChange)="facade.setFilter($event.key, $event.value)"
+    (clearAll)="facade.clearFilters()"
+  />
+
+  <app-table
+    [columns]="columns()"
+    [rows]="facade.items()"
+    [query]="facade.query()"
+    [total]="facade.total()"
+    [status]="facade.status()"
+    [error]="facade.error()"
+    [filtered]="facade.isFiltered()"
+    [rowClickable]="true"
+    [mutatingIds]="facade.mutatingIds()"
+    emptyTitle="Program bulunamadı"
+    emptyDescription="Henüz bir program oluşturulmamış."
+    (sortChange)="facade.toggleSort($event)"
+    (pageChange)="facade.goToPage($event)"
+    (sizeChange)="facade.setPageSize($event)"
+    (rowClick)="openDetail($event)"
+    (retry)="facade.load()"
+    (clearFilters)="facade.clearFilters()"
+  />
+</div>
+
+<!-- ── Hücre şablonları ─────────────────────────────────────────────────── -->
+<ng-template #nameCell let-program>
+  <div class="cell-name">
+    <span class="text-body-strong truncate">{{ program.name }}</span>
+    @if (program.description) {
+      <span class="text-xs text-subtle truncate">{{ program.description }}</span>
+    }
+  </div>
+</ng-template>
+
+<ng-template #stateCell let-program>
+  <app-status-badge
+    [label]="toneFor(program.state).label"
+    [tone]="toneFor(program.state).tone"
+    [icon]="toneFor(program.state).icon"
+  />
+</ng-template>
+
+<ng-template #actionsCell let-program>
+  <app-dropdown
+    [items]="rowActions(program)"
+    triggerLabel="Program işlemleri"
+    (itemSelect)="onRowAction(program, $event)"
+  />
+</ng-template>
+
+<!-- ── Form diyaloğu ───────────────────────────────────────────────────── -->
+@if (isFormOpen()) {
+  <app-program-form
+    #form
+    [program]="editing()"
+    [coordinators]="coordinators()"
+    [saving]="facade.isSaving()"
+    (save)="onSave($event, form)"
+    (cancel)="closeForm()"
+  />
+}

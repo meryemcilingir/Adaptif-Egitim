@@ -1,0 +1,52 @@
+<div class="tags" [class.is-invalid]="invalid()" [class.is-disabled]="isDisabled()">
+  @for (tag of tags(); track tag) {
+    <span class="tags__chip">
+      {{ tag }}
+      <button
+        type="button"
+        class="tags__remove"
+        [attr.aria-label]="tag + ' etiketini kaldır'"
+        [disabled]="isDisabled()"
+        (click)="remove(tag)"
+      >
+        <app-icon name="x" [size]="11" [strokeWidth]="2.5" />
+      </button>
+    </span>
+  }
+
+  <input
+    class="tags__input"
+    type="text"
+    [id]="inputId()"
+    [placeholder]="isFull() ? '' : placeholder()"
+    [value]="draft()"
+    [disabled]="isDisabled() || isFull()"
+    [attr.aria-invalid]="invalid()"
+    (input)="onDraftInput($event)"
+    (keydown)="onKeydown($event)"
+    (blur)="onBlur()"
+  />
+</div>
+
+<div class="tags__meta">
+  <span class="text-xs" [class.text-danger]="hint()" [class.text-subtle]="!hint()">
+    {{ hint() ?? 'Enter veya virgül ile ekleyin.' }}
+  </span>
+  <span class="text-xs text-subtle tabular">{{ tags().length }} / {{ maxTags() }}</span>
+</div>
+
+@if (availableSuggestions().length > 0 && !isFull()) {
+  <div class="tags__suggestions">
+    @for (suggestion of availableSuggestions(); track suggestion) {
+      <button
+        type="button"
+        class="tags__suggestion"
+        [disabled]="isDisabled()"
+        (click)="addSuggestion(suggestion)"
+      >
+        <app-icon name="plus" [size]="11" />
+        {{ suggestion }}
+      </button>
+    }
+  </div>
+}

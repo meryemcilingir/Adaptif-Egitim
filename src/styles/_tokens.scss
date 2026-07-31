@@ -1,0 +1,163 @@
+/**
+ * Design tokens — DESIGN_SYSTEM.md ile birebir eşleşir.
+ * Ekranlarda ham hex/px değeri yazılmaz; her değer buradan okunur.
+ */
+
+:root {
+  /* ── Yüzeyler ─────────────────────────────────────────────── */
+  --color-bg: #f8fafc;
+  --color-surface: #ffffff;
+  --color-surface-subtle: #f9fafb;
+  --color-surface-muted: #f3f4f6;
+  --color-overlay: rgb(15 23 42 / 45%);
+
+  /* ── Kenarlıklar ──────────────────────────────────────────── */
+  --color-border: #e5e7eb;
+  --color-border-strong: #d1d5db;
+  --color-border-focus: #4f46e5;
+
+  /* ── Metin ────────────────────────────────────────────────── */
+  --color-text: #111827;
+  --color-text-secondary: #6b7280;
+  --color-text-tertiary: #9ca3af;
+  --color-text-inverse: #ffffff;
+
+  /* ── Marka / aksiyon ──────────────────────────────────────── */
+  --color-primary: #4f46e5;
+  --color-primary-hover: #4338ca;
+  --color-primary-active: #3730a3;
+  --color-primary-subtle: #eef2ff;
+  --color-primary-border: #c7d2fe;
+
+  /* ── Anlamsal ─────────────────────────────────────────────── */
+  --color-success: #22c55e;
+  --color-success-subtle: #f0fdf4;
+  --color-success-border: #bbf7d0;
+  --color-success-text: #15803d;
+
+  --color-warning: #f59e0b;
+  --color-warning-subtle: #fffbeb;
+  --color-warning-border: #fde68a;
+  --color-warning-text: #b45309;
+
+  --color-danger: #ef4444;
+  --color-danger-subtle: #fef2f2;
+  --color-danger-border: #fecaca;
+  --color-danger-text: #b91c1c;
+
+  --color-info: #0ea5e9;
+  --color-info-subtle: #f0f9ff;
+  --color-info-border: #bae6fd;
+  --color-info-text: #0369a1;
+
+  --color-neutral-subtle: #f3f4f6;
+  --color-neutral-border: #e5e7eb;
+  --color-neutral-text: #4b5563;
+
+  /* ── Grafik paleti ────────────────────────────────────────── */
+  --chart-1: #4f46e5;
+  --chart-2: #0ea5e9;
+  --chart-3: #10b981;
+  --chart-4: #f59e0b;
+  --chart-5: #f43f5e;
+  --chart-6: #8b5cf6;
+  --chart-7: #14b8a6;
+  --chart-8: #64748b;
+
+  /* Ustalık ısı haritası — düşükten yükseğe */
+  --heat-0: #fee2e2;
+  --heat-1: #fed7aa;
+  --heat-2: #fef08a;
+  --heat-3: #bbf7d0;
+  --heat-4: #86efac;
+  --heat-5: #22c55e;
+
+  /* ── Tipografi ────────────────────────────────────────────── */
+  --font-sans:
+    'Inter', -apple-system, blinkmacsystemfont, 'Segoe UI', roboto, 'Helvetica Neue', arial,
+    sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, sfmono-regular, menlo, consolas, monospace;
+
+  --fs-display: 1.875rem; /* 30 */
+  --lh-display: 2.375rem;
+  --fs-h1: 1.5rem; /* 24 */
+  --lh-h1: 2rem;
+  --fs-h2: 1.25rem; /* 20 */
+  --lh-h2: 1.75rem;
+  --fs-h3: 1rem; /* 16 */
+  --lh-h3: 1.5rem;
+  --fs-body: 0.875rem; /* 14 */
+  --lh-body: 1.25rem;
+  --fs-sm: 0.8125rem; /* 13 */
+  --lh-sm: 1.125rem;
+  --fs-xs: 0.75rem; /* 12 */
+  --lh-xs: 1rem;
+  --fs-metric: 1.75rem; /* 28 */
+  --lh-metric: 2.125rem;
+  --fs-overline: 0.6875rem; /* 11 */
+  --lh-overline: 0.875rem;
+
+  --fw-regular: 400;
+  --fw-medium: 500;
+  --fw-strong: 550;
+  --fw-semibold: 600;
+  --fw-bold: 650;
+
+  /* ── Spacing — 8px grid ───────────────────────────────────── */
+  --space-0: 0;
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 20px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+
+  /* ── Radius ───────────────────────────────────────────────── */
+  --radius-sm: 6px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+  --radius-full: 999px;
+
+  /* ── Gölge — hafif; derinlik border ile kurulur ───────────── */
+  --shadow-xs: 0 1px 2px rgb(16 24 40 / 5%);
+  --shadow-sm: 0 1px 3px rgb(16 24 40 / 8%), 0 1px 2px rgb(16 24 40 / 4%);
+  --shadow-md: 0 4px 12px rgb(16 24 40 / 8%);
+  --shadow-lg: 0 12px 32px rgb(16 24 40 / 12%);
+  --shadow-focus: 0 0 0 3px rgb(79 70 229 / 18%);
+  --shadow-focus-danger: 0 0 0 3px rgb(239 68 68 / 18%);
+
+  --border-width: 1px;
+
+  /* ── Z-index ──────────────────────────────────────────────── */
+  --z-dropdown: 1000;
+  --z-sticky: 1010;
+  --z-drawer: 1020;
+  --z-overlay: 1030;
+  --z-dialog: 1040;
+  --z-toast: 1050;
+  --z-tooltip: 1060;
+
+  /* ── Hareket ──────────────────────────────────────────────── */
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
+  --duration-slow: 260ms;
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+
+  /* ── Layout ölçüleri ──────────────────────────────────────── */
+  --header-height: 60px;
+  --sidebar-width: 248px;
+  --sidebar-width-collapsed: 64px;
+  --content-max-width: 1440px;
+}
+
+/*
+ * Breakpoint'ler burada DEĞİL, `_breakpoints.scss` içindedir.
+ * Bileşen stilleri yalnızca o dosyayı `@use` eder; böylece bu `:root` bloğu
+ * her bileşenin CSS'ine kopyalanmaz.
+ */

@@ -1,0 +1,38 @@
+<app-card [title]="title()" [description]="description()" [hasActions]="true" padding="compact">
+  <div card-actions><ng-content select="[chart-actions]" /></div>
+
+  @if (loading()) {
+    <app-loading-state variant="skeleton-chart" />
+  } @else if (error(); as apiError) {
+    <app-error-state [error]="apiError" title="Grafik yüklenemedi" (retry)="retry.emit()" />
+  } @else if (!hasData()) {
+    <app-empty-state icon="chart-line" title="Veri yok" [description]="emptyMessage()" />
+  } @else {
+    <!--
+      Grafik motoru ilk boyamadan SONRA yüklenir: ApexCharts kendi lazy chunk'ında
+      kalır, sayfa iskeleti anında görünür. `on viewport` yerine `on immediate`
+      kullanılır; dashboard'da grafikler birincil içeriktir ve kaydırmaya bağlı
+      geç yükleme boş kart izlenimi yaratır.
+    -->
+    @defer (on immediate) {
+      <apx-chart
+        [series]="apexSeries()"
+        [chart]="chart()"
+        [colors]="chartColors()"
+        [labels]="chartLabels()"
+        [xaxis]="xaxis()"
+        [yaxis]="yaxis()"
+        [grid]="grid()"
+        [stroke]="stroke()"
+        [legend]="legend()"
+        [plotOptions]="plotOptions()"
+        [markers]="markers()"
+        [dataLabels]="dataLabels"
+        [tooltip]="tooltip"
+        [fill]="fill()"
+      />
+    } @placeholder {
+      <div class="chart__placeholder" [style.height.px]="height()"></div>
+    }
+  }
+</app-card>

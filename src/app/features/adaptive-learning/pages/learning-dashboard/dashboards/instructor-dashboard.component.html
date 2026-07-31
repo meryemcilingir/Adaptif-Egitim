@@ -1,0 +1,122 @@
+@let dashboard = data();
+
+<app-kpi-grid [cards]="dashboard.kpis" />
+
+<app-quick-actions [actions]="dashboard.quickActions" />
+
+<app-progress-group [cards]="dashboard.progress" />
+
+<section class="grid grid-2-1" aria-label="Değerlendirme ve sınavlar">
+  <app-card
+    title="Değerlendirme kuyruğu"
+    description="En uzun bekleyen denemeler önce listelenir"
+    padding="compact"
+  >
+    <app-grading-queue [entries]="dashboard.gradingQueue" (gradeSelect)="openGrading($event)" />
+  </app-card>
+
+  <app-card title="Yaklaşan sınavlar" padding="compact">
+    <app-upcoming-exams
+      [exams]="dashboard.upcomingExams"
+      [showCohorts]="true"
+      (examSelect)="openExams()"
+    />
+  </app-card>
+</section>
+
+<section class="grid grid-2-1" aria-label="Sınıf performansı">
+  <app-chart-card
+    title="Ders bazlı başarı trendi"
+    description="Her ders için ortalama sınav başarısı"
+    type="line"
+    [series]="performanceSeries()"
+    [categories]="performanceCategories()"
+    valueSuffix="%"
+    [height]="300"
+    emptyMessage="Trend için yeterli sınav sonucu bulunmuyor."
+  />
+
+  <app-chart-card
+    title="Soru bankası durumu"
+    description="Sorularının yayın durumu dağılımı"
+    type="bar"
+    [series]="questionStateSeries()"
+    [categories]="questionStateCategories()"
+    [height]="300"
+    [showLegend]="false"
+    [horizontal]="true"
+  />
+</section>
+
+<section class="grid grid-2" aria-label="Kazanım ve öğrenci riski">
+  <app-card
+    title="En zayıf kazanımlar"
+    description="Sınıf ortalaması en düşük kazanımlar"
+    padding="compact"
+  >
+    <app-ranked-list
+      [entries]="dashboard.outcomeCoverage"
+      emptyTitle="Kazanım verisi yok"
+      emptyDescription="Sınav sonuçları işlendiğinde burada görünecek."
+    />
+  </app-card>
+
+  <app-card
+    title="Risk altındaki öğrenciler"
+    description="Ustalık ortalaması kritik eşiğin altında"
+    padding="compact"
+  >
+    <app-ranked-list
+      [entries]="dashboard.atRiskStudents"
+      emptyTitle="Risk altında öğrenci yok"
+      emptyDescription="Tüm öğrencilerin ustalık ortalaması eşiğin üzerinde."
+    />
+  </app-card>
+</section>
+
+<section aria-label="Ders ilerlemesi">
+  <app-card title="Ders ilerlemesi" description="Ders bazlı özet" padding="none">
+    <div class="courses">
+      @for (course of dashboard.courseProgress; track course.courseId) {
+        <article class="courses__row">
+          <div class="courses__title">
+            <span class="text-body-strong">{{ course.courseCode }}</span>
+            <span class="text-xs text-muted truncate">{{ course.courseName }}</span>
+          </div>
+
+          <div class="courses__metric">
+            <span class="text-xs text-muted">Öğrenci</span>
+            <span class="text-body-strong tabular">{{ course.studentCount }}</span>
+          </div>
+
+          <div class="courses__metric">
+            <span class="text-xs text-muted">Yayında soru</span>
+            <span class="text-body-strong tabular">{{ course.publishedQuestionCount }}</span>
+          </div>
+
+          <div class="courses__metric">
+            <span class="text-xs text-muted">Ortalama ustalık</span>
+            <span class="text-body-strong tabular">%{{ course.averageMastery }}</span>
+          </div>
+
+          <div class="courses__progress">
+            <app-progress-bar
+              [value]="course.completionPercent"
+              [max]="100"
+              [tone]="course.completionPercent >= 60 ? 'success' : 'warning'"
+              [label]="course.courseCode + ' içerik tamamlama'"
+              [showLabel]="true"
+            />
+          </div>
+        </article>
+      }
+    </div>
+  </app-card>
+</section>
+
+<app-dashboard-common
+  [activity]="dashboard.recentActivity"
+  [notifications]="dashboard.notifications"
+  [statistics]="dashboard.statistics"
+  (notificationRead)="notificationRead.emit($event)"
+/>

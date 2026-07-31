@@ -1,0 +1,50 @@
+<div class="sidebar__brand">
+  <span class="sidebar__logo" aria-hidden="true">
+    <app-icon name="graduation-cap" [size]="18" [strokeWidth]="2" />
+  </span>
+  @if (!isCollapsed()) {
+    <span class="sidebar__brand-text">
+      <span class="sidebar__brand-name">Adaptif</span>
+      <span class="sidebar__brand-sub">{{ roleLabel() }}</span>
+    </span>
+  }
+</div>
+
+<nav class="sidebar__nav" aria-label="Ana gezinme">
+  @for (group of groups(); track group.title) {
+    <div class="sidebar__group">
+      @if (!isCollapsed()) {
+        <p class="sidebar__group-title text-overline">{{ group.title }}</p>
+      }
+
+      <ul>
+        @for (item of group.items; track item.label) {
+          <li>
+            <a
+              class="sidebar__link"
+              [routerLink]="item.link"
+              routerLinkActive="is-active"
+              [routerLinkActiveOptions]="{ exact: item.exact ?? false }"
+              [title]="isCollapsed() ? item.label : ''"
+              (click)="onNavigate()"
+            >
+              <app-icon [name]="item.icon" [size]="17" />
+              @if (!isCollapsed()) {
+                <span class="sidebar__link-text">{{ item.label }}</span>
+              }
+            </a>
+          </li>
+        }
+      </ul>
+    </div>
+  }
+</nav>
+
+<div class="sidebar__footer">
+  <button type="button" class="sidebar__collapse" (click)="ui.toggleSidebar()">
+    <app-icon [name]="isCollapsed() ? 'panel-left-open' : 'panel-left-close'" [size]="16" />
+    @if (!isCollapsed()) {
+      <span>Menüyü daralt</span>
+    }
+  </button>
+</div>

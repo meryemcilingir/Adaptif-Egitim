@@ -1,0 +1,53 @@
+<div class="rich" [class.is-invalid]="invalid()" [class.is-focused]="isFocused()">
+  <div class="rich__toolbar" role="toolbar" aria-label="Metin biçimlendirme">
+    @for (command of commands; track command.id) {
+      <button
+        type="button"
+        class="rich__tool"
+        [attr.aria-label]="command.label"
+        [title]="command.label"
+        [disabled]="isDisabled()"
+        (mousedown)="$event.preventDefault()"
+        (click)="run(command)"
+      >
+        <app-icon [name]="command.icon" [size]="15" />
+      </button>
+    }
+
+    @if (allowImages()) {
+      <span class="rich__divider" aria-hidden="true"></span>
+      <button
+        type="button"
+        class="rich__tool"
+        aria-label="Görsel ekle"
+        title="Görsel ekle"
+        [disabled]="isDisabled()"
+        (mousedown)="$event.preventDefault()"
+        (click)="insertImage()"
+      >
+        <app-icon name="image" [size]="15" />
+      </button>
+    }
+  </div>
+
+  <div class="rich__surface">
+    <div
+      #editor
+      class="rich__editor"
+      [id]="inputId()"
+      [attr.contenteditable]="isDisabled() ? 'false' : 'true'"
+      [style.min-height]="minHeight()"
+      role="textbox"
+      aria-multiline="true"
+      [attr.aria-invalid]="invalid()"
+      (input)="onInput()"
+      (focus)="onFocus()"
+      (blur)="onBlur()"
+      (paste)="onPaste($event)"
+    ></div>
+
+    @if (isEmpty() && !isFocused()) {
+      <p class="rich__placeholder" aria-hidden="true">{{ placeholder() }}</p>
+    }
+  </div>
+</div>

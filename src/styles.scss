@@ -1,1 +1,12 @@
-/* You can add global styles to this file, and also import other style files */
+/**
+ * Global stil giriş noktası.
+ * Buraya doğrudan kural yazılmaz; yalnızca design system parçaları toplanır.
+ * Bkz. DESIGN_SYSTEM.md
+ */
+
+@use 'styles/tokens';
+@use 'styles/reset';
+@use 'styles/typography';
+@use 'styles/animations';
+@use 'styles/scrollbar';
+@use 'styles/utilities';

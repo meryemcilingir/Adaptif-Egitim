@@ -1,0 +1,90 @@
+@let dashboard = data();
+
+<div class="observer__notice" role="note">
+  <app-icon name="eye" [size]="16" />
+  <div>
+    <p class="text-body-strong">Salt okunur görünüm</p>
+    <p class="text-sm text-muted">
+      Yalnızca yetkilendirildiğiniz cohort'ların özet verilerini görüntüleyebilirsiniz. Öğrenci
+      sayısı {{ dashboard.minCohortSize }} altındaki gruplar gizlilik gereği raporlanmaz.
+    </p>
+  </div>
+</div>
+
+<app-kpi-grid [cards]="dashboard.kpis" />
+
+<app-quick-actions [actions]="dashboard.quickActions" />
+
+<section class="grid grid-2" aria-label="Cohort karşılaştırması ve trend">
+  <app-chart-card
+    title="Cohort ustalık karşılaştırması"
+    description="Yetkili olduğunuz gruplar"
+    type="bar"
+    [series]="cohortSeries()"
+    [categories]="cohortCategories()"
+    valueSuffix="%"
+    [height]="300"
+    [showLegend]="false"
+    emptyMessage="Gizlilik eşiğini geçen cohort bulunmuyor."
+  />
+
+  <app-chart-card
+    title="Başarı trendi"
+    description="İzlenen grupların zaman içindeki ortalaması"
+    type="area"
+    [series]="completionSeries()"
+    [categories]="completionCategories()"
+    valueSuffix="%"
+    [height]="300"
+    [showLegend]="false"
+    emptyMessage="Trend için yeterli sınav sonucu yok."
+  />
+</section>
+
+<section class="grid grid-2" aria-label="Kazanım kapsaması ve sınavlar">
+  <app-card
+    title="Kazanım kapsaması"
+    description="Ortalaması en düşük kazanımlar"
+    padding="compact"
+  >
+    <app-ranked-list
+      [entries]="dashboard.outcomeCoverage"
+      emptyTitle="Kazanım verisi yok"
+      emptyDescription="İzlenen gruplarda yeterli ölçüm bulunmuyor."
+    />
+  </app-card>
+
+  <app-card title="Yaklaşan sınavlar" padding="compact">
+    <app-upcoming-exams
+      [exams]="dashboard.upcomingExams"
+      [showCohorts]="true"
+      (examSelect)="openExams()"
+    />
+  </app-card>
+</section>
+
+@if (dashboard.suppressedCohorts.length > 0) {
+  <section aria-label="Gizlenen gruplar">
+    <app-card
+      title="Gizlilik eşiği nedeniyle gizlenen gruplar"
+      description="Bu gruplar için bireysel karşılaştırma verisi gönderilmez"
+      padding="compact"
+    >
+      <ul class="observer__suppressed">
+        @for (name of dashboard.suppressedCohorts; track name) {
+          <li class="observer__chip">
+            <app-icon name="lock" [size]="12" />
+            {{ name }}
+          </li>
+        }
+      </ul>
+    </app-card>
+  </section>
+}
+
+<app-dashboard-common
+  [activity]="dashboard.recentActivity"
+  [notifications]="dashboard.notifications"
+  [statistics]="dashboard.statistics"
+  (notificationRead)="notificationRead.emit($event)"
+/>

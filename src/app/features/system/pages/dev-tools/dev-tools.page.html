@@ -1,0 +1,103 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Geliştirici paneli</h1>
+      <p class="text-sm text-muted">
+        Mock backend davranışını canlı olarak değiştirerek hata, gecikme ve çevrimdışı senaryolarını
+        test edin.
+      </p>
+    </div>
+
+    <div class="row gap-2">
+      <app-button variant="secondary" icon="refresh-cw" (pressed)="resetSettings()">
+        Ayarları sıfırla
+      </app-button>
+      <app-button variant="danger" icon="database" (pressed)="resetDatabase()">
+        Demo veriyi sıfırla
+      </app-button>
+    </div>
+  </header>
+
+  <div class="grid grid-2">
+    <app-card title="Ağ simülasyonu" description="İstek gecikmesi ve hata oranı">
+      <div class="dev__control">
+        <div class="row-between">
+          <label class="text-sm" for="latency">Maksimum gecikme</label>
+          <span class="text-body-strong tabular">{{ settings().maxLatencyMs }} ms</span>
+        </div>
+        <input
+          id="latency"
+          type="range"
+          min="0"
+          max="4000"
+          step="60"
+          [value]="settings().maxLatencyMs"
+          (input)="setLatency($event)"
+        />
+        <p class="text-xs text-subtle">
+          Yükleme (skeleton) durumlarının gerçekten görülebilmesi için isteklere yapay gecikme
+          eklenir.
+        </p>
+      </div>
+
+      <div class="dev__control">
+        <div class="row-between">
+          <label class="text-sm" for="error-rate">Rastgele hata oranı</label>
+          <span class="text-body-strong tabular"
+            >%{{ (settings().errorRate * 100).toFixed(0) }}</span
+          >
+        </div>
+        <input
+          id="error-rate"
+          type="range"
+          min="0"
+          max="100"
+          step="5"
+          [value]="settings().errorRate * 100"
+          (input)="setErrorRate($event)"
+        />
+        <p class="text-xs text-subtle">
+          İsteklerin bu oranı 500 ile başarısız olur. GET istekleri exponential backoff ile otomatik
+          yeniden denenir.
+        </p>
+      </div>
+    </app-card>
+
+    <app-card title="Bağlantı durumu" description="Çevrimdışı ve senkronizasyon kuyruğu">
+      <div class="dev__status">
+        <app-status-badge
+          [label]="settings().offline ? 'Çevrimdışı' : 'Çevrimiçi'"
+          [tone]="settings().offline ? 'danger' : 'success'"
+          [icon]="settings().offline ? 'wifi-off' : 'circle-check-big'"
+        />
+        <app-button
+          [variant]="settings().offline ? 'primary' : 'secondary'"
+          [icon]="settings().offline ? 'refresh-cw' : 'wifi-off'"
+          (pressed)="toggleOffline()"
+        >
+          {{ settings().offline ? 'Bağlantıyı geri getir' : 'Çevrimdışına al' }}
+        </app-button>
+      </div>
+
+      <dl class="dev__facts">
+        <div>
+          <dt class="text-sm text-muted">Bekleyen senkronizasyon</dt>
+          <dd class="text-body-strong tabular">{{ outbox.pendingCount() }} kayıt</dd>
+        </div>
+        <div>
+          <dt class="text-sm text-muted">Rate limit</dt>
+          <dd class="text-body-strong tabular">{{ settings().rateLimitPerSecond }} istek / sn</dd>
+        </div>
+        <div>
+          <dt class="text-sm text-muted">Veritabanı değişiklik sayacı</dt>
+          <dd class="text-body-strong tabular">{{ dbRevision() }}</dd>
+        </div>
+      </dl>
+
+      <p class="text-xs text-subtle">
+        Çevrimdışı modda yazma istekleri sıraya alınır ve bağlantı geldiğinde
+        <strong>eklenme sırası korunarak</strong> gönderilir.
+      </p>
+    </app-card>
+  </div>
+</div>

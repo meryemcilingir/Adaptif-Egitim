@@ -1,0 +1,49 @@
+.achievements {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+}
+
+.achievement {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle);
+
+  &.is-unlocked {
+    border-color: var(--color-success-border);
+    background: var(--color-success-subtle);
+  }
+}
+
+.achievement__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  flex: none;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-border);
+  color: var(--color-text-subtle);
+}
+
+.achievement.is-unlocked .achievement__icon {
+  color: var(--color-success-text);
+  border-color: var(--color-success-border);
+}
+
+.achievement__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+
+  p {
+    margin: 0;
+  }
+}

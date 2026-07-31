@@ -1,0 +1,38 @@
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.observer__notice {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-info-subtle);
+  border: var(--border-width) solid var(--color-info-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-info-text);
+
+  app-icon {
+    margin-top: 2px;
+  }
+}
+
+.observer__suppressed {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  padding: var(--space-2) 0;
+}
+
+.observer__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 4px 10px;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  color: var(--color-text-secondary);
+}

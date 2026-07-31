@@ -1,0 +1,309 @@
+@if (facade.isExamDetailLoading()) {
+  <app-loading-state variant="skeleton-card" [rows]="4" message="Sınav yükleniyor…" />
+} @else if (facade.hasExamDetailError()) {
+  <app-error-state [error]="facade.examDetailError()" title="Sınav yüklenemedi" (retry)="reload()" />
+} @else if (detail(); as view) {
+  <div class="page">
+    <app-breadcrumb [items]="breadcrumbs()" />
+
+    <header class="page-header">
+      <div class="detail-title">
+        <div class="row-wrap gap-2">
+          <app-status-badge
+            [label]="statusView().label"
+            [tone]="statusView().tone"
+            [icon]="statusView().icon"
+          />
+          <app-status-badge [label]="runtimeLabel()" [tone]="runtimeTone()" [dot]="true" />
+        </div>
+
+        <h1 class="text-h1">{{ view.exam.title }}</h1>
+        <p class="text-sm text-muted">
+          {{ view.courseCode }} · {{ view.courseName }}
+          @if (view.cohortNames.length > 0) {
+            — {{ view.cohortNames.join(', ') }}
+          }
+        </p>
+      </div>
+
+      <div class="row-wrap gap-2">
+        @if (canWrite()) {
+          @if (canPublish() && hasWorkflowActions(view.exam.state)) {
+            <app-publish-actions
+              [state]="view.exam.state"
+              [pendingTarget]="pendingTarget()"
+              (transitionRequested)="onTransition($event)"
+            />
+          }
+
+          @if (canEdit()) {
+            <app-button variant="secondary" icon="square-pen" (pressed)="openWizard()">
+              Sihirbazda düzenle
+            </app-button>
+          }
+
+          <app-button variant="ghost" icon="copy" (pressed)="clone('clone')">Klonla</app-button>
+
+          @if (view.exam.state === 'DRAFT') {
+            <app-button variant="ghost" icon="trash-2" (pressed)="confirmDelete()">Sil</app-button>
+          }
+        }
+      </div>
+    </header>
+
+    @if (!view.isEditable) {
+      <p class="notice text-sm" role="note">
+        <app-icon name="lock" [size]="15" />
+        Bu sınav "{{ statusView().label }}" durumunda ve doğrudan düzenlenemez. Değişiklik için
+        taslağa geri alın ya da klonlayarak yeni bir sınav oluşturun.
+      </p>
+    }
+
+    <app-tabs [tabs]="tabs" [activeId]="tab()" (tabChange)="onTabChange($event)" />
+
+    <div class="detail-grid">
+      <div class="detail-grid__main">
+        @switch (tab()) {
+          @case ('overview') {
+            <app-card title="Sınav bilgisi">
+              <dl class="meta">
+                <div class="meta__wide">
+                  <dt>Açıklama</dt>
+                  <dd>{{ view.exam.description || '—' }}</dd>
+                </div>
+                <div>
+                  <dt>Süre</dt>
+                  <dd class="tabular">{{ view.exam.durationMinutes }} dk</dd>
+                </div>
+                <div>
+                  <dt>Açılış</dt>
+                  <dd>{{ view.exam.opensAt | appRelativeTime }}</dd>
+                </div>
+                <div>
+                  <dt>Kapanış</dt>
+                  <dd>{{ view.exam.closesAt | appRelativeTime }}</dd>
+                </div>
+                <div>
+                  <dt>Geçme puanı</dt>
+                  <dd class="tabular">{{ view.exam.rules.passingScore }}</dd>
+                </div>
+                <div>
+                  <dt>Deneme hakkı</dt>
+                  <dd class="tabular">{{ view.exam.rules.maxAttempts }}</dd>
+                </div>
+                <div>
+                  <dt>Soru sırası</dt>
+                  <dd>{{ view.exam.rules.shuffleQuestions ? 'Karışık' : 'Sabit' }}</dd>
+                </div>
+              </dl>
+
+              @if (view.exam.instructions) {
+                <div class="instructions">
+                  <span class="text-overline text-muted">Yönerge</span>
+                  <p class="text-sm">{{ view.exam.instructions }}</p>
+                </div>
+              }
+            </app-card>
+
+            <app-card title="Blueprint özeti">
+              @if (view.blueprintSummary; as summary) {
+                <dl class="meta">
+                  <div class="meta__wide">
+                    <dt>Ölçme planı</dt>
+                    <dd>{{ view.blueprintName }}</dd>
+                  </div>
+                  <div>
+                    <dt>Hedef soru</dt>
+                    <dd class="tabular">{{ summary.totalQuestions }}</dd>
+                  </div>
+                  <div>
+                    <dt>Hedef puan</dt>
+                    <dd class="tabular">{{ summary.targetTotalPoints }}</dd>
+                  </div>
+                  <div>
+                    <dt>Kazanım kapsaması</dt>
+                    <dd class="tabular">%{{ summary.coveragePercent }}</dd>
+                  </div>
+                </dl>
+              } @else {
+                <app-empty-state
+                  icon="file-text"
+                  title="Blueprint bağlı değil"
+                  description="Sınav bir ölçme planına bağlanmadan yayına alınamaz."
+                />
+              }
+            </app-card>
+
+            <app-card title="Ölçülen kazanımlar">
+              @if (view.outcomes.length === 0) {
+                <app-empty-state
+                  icon="target"
+                  title="Kazanım yok"
+                  description="Sınava soru eklendiğinde ölçülen kazanımlar burada listelenir."
+                />
+              } @else {
+                <ul class="outcomes">
+                  @for (outcome of view.outcomes; track outcome.id) {
+                    <li class="outcomes__item">
+                      <span class="text-sm text-body-strong">{{ outcome.code }}</span>
+                      <span class="text-xs text-subtle">{{ outcome.title }}</span>
+                    </li>
+                  }
+                </ul>
+              }
+            </app-card>
+
+            <app-card title="İstatistikler" description="Deneme verisinden türetilir">
+              @if (view.statistics.attemptCount === 0) {
+                <app-empty-state
+                  icon="chart-column"
+                  title="Henüz deneme yok"
+                  description="Sınav uygulandığında sonuç istatistikleri burada oluşur."
+                />
+              } @else {
+                <dl class="meta">
+                  <div>
+                    <dt>Deneme</dt>
+                    <dd class="tabular">{{ view.statistics.attemptCount }}</dd>
+                  </div>
+                  <div>
+                    <dt>Ortalama puan</dt>
+                    <dd class="tabular">
+                      @if (view.statistics.averageScorePercent !== null) {
+                        %{{ view.statistics.averageScorePercent }}
+                      } @else {
+                        —
+                      }
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Geçme oranı</dt>
+                    <dd class="tabular">
+                      @if (view.statistics.passRatePercent !== null) {
+                        %{{ view.statistics.passRatePercent }}
+                      } @else {
+                        —
+                      }
+                    </dd>
+                  </div>
+                  <div>
+                    <dt>Ortalama süre</dt>
+                    <dd class="tabular">
+                      @if (view.statistics.averageDurationMinutes !== null) {
+                        {{ view.statistics.averageDurationMinutes }} dk
+                      } @else {
+                        —
+                      }
+                    </dd>
+                  </div>
+                </dl>
+              }
+            </app-card>
+          }
+
+          @case ('questions') {
+            <app-card
+              [title]="'Sorular · ' + view.questions.length"
+              description="Sınav soruya değil, sorunun yayınlanmış sürümüne bağlanır"
+            >
+              @if (view.questions.length === 0) {
+                <app-empty-state
+                  icon="list-checks"
+                  title="Sınavda soru yok"
+                  description="Sihirbazın soru seçimi adımından otomatik seçim yapabilirsiniz."
+                />
+              } @else {
+                <ol class="questions">
+                  @for (question of view.questions; track question.questionId) {
+                    <li class="question">
+                      <span class="question__order tabular">{{ question.order }}</span>
+                      <div class="question__body">
+                        <span class="text-sm text-body-strong">{{ question.title }}</span>
+                        <span class="text-xs text-subtle">
+                          {{ question.code }} · {{ question.typeLabel }} ·
+                          {{ question.difficultyLabel }} · {{ question.points }} puan · v{{
+                            question.versionNumber
+                          }}
+                          @if (question.outcomeCodes.length > 0) {
+                            · {{ question.outcomeCodes.join(', ') }}
+                          }
+                        </span>
+                      </div>
+
+                      @if (!question.isPublished) {
+                        <app-status-badge label="Yayında değil" tone="danger" icon="circle-alert" />
+                      } @else if (!question.isLatestVersion) {
+                        <app-status-badge
+                          label="Eski sürüm"
+                          tone="warning"
+                          icon="triangle-alert"
+                        />
+                      }
+                    </li>
+                  }
+                </ol>
+              }
+            </app-card>
+          }
+
+          @case ('preview') {
+            <app-card
+              title="Önizleme"
+              description="Öğrencinin göreceği hâle yakın gösterim (sayaç örnektir)"
+            >
+              <app-exam-preview
+                [title]="view.exam.title"
+                [courseCode]="view.courseCode"
+                [instructions]="view.exam.instructions"
+                [durationMinutes]="view.exam.durationMinutes"
+                [totalPoints]="view.exam.totalPoints"
+                [questions]="view.questions"
+              />
+            </app-card>
+          }
+
+          @case ('history') {
+            <app-card title="Yayın geçmişi" description="Denetim kaydından okunur">
+              @if (view.publishHistory.length === 0) {
+                <app-empty-state
+                  icon="history"
+                  title="Kayıt yok"
+                  description="Sınav üzerinde yapılan durum değişiklikleri burada listelenir."
+                />
+              } @else {
+                <ul class="history">
+                  @for (event of view.publishHistory; track event.id) {
+                    <li class="history__item">
+                      <span class="history__dot" aria-hidden="true"></span>
+                      <div class="history__body">
+                        <span class="text-sm text-body-strong">{{ event.actionLabel }}</span>
+                        <span class="text-xs text-subtle">
+                          {{ event.actorName }} · {{ event.at | appRelativeTime }}
+                        </span>
+                        @if (event.reason) {
+                          <span class="text-xs history__reason">{{ event.reason }}</span>
+                        }
+                      </div>
+                    </li>
+                  }
+                </ul>
+              }
+            </app-card>
+          }
+        }
+      </div>
+
+      <app-constraint-panel
+        class="detail-grid__side"
+        [snapshot]="view.constraints"
+        (issueSelect)="onIssueSelect()"
+      />
+    </div>
+  </div>
+} @else {
+  <app-empty-state
+    icon="inbox"
+    title="Sınav bulunamadı"
+    description="Aradığınız sınav silinmiş veya kapsamınız dışında olabilir."
+  />
+}

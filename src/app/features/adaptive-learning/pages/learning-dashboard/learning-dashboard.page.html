@@ -1,0 +1,81 @@
+<div class="page">
+  <header class="page-header">
+    <div class="dashboard__intro">
+      <h1 class="text-h1">{{ greeting() }}, {{ firstName() }}</h1>
+      <p class="dashboard__meta text-sm text-muted">
+        <app-status-badge [label]="roleLabel()" tone="primary" icon="shield-check" />
+        @if (facade.subline(); as subline) {
+          <span>{{ subline }}</span>
+        }
+        @if (facade.generatedAt(); as generatedAt) {
+          <span>· Son güncelleme {{ generatedAt | appRelativeTime }}</span>
+        }
+      </p>
+    </div>
+
+    <div class="row gap-2">
+      <app-button variant="ghost" icon="database" (pressed)="openDevTools()">
+        Geliştirici paneli
+      </app-button>
+      <app-button
+        variant="secondary"
+        icon="refresh-cw"
+        [loading]="facade.isRefreshing()"
+        (pressed)="refresh()"
+      >
+        Yenile
+      </app-button>
+    </div>
+  </header>
+
+  @if (facade.isLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="4" />
+    <app-loading-state variant="skeleton-chart" />
+  } @else if (facade.hasError()) {
+    <app-error-state
+      [error]="facade.error()"
+      title="Panel verileri yüklenemedi"
+      (retry)="refresh()"
+    />
+  } @else if (facade.snapshot(); as snapshot) {
+    @switch (snapshot.role) {
+      @case ('STUDENT') {
+        <app-student-dashboard
+          [data]="asStudent(snapshot)"
+          (recommendationStart)="onRecommendationStart($event)"
+          (notificationRead)="onNotificationRead($event)"
+        />
+      }
+      @case ('INSTRUCTOR') {
+        <app-instructor-dashboard
+          [data]="asInstructor(snapshot)"
+          (notificationRead)="onNotificationRead($event)"
+        />
+      }
+      @case ('ASSESSMENT_SPECIALIST') {
+        <app-measurement-dashboard
+          [data]="asMeasurement(snapshot)"
+          (notificationRead)="onNotificationRead($event)"
+        />
+      }
+      @case ('PROGRAM_MANAGER') {
+        <app-program-manager-dashboard
+          [data]="asProgramManager(snapshot)"
+          (notificationRead)="onNotificationRead($event)"
+        />
+      }
+      @case ('OBSERVER') {
+        <app-observer-dashboard
+          [data]="asObserver(snapshot)"
+          (notificationRead)="onNotificationRead($event)"
+        />
+      }
+      @case ('PLATFORM_ADMIN') {
+        <app-admin-dashboard
+          [data]="asAdmin(snapshot)"
+          (notificationRead)="onNotificationRead($event)"
+        />
+      }
+    }
+  }
+</div>

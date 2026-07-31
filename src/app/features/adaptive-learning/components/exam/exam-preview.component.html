@@ -1,0 +1,101 @@
+<div class="preview">
+  <!-- Sınav başlığı: öğrencinin üstte göreceği şerit -->
+  <header class="exam-header">
+    <div class="exam-header__titles">
+      <span class="text-overline exam-header__course">{{ courseCode() }}</span>
+      <h3 class="text-h2">{{ title() || 'Sınav adı girilmedi' }}</h3>
+    </div>
+
+    <div class="exam-header__meta">
+      <span class="exam-header__timer" title="Örnek sayaç — gerçek oturum Sprint 7'de">
+        <app-icon name="timer" [size]="15" />
+        <span class="tabular">{{ mockTimer() }}</span>
+      </span>
+      <span class="exam-header__chip">{{ questions().length }} soru</span>
+      <span class="exam-header__chip">{{ totalPoints() }} puan</span>
+    </div>
+  </header>
+
+  @if (instructions()) {
+    <section class="instructions" aria-label="Sınav yönergesi">
+      <app-icon name="info" [size]="15" />
+      <p class="text-sm">{{ instructions() }}</p>
+    </section>
+  }
+
+  @if (questions().length === 0) {
+    <p class="empty text-sm">
+      Sınavda henüz soru yok. Önizleme için önce soru seçimi yapın.
+    </p>
+  } @else {
+    <div class="body">
+      <!-- Soru gezinme paneli -->
+      <nav class="navigator" aria-label="Soru gezinme">
+        <span class="text-overline text-muted">Sorular</span>
+        <div class="navigator__grid">
+          @for (question of questions(); track question.questionId; let i = $index) {
+            <button
+              type="button"
+              class="navigator__item"
+              [class.is-current]="i === index()"
+              [attr.aria-current]="i === index() ? 'true' : null"
+              [attr.aria-label]="i + 1 + '. soruya git'"
+              (click)="goTo(i)"
+            >
+              {{ i + 1 }}
+            </button>
+          }
+        </div>
+      </nav>
+
+      <!-- Geçerli soru -->
+      @if (current(); as question) {
+        <article class="question">
+          <header class="question__head">
+            <span class="text-overline text-muted">
+              Soru {{ index() + 1 }} / {{ questions().length }}
+            </span>
+            <span class="question__points tabular">{{ question.points }} puan</span>
+          </header>
+
+          <p class="question__title text-body-strong">{{ question.title }}</p>
+          <p class="question__stem text-sm">{{ question.stem }}</p>
+
+          <div class="question__meta">
+            <span class="question__chip">{{ question.typeLabel }}</span>
+            <span class="question__chip">{{ question.difficultyLabel }}</span>
+            @for (code of question.outcomeCodes; track code) {
+              <span class="question__chip">{{ code }}</span>
+            }
+          </div>
+
+          <p class="question__note text-xs">
+            <app-icon name="info" [size]="12" />
+            Cevap alanı sınav oturumu modülünde etkinleşecek.
+          </p>
+
+          <footer class="question__footer">
+            <app-button
+              variant="secondary"
+              size="sm"
+              icon="chevron-left"
+              [disabled]="!hasPrevious()"
+              (pressed)="previous()"
+            >
+              Önceki
+            </app-button>
+            <app-button
+              variant="secondary"
+              size="sm"
+              trailingIcon="chevron-right"
+              [disabled]="!hasNext()"
+              (pressed)="next()"
+            >
+              Sonraki
+            </app-button>
+          </footer>
+        </article>
+      }
+    </div>
+  }
+</div>

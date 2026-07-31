@@ -1,0 +1,151 @@
+<div class="page">
+  @if (facade.isDetailLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="3" />
+  } @else if (facade.hasDetailError()) {
+    <app-error-state
+      [error]="facade.detailError()"
+      title="Kazanım yüklenemedi"
+      (retry)="facade.loadDetail(id())"
+    />
+  } @else if (facade.detail(); as outcome) {
+    <header class="page-header">
+      <div class="detail__intro">
+        <app-button variant="ghost" size="sm" icon="arrow-left" (pressed)="goBack()">
+          Kazanımlar
+        </app-button>
+
+        <div class="detail__title">
+          <span class="text-overline text-muted">{{ outcome.code }} · {{ courseLabel() }}</span>
+          <h1 class="text-h1">{{ outcome.title }}</h1>
+        </div>
+      </div>
+
+      <div class="detail__actions">
+        @if (canWrite()) {
+          <app-publish-actions
+            [state]="outcome.state"
+            [disabled]="facade.isSaving()"
+            [pendingTarget]="pendingTarget()"
+            (transitionRequested)="onTransition($event)"
+          />
+        } @else {
+          <app-status-badge
+            [label]="toneFor(outcome.state).label"
+            [tone]="toneFor(outcome.state).tone"
+            [icon]="toneFor(outcome.state).icon"
+          />
+        }
+
+        <app-button variant="ghost" icon="workflow" (pressed)="openGraph(outcome)">
+          Haritada gör
+        </app-button>
+
+        @if (canEdit()) {
+          <app-button variant="secondary" icon="pencil-line" (pressed)="openForm()">
+            Düzenle
+          </app-button>
+        }
+        @if (canWrite() && outcome.state === 'DRAFT') {
+          <app-button variant="ghost" icon="x" (pressed)="confirmDelete()">Sil</app-button>
+        }
+      </div>
+    </header>
+
+    <section class="grid grid-4" aria-label="Kazanım özeti">
+      <app-card padding="compact">
+        <div class="stat">
+          <span class="text-overline text-muted">Bilişsel seviye</span>
+          <span class="text-h3">{{ labels.level[outcome.level] }}</span>
+        </div>
+      </app-card>
+      <app-card padding="compact">
+        <div class="stat">
+          <span class="text-overline text-muted">Zorluk</span>
+          <span class="text-h3">{{ labels.difficulty[outcome.difficulty] }}</span>
+        </div>
+      </app-card>
+      <app-card padding="compact">
+        <div class="stat">
+          <span class="text-overline text-muted">Tahmini süre</span>
+          <span class="text-h3">{{ outcome.estimatedDurationMinutes | appDuration }}</span>
+        </div>
+      </app-card>
+      <app-card padding="compact">
+        <div class="stat">
+          <span class="text-overline text-muted">Ağırlık</span>
+          <span class="text-h3">{{ outcome.weight }}</span>
+        </div>
+      </app-card>
+    </section>
+
+    <section class="grid grid-2-1" aria-label="Kazanım bilgileri">
+      <app-card title="Açıklama" padding="default">
+        @if (outcome.description) {
+          <p class="text-body">{{ outcome.description }}</p>
+        } @else {
+          <p class="text-sm text-muted">Bu kazanım için açıklama girilmemiş.</p>
+        }
+
+        @if (outcome.tags.length > 0) {
+          <div class="tags">
+            @for (tag of outcome.tags; track tag) {
+              <span class="tags__chip">{{ tag }}</span>
+            }
+          </div>
+        }
+      </app-card>
+
+      <app-card title="Künye" padding="default">
+        <dl class="meta">
+          <div class="meta__row">
+            <dt class="text-sm text-muted">Ders</dt>
+            <dd class="text-body-strong truncate">{{ courseLabel() || '—' }}</dd>
+          </div>
+          <div class="meta__row">
+            <dt class="text-sm text-muted">Soru sayısı</dt>
+            <dd class="text-body-strong tabular">{{ outcome.questionCount }}</dd>
+          </div>
+          <div class="meta__row">
+            <dt class="text-sm text-muted">İçerik sayısı</dt>
+            <dd class="text-body-strong tabular">{{ outcome.contentCount }}</dd>
+          </div>
+          <div class="meta__row">
+            <dt class="text-sm text-muted">Son güncelleme</dt>
+            <dd class="text-body-strong">{{ outcome.updatedAt | appRelativeTime }}</dd>
+          </div>
+        </dl>
+      </app-card>
+    </section>
+
+    <section aria-label="Önkoşullar">
+      <app-card
+        title="Önkoşullar"
+        description="Bu kazanımdan önce edinilmesi gereken kazanımlar. Döngü oluşturan seçimler engellenir."
+        padding="default"
+      >
+        <app-prerequisite-editor
+          [prerequisites]="facade.prerequisites()"
+          [dependents]="facade.dependents()"
+          [options]="prerequisiteOptions()"
+          [editable]="canEdit()"
+          [saving]="isSavingPrerequisites()"
+          (save)="onSavePrerequisites($event)"
+          (outcomeSelect)="openOutcome($event)"
+        />
+      </app-card>
+    </section>
+
+    @if (isFormOpen()) {
+      <app-outcome-form
+        #form
+        [outcome]="outcome"
+        [courses]="courseOptions()"
+        [prerequisiteOptions]="prerequisiteOptions()"
+        [tagSuggestions]="tagPool()"
+        [saving]="facade.isSaving()"
+        (save)="onSave($event, form)"
+        (cancel)="closeForm()"
+      />
+    }
+  }
+</div>

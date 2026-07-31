@@ -1,0 +1,291 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">İçerikler</h1>
+      <p class="text-sm text-muted">
+        Video, PDF, sunum, kısa sınav ve ödevleri yönetin; kazanımlara bağlayarak öğrenme yolunu
+        besleyin.
+      </p>
+    </div>
+
+    <div class="row gap-2">
+      <div class="view-toggle" role="group" aria-label="Görünüm">
+        <button
+          type="button"
+          class="view-toggle__button"
+          [class.is-active]="isGrid()"
+          [attr.aria-pressed]="isGrid()"
+          (click)="setViewMode('grid')"
+        >
+          <app-icon name="grid-2x2" [size]="15" label="Kart görünümü" />
+          <span>Kart</span>
+        </button>
+        <button
+          type="button"
+          class="view-toggle__button"
+          [class.is-active]="!isGrid()"
+          [attr.aria-pressed]="!isGrid()"
+          (click)="setViewMode('list')"
+        >
+          <app-icon name="layout-list" [size]="15" label="Liste görünümü" />
+          <span>Liste</span>
+        </button>
+      </div>
+
+      @if (canCreate()) {
+        <app-button variant="primary" icon="plus" (pressed)="openForm(null)"
+          >Yeni içerik</app-button
+        >
+      }
+    </div>
+  </header>
+
+  <app-filter-bar
+    [query]="facade.query()"
+    [filters]="filters()"
+    searchPlaceholder="İçerik başlığı, açıklaması, yazarı veya etiketinde ara…"
+    (searchChange)="facade.setSearch($event)"
+    (filterChange)="facade.setFilter($event.key, $event.value)"
+    (clearAll)="facade.clearFilters()"
+  />
+
+  @if (facade.hasSelection()) {
+    <div class="bulk-bar" role="region" aria-label="Toplu işlemler">
+      <span class="text-sm text-body-strong">{{ facade.selectedCount() }} içerik seçildi</span>
+      <div class="row gap-2">
+        <app-dropdown
+          [items]="bulkActions"
+          triggerText="Toplu işlem"
+          triggerVariant="secondary"
+          triggerSize="md"
+          triggerIcon="square-check"
+          (itemSelect)="onBulkAction($event)"
+        />
+        <app-button variant="ghost" (pressed)="facade.clearSelection()">Seçimi temizle</app-button>
+      </div>
+    </div>
+  }
+
+  @if (isGrid()) {
+    @if (isLoading()) {
+      <app-loading-state variant="skeleton-card" [rows]="8" message="İçerikler yükleniyor…" />
+    } @else if (hasError()) {
+      <app-error-state
+        [error]="facade.error()"
+        title="İçerikler yüklenemedi"
+        (retry)="facade.load()"
+      />
+    } @else if (facade.isEmpty()) {
+      <app-empty-state
+        icon="library"
+        title="İçerik bulunamadı"
+        [description]="
+          facade.isFiltered()
+            ? 'Seçtiğiniz filtrelere uyan içerik yok. Filtreleri temizleyip tekrar deneyin.'
+            : 'Bu kapsamda henüz içerik oluşturulmamış.'
+        "
+        [filtered]="facade.isFiltered()"
+        [actionLabel]="canCreate() ? 'Yeni içerik' : null"
+        (action)="openForm(null)"
+        (clearFilters)="facade.clearFilters()"
+      />
+    } @else {
+      <div class="content-grid">
+        @for (item of facade.items(); track item.id) {
+          <article
+            class="content-card"
+            [class.is-selected]="facade.isSelected(item.id)"
+            [class.is-busy]="facade.mutatingIds().has(item.id)"
+          >
+            <div class="content-card__media">
+              @if (item.thumbnailUrl) {
+                <img class="content-card__image" [src]="item.thumbnailUrl" [alt]="item.title" />
+              } @else {
+                <div class="content-card__placeholder">
+                  <app-icon [name]="typeIcon(item.type)" [size]="28" />
+                </div>
+              }
+
+              @if (canWrite()) {
+                <label class="content-card__select">
+                  <input
+                    type="checkbox"
+                    [checked]="facade.isSelected(item.id)"
+                    [attr.aria-label]="item.title + ' seç'"
+                    (change)="facade.toggleSelection(item.id)"
+                  />
+                </label>
+              }
+
+              <span class="content-card__type">
+                <app-icon [name]="typeIcon(item.type)" [size]="13" />
+                {{ typeLabel(item.type) }}
+              </span>
+            </div>
+
+            <div class="content-card__body">
+              <div class="content-card__top">
+                <app-status-badge
+                  [label]="toneFor(item.state).label"
+                  [tone]="toneFor(item.state).tone"
+                  [icon]="toneFor(item.state).icon"
+                  [subtle]="true"
+                />
+                <span class="text-xs text-subtle">{{ item.estimatedDurationMinutes }} dk</span>
+              </div>
+
+              <h3 class="content-card__title text-body-strong">{{ item.title }}</h3>
+              @if (item.description) {
+                <p class="content-card__description text-sm text-muted">{{ item.description }}</p>
+              }
+
+              <dl class="content-card__meta">
+                <div>
+                  <dt>Ders</dt>
+                  <dd>{{ courseLabel(item.courseId) || '—' }}</dd>
+                </div>
+                <div>
+                  <dt>Kazanım</dt>
+                  <dd>{{ outcomeCode(item.outcomeId) }}</dd>
+                </div>
+                <div>
+                  <dt>Zorluk</dt>
+                  <dd>{{ difficultyLabel(item.difficulty) }}</dd>
+                </div>
+              </dl>
+
+              @if (item.tags.length > 0) {
+                <div class="content-card__tags">
+                  @for (tag of item.tags.slice(0, 3); track tag) {
+                    <span class="cell-tag">{{ tag }}</span>
+                  }
+                  @if (item.tags.length > 3) {
+                    <span class="text-xs text-subtle">+{{ item.tags.length - 3 }}</span>
+                  }
+                </div>
+              }
+            </div>
+
+            <footer class="content-card__footer">
+              <app-button variant="ghost" size="sm" icon="eye" (pressed)="openPreview(item)">
+                Önizle
+              </app-button>
+              <div class="row gap-1">
+                <app-button variant="ghost" size="sm" (pressed)="openDetail(item)"
+                  >Detay</app-button
+                >
+                <app-dropdown
+                  [items]="rowActions(item)"
+                  triggerLabel="İçerik işlemleri"
+                  (itemSelect)="onRowAction(item, $event)"
+                />
+              </div>
+            </footer>
+          </article>
+        }
+      </div>
+
+      <app-pagination
+        [page]="facade.query().page"
+        [size]="facade.query().size"
+        [total]="facade.total()"
+        (pageChange)="facade.goToPage($event)"
+        (sizeChange)="facade.setPageSize($event)"
+      />
+    }
+  } @else {
+    <app-table
+      [columns]="columns()"
+      [rows]="facade.items()"
+      [query]="facade.query()"
+      [total]="facade.total()"
+      [status]="facade.status()"
+      [error]="facade.error()"
+      [filtered]="facade.isFiltered()"
+      [rowClickable]="true"
+      [mutatingIds]="facade.mutatingIds()"
+      emptyTitle="İçerik bulunamadı"
+      emptyDescription="Bu kapsamda görüntülenecek içerik yok."
+      (sortChange)="facade.toggleSort($event)"
+      (pageChange)="facade.goToPage($event)"
+      (sizeChange)="facade.setPageSize($event)"
+      (rowClick)="openDetail($event)"
+      (retry)="facade.load()"
+      (clearFilters)="facade.clearFilters()"
+    />
+  }
+</div>
+
+<ng-template #selectCell let-content>
+  <label class="row-select" (click)="$event.stopPropagation()">
+    <input
+      type="checkbox"
+      [checked]="facade.isSelected(content.id)"
+      [attr.aria-label]="content.title + ' seç'"
+      (change)="facade.toggleSelection(content.id)"
+    />
+  </label>
+</ng-template>
+
+<ng-template #titleCell let-content>
+  <div class="cell-stack">
+    <span class="text-body-strong truncate">{{ content.title }}</span>
+    <span class="text-xs text-subtle truncate">
+      {{ courseLabel(content.courseId) || content.authorName }}
+    </span>
+  </div>
+</ng-template>
+
+<ng-template #typeCell let-content>
+  <span class="type-chip">
+    <app-icon [name]="typeIcon(content.type)" [size]="14" />
+    {{ typeLabel(content.type) }}
+  </span>
+</ng-template>
+
+<ng-template #outcomeCell let-content>
+  <div class="cell-stack">
+    <span class="text-sm">{{ outcomeCode(content.outcomeId) }}</span>
+    <span class="text-xs text-subtle">{{ difficultyLabel(content.difficulty) }}</span>
+  </div>
+</ng-template>
+
+<ng-template #stateCell let-content>
+  <app-status-badge
+    [label]="toneFor(content.state).label"
+    [tone]="toneFor(content.state).tone"
+    [icon]="toneFor(content.state).icon"
+  />
+</ng-template>
+
+<ng-template #actionsCell let-content>
+  <app-dropdown
+    [items]="rowActions(content)"
+    triggerLabel="İçerik işlemleri"
+    (itemSelect)="onRowAction(content, $event)"
+  />
+</ng-template>
+
+@if (isFormOpen()) {
+  <app-content-form
+    #form
+    [content]="editing()"
+    [courses]="courseOptions()"
+    [outcomes]="outcomeList()"
+    [tagSuggestions]="tagPool()"
+    [defaultCourseId]="currentCourseFilter()"
+    [saving]="facade.isSaving()"
+    (save)="onSave($event, form)"
+    (cancel)="closeForm()"
+  />
+}
+
+@if (preview(); as item) {
+  <app-content-preview
+    [content]="item"
+    [courseLabel]="courseLabel(item.courseId)"
+    [outcomeCode]="outcomeCode(item.outcomeId)"
+    (openDetail)="openDetail(item)"
+    (closed)="closePreview()"
+  />
+}

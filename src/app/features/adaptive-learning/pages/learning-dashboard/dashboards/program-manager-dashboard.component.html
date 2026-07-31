@@ -1,0 +1,146 @@
+@let dashboard = data();
+
+<app-kpi-grid [cards]="dashboard.kpis" />
+
+<app-quick-actions [actions]="dashboard.quickActions" />
+
+<app-progress-group [cards]="dashboard.progress" />
+
+<section class="grid grid-2-1" aria-label="Katalog dağılımı">
+  <app-chart-card
+    title="Program dağılımı"
+    description="Program başına ders sayısı"
+    type="bar"
+    [series]="programDistributionSeries()"
+    [categories]="programDistributionCategories()"
+    [height]="300"
+    [showLegend]="false"
+    emptyMessage="Henüz program tanımlanmamış."
+  />
+
+  <app-chart-card
+    title="Ders dağılımı"
+    description="Derslerin yayın durumu"
+    type="donut"
+    [series]="pipelineSeries()"
+    [labels]="pipelineCategories()"
+    [height]="300"
+  />
+</section>
+
+<section aria-label="Kazanım istatistikleri">
+  <app-chart-card
+    title="Kazanım istatistikleri"
+    description="Kazanımların zorluk dağılımı"
+    type="bar"
+    [series]="outcomeStatisticsSeries()"
+    [categories]="outcomeStatisticsCategories()"
+    [height]="240"
+    [showLegend]="false"
+    emptyMessage="Henüz kazanım tanımlanmamış."
+  />
+</section>
+
+<section aria-label="Cohort karşılaştırması">
+  <app-chart-card
+    title="Cohort karşılaştırması"
+    description="Gizlilik eşiği altındaki gruplar sıfır olarak raporlanır"
+    type="bar"
+    [series]="cohortSeries()"
+    [categories]="cohortCategories()"
+    valueSuffix="%"
+    [height]="300"
+    [showLegend]="false"
+  />
+</section>
+
+<section aria-label="Cohort × kazanım matrisi">
+  <app-chart-card
+    title="Cohort × kazanım ustalık matrisi"
+    description="Gizlilik eşiğini geçen gruplar gösterilir"
+    type="heatmap"
+    [series]="matrixSeries()"
+    [height]="360"
+    [showGrid]="false"
+    emptyMessage="Matris için yeterli ölçüm bulunmuyor."
+  />
+</section>
+
+<section class="grid grid-2-1" aria-label="Program trendi ve sınavlar">
+  <app-chart-card
+    title="Cohort başarı trendi"
+    description="Zaman içinde grup ortalamaları"
+    type="line"
+    [series]="trendSeries()"
+    [categories]="trendCategories()"
+    valueSuffix="%"
+    [height]="300"
+    emptyMessage="Trend için yeterli sınav sonucu yok."
+  />
+
+  <app-card title="Yaklaşan sınavlar" padding="compact">
+    <app-upcoming-exams
+      [exams]="dashboard.upcomingExams"
+      [showCohorts]="true"
+      (examSelect)="openExams()"
+    />
+  </app-card>
+</section>
+
+<section aria-label="Ders sağlığı">
+  <app-card
+    title="Ders sağlığı"
+    description="Ustalık ortalaması en düşük dersler önce listelenir"
+    padding="none"
+  >
+    <div class="health">
+      @for (course of dashboard.courseHealth; track course.courseId) {
+        <article class="health__row" (click)="openCourses()">
+          <div class="health__title">
+            <span class="text-body-strong">{{ course.courseCode }}</span>
+            <span class="text-xs text-muted truncate">{{ course.courseName }}</span>
+          </div>
+
+          <app-status-badge
+            [label]="statusFor(course.state).label"
+            [tone]="statusFor(course.state).tone"
+          />
+
+          <div class="health__metric">
+            <span class="text-xs text-muted">Eğitmen</span>
+            <span class="text-sm truncate">{{ course.instructorName }}</span>
+          </div>
+
+          <div class="health__metric">
+            <span class="text-xs text-muted">Yayındaki kazanım</span>
+            <span class="text-body-strong tabular">
+              {{ course.publishedOutcomeCount }} / {{ course.outcomeCount }}
+            </span>
+          </div>
+
+          <div class="health__metric">
+            <span class="text-xs text-muted">Risk altındaki öğrenci</span>
+            <span class="text-body-strong tabular">{{ course.atRiskCount }}</span>
+          </div>
+
+          <div class="health__progress">
+            <app-progress-bar
+              [value]="course.averageMastery"
+              [max]="100"
+              [tone]="course.averageMastery >= 60 ? 'success' : 'warning'"
+              [label]="course.courseCode + ' ortalama ustalık'"
+              [showLabel]="true"
+            />
+          </div>
+        </article>
+      }
+    </div>
+  </app-card>
+</section>
+
+<app-dashboard-common
+  [activity]="dashboard.recentActivity"
+  [notifications]="dashboard.notifications"
+  [statistics]="dashboard.statistics"
+  (notificationRead)="notificationRead.emit($event)"
+/>

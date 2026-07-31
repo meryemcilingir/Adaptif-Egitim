@@ -1,0 +1,124 @@
+@use '../../../../../styles/breakpoints' as t;
+
+.editor {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) minmax(300px, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+
+  @media (max-width: t.$bp-lg) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.editor__main,
+.editor__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-block-end: var(--space-3);
+}
+
+/* ── Seçenek satırı ──────────────────────────────────────────────────────── */
+
+.option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle);
+}
+
+.option__correct {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding-block-start: var(--space-2);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  user-select: none;
+}
+
+.option__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* ── Eşleştirme ve sıralama satırları ────────────────────────────────────── */
+
+.pair-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-subtle);
+
+  @media (max-width: t.$bp-md) {
+    grid-template-columns: minmax(0, 1fr) auto;
+
+    app-icon {
+      display: none;
+    }
+  }
+}
+
+.sequence-row {
+  display: grid;
+  grid-template-columns: 90px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.attachment {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 2fr) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-2);
+
+  @media (max-width: t.$bp-md) {
+    grid-template-columns: minmax(0, 1fr) auto;
+  }
+}
+
+/* ── Uyarılar ve anahtarlar ──────────────────────────────────────────────── */
+
+.issues {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-block-end: var(--space-3);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-danger-border);
+  border-radius: var(--radius-md);
+  background: var(--color-danger-subtle);
+  color: var(--color-danger-text);
+
+  p {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin: 0;
+  }
+}
+
+.switch {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-block-start: var(--space-3);
+  cursor: pointer;
+  user-select: none;
+}

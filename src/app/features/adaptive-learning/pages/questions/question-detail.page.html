@@ -1,0 +1,221 @@
+@if (facade.isQuestionDetailLoading()) {
+  <app-loading-state variant="skeleton-card" [rows]="4" message="Soru yükleniyor…" />
+} @else if (facade.hasQuestionDetailError()) {
+  <app-error-state
+    [error]="facade.questionDetailError()"
+    title="Soru yüklenemedi"
+    (retry)="reload()"
+  />
+} @else if (detail(); as view) {
+  <div class="page">
+    <app-breadcrumb [items]="breadcrumbs()" />
+
+    <header class="page-header">
+      <div class="detail-title">
+        <app-question-badges
+          [question]="view.question"
+          [outcomeCode]="view.outcomes[0]?.code ?? null"
+        />
+        <h1 class="text-h1">{{ view.question.title }}</h1>
+        <p class="text-sm text-muted">
+          {{ view.question.code }} · {{ view.courseCode }} {{ view.courseName }}
+        </p>
+      </div>
+
+      <div class="row-wrap gap-2">
+        <app-button
+          variant="ghost"
+          [icon]="view.isFavorite ? 'star' : 'star'"
+          [ariaLabel]="view.isFavorite ? 'Favoriden çıkar' : 'Favorilere ekle'"
+          (pressed)="toggleFavorite()"
+        >
+          {{ view.isFavorite ? 'Favoride' : 'Favorile' }}
+        </app-button>
+
+        @if (canWrite()) {
+          @if (hasWorkflowActions(view.question.state)) {
+            <app-publish-actions
+              [state]="view.question.state"
+              [pendingTarget]="pendingTarget()"
+              (transitionRequested)="onTransition($event)"
+            />
+          }
+
+          @if (canEdit()) {
+            <app-button variant="secondary" icon="square-pen" (pressed)="openEditor()">
+              Düzenle
+            </app-button>
+          }
+          @if (canVersion()) {
+            <app-button variant="secondary" icon="history" (pressed)="createVersion()">
+              Yeni versiyon
+            </app-button>
+          }
+
+          <app-button variant="ghost" icon="copy" (pressed)="duplicate()">Kopyala</app-button>
+
+          @if (view.question.state !== 'PUBLISHED') {
+            <app-button variant="ghost" icon="trash-2" (pressed)="confirmDelete()">Sil</app-button>
+          }
+        }
+      </div>
+    </header>
+
+    @if (!view.isEditable) {
+      <div class="notice" role="note">
+        <app-icon name="lock" [size]="16" />
+        <p class="text-sm">
+          Bu soru "{{ view.question.state === 'PUBLISHED' ? 'Yayında' : 'Arşiv' }}" durumunda ve
+          doğrudan düzenlenemez. Değişiklik için yeni bir versiyon oluşturun; mevcut sürüm sınav
+          geçmişi için korunur.
+        </p>
+      </div>
+    }
+
+    <div class="detail-grid">
+      <div class="detail-grid__main">
+        <app-card title="Soru" [hasActions]="true">
+          <app-button
+            card-actions
+            variant="ghost"
+            size="sm"
+            [icon]="showAnswers() ? 'eye' : 'circle-check-big'"
+            (pressed)="toggleAnswers()"
+          >
+            {{ showAnswers() ? 'Öğrenci görünümü' : 'Cevapları göster' }}
+          </app-button>
+
+          <app-question-preview [question]="view.question" [showAnswers]="showAnswers()" />
+        </app-card>
+
+        <app-card
+          title="Versiyon geçmişi"
+          description="İki versiyon seçip aralarındaki farkı görebilirsiniz."
+        >
+          <app-version-history
+            [versions]="view.versions"
+            [publishedVersion]="view.question.publishedVersion"
+            (compare)="onCompare($event)"
+          />
+        </app-card>
+
+        <app-card title="Kullanım" description="Sorunun geçtiği sınavlar">
+          @if (view.usage.exams.length === 0) {
+            <app-empty-state
+              icon="file-text"
+              title="Henüz sınavda kullanılmadı"
+              description="Soru bir sınava eklendiğinde burada listelenir."
+            />
+          } @else {
+            <ul class="usage">
+              @for (exam of view.usage.exams; track exam.examId) {
+                <li class="usage__item">
+                  <div class="cell-stack">
+                    <span class="text-sm text-body-strong truncate">{{ exam.examTitle }}</span>
+                    <span class="text-xs text-subtle">
+                      {{ exam.courseCode }} · {{ exam.opensAt | appRelativeTime }}
+                    </span>
+                  </div>
+                  <span class="usage__state text-xs">{{ exam.state }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+      </div>
+
+      <aside class="detail-grid__side">
+        <app-card title="İstatistikler" description="Madde analizi sonuçları">
+          @if (view.statistics.sampleSize === 0) {
+            <app-empty-state
+              icon="microscope"
+              title="Yeterli veri yok"
+              description="Soru yeterli sayıda denemede kullanıldığında istatistikler burada oluşur."
+            />
+          } @else {
+            <dl class="stats">
+              <div>
+                <dt>Doğru cevaplama</dt>
+                <dd class="tabular">%{{ view.statistics.correctRatePercent }}</dd>
+              </div>
+              <div>
+                <dt>Ortalama süre</dt>
+                <dd class="tabular">{{ view.statistics.averageSolveTimeSeconds }} sn</dd>
+              </div>
+              <div>
+                <dt>Ayırt edicilik</dt>
+                <dd class="tabular">{{ view.statistics.discrimination }}</dd>
+              </div>
+              <div>
+                <dt>Örneklem</dt>
+                <dd class="tabular">{{ view.statistics.sampleSize }}</dd>
+              </div>
+            </dl>
+
+            @if (view.statistics.flags.length > 0) {
+              <div class="flags">
+                @for (flag of view.statistics.flags; track flag) {
+                  <span class="flag">{{ flag }}</span>
+                }
+              </div>
+            }
+          }
+        </app-card>
+
+        <app-card title="Kazanımlar">
+          @if (view.outcomes.length === 0) {
+            <p class="text-sm text-subtle">Bu soru bir kazanıma bağlı değil.</p>
+          } @else {
+            <ul class="outcomes">
+              @for (outcome of view.outcomes; track outcome.id) {
+                <li>
+                  <span class="text-sm text-body-strong">{{ outcome.code }}</span>
+                  <span class="text-xs text-subtle">{{ outcome.title }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+
+        <app-card title="Künye">
+          <dl class="meta-list">
+            <div>
+              <dt>Puan</dt>
+              <dd>{{ view.question.points }}</dd>
+            </div>
+            <div>
+              <dt>Tahmini çözüm süresi</dt>
+              <dd>{{ view.question.estimatedSolveTimeSeconds }} sn</dd>
+            </div>
+            <div>
+              <dt>Etiketler</dt>
+              <dd>{{ view.question.tags.join(', ') || '—' }}</dd>
+            </div>
+            <div>
+              <dt>Oluşturan</dt>
+              <dd>{{ view.createdByName }}</dd>
+            </div>
+            <div>
+              <dt>Güncelleyen</dt>
+              <dd>{{ view.updatedByName }}</dd>
+            </div>
+            <div>
+              <dt>Son güncelleme</dt>
+              <dd>{{ view.question.updatedAt | appRelativeTime }}</dd>
+            </div>
+          </dl>
+        </app-card>
+      </aside>
+    </div>
+  </div>
+
+  @if (facade.comparison(); as comparison) {
+    <app-version-compare [comparison]="comparison" (closed)="closeComparison()" />
+  }
+} @else {
+  <app-empty-state
+    icon="inbox"
+    title="Soru bulunamadı"
+    description="Aradığınız soru silinmiş veya kapsamınız dışında olabilir."
+  />
+}

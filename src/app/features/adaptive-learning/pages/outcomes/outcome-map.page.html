@@ -1,0 +1,125 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Kazanım haritası</h1>
+      <p class="text-sm text-muted">
+        Önkoşul ilişkileri soldan sağa akar. Bir düğüme tıklayarak komşularına odaklanın.
+      </p>
+    </div>
+
+    <div class="map__controls">
+      <app-select
+        selectId="map-course"
+        [options]="courseOptions()"
+        [placeholder]="null"
+        [ngModel]="selectedCourse()"
+        (ngModelChange)="onCourseChange($event)"
+      />
+      <app-button variant="secondary" icon="target" (pressed)="openList()">
+        Kazanım listesi
+      </app-button>
+    </div>
+  </header>
+
+  @if (facade.hasCycles()) {
+    <div class="map__alert" role="alert">
+      <app-icon name="triangle-alert" [size]="18" />
+      <div>
+        <p class="text-body-strong">Önkoşul döngüsü tespit edildi</p>
+        <p class="text-sm">
+          Aşağıdaki zincirler kendi üzerine kapanıyor. Bu kazanımlar sırayla edinilemez; önkoşul
+          bağlantılarından birini kaldırın.
+        </p>
+        <ul class="map__cycles">
+          @for (cycle of cycleCodes(); track cycle) {
+            <li class="map__cycle">{{ cycle }}</li>
+          }
+        </ul>
+      </div>
+    </div>
+  }
+
+  <section class="grid grid-2-1" aria-label="Harita ve seçim">
+    <app-card
+      title="Önkoşul grafiği"
+      [description]="nodeCount() + ' kazanım · ' + edgeCount() + ' bağlantı'"
+      padding="compact"
+    >
+      @if (facade.isGraphLoading()) {
+        <app-loading-state variant="skeleton-chart" />
+      } @else if (facade.hasGraphError()) {
+        <app-error-state
+          [error]="facade.graphError()"
+          title="Harita yüklenemedi"
+          (retry)="reload()"
+        />
+      } @else if (facade.isGraphEmpty()) {
+        <app-empty-state
+          icon="workflow"
+          title="Gösterilecek kazanım yok"
+          description="Seçili derste tanımlı kazanım bulunmuyor."
+          actionLabel="Kazanım listesine git"
+          actionIcon="target"
+          (action)="openList()"
+        />
+      } @else if (facade.graph(); as graph) {
+        <app-outcome-graph
+          [graph]="graph"
+          [focusId]="focus()"
+          (nodeSelect)="onNodeSelect($event)"
+        />
+      }
+    </app-card>
+
+    <app-card title="Seçili kazanım" padding="default">
+      @if (selectedNode(); as node) {
+        <div class="map__node">
+          <span class="text-overline text-muted">{{ node.courseCode }}</span>
+          <h3 class="text-h3">{{ node.code }}</h3>
+          <p class="text-sm text-muted">{{ node.title }}</p>
+
+          <dl class="map__meta">
+            <div>
+              <dt class="text-xs text-muted">Önkoşul</dt>
+              <dd class="text-body-strong tabular">{{ node.prerequisiteCount }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-muted">Bağımlı</dt>
+              <dd class="text-body-strong tabular">{{ node.dependentCount }}</dd>
+            </div>
+            <div>
+              <dt class="text-xs text-muted">Katman</dt>
+              <dd class="text-body-strong tabular">{{ node.depth + 1 }}</dd>
+            </div>
+          </dl>
+
+          <app-button
+            variant="secondary"
+            icon="external-link"
+            [fullWidth]="true"
+            (pressed)="openOutcome(node)"
+          >
+            Kazanım detayını aç
+          </app-button>
+        </div>
+      } @else {
+        <app-empty-state
+          icon="workflow"
+          title="Bir düğüm seçin"
+          description="Haritadaki bir kazanıma tıklayarak ayrıntılarını burada görebilirsiniz."
+        />
+      }
+
+      <div class="map__legend">
+        <p class="text-overline text-muted">Gösterim</p>
+        <ul>
+          <li><span class="dot dot--PUBLISHED"></span> Yayında</li>
+          <li><span class="dot dot--REVIEW"></span> İncelemede</li>
+          <li><span class="dot dot--DRAFT"></span> Taslak</li>
+          <li><span class="dot dot--ARCHIVED"></span> Arşiv</li>
+          <li><span class="line line--cycle"></span> Döngüye dâhil bağlantı</li>
+        </ul>
+      </div>
+    </app-card>
+  </section>
+</div>

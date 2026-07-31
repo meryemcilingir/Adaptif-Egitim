@@ -1,0 +1,103 @@
+@if (isLoading()) {
+  <div class="header__progress" role="status" aria-label="İstek sürüyor"></div>
+}
+
+<div class="header__start">
+  <app-button
+    class="header__menu-toggle"
+    variant="ghost"
+    size="sm"
+    icon="menu"
+    ariaLabel="Menüyü aç"
+    (pressed)="ui.toggleSidebar()"
+  />
+  <app-breadcrumb [items]="breadcrumb()" />
+</div>
+
+<form class="header__search" role="search" (submit)="onSearchSubmit($event)">
+  <app-icon name="search" [size]="15" />
+  <input
+    type="search"
+    class="header__search-input"
+    placeholder="Soru, kazanım veya sınav ara…"
+    aria-label="Genel arama"
+    [value]="search()"
+    (input)="onSearchInput($event)"
+  />
+</form>
+
+<div class="header__end">
+  @if (isOffline()) {
+    <app-status-badge label="Çevrimdışı" tone="danger" icon="wifi-off" />
+  }
+
+  @if (auth.canSwitchRole()) {
+    <app-dropdown
+      [items]="roleItems()"
+      triggerVariant="secondary"
+      triggerSize="sm"
+      [triggerIcon]="null"
+      [triggerText]="auth.activeRoleLabel()"
+      triggerLabel="Rol değiştir"
+      (itemSelect)="onRoleSelect($event)"
+    />
+  } @else {
+    <app-status-badge [label]="auth.activeRoleLabel()" tone="primary" icon="shield-check" />
+  }
+
+  <div class="header__notifications">
+    <button
+      type="button"
+      class="header__bell"
+      [attr.aria-expanded]="isPanelOpen()"
+      aria-haspopup="dialog"
+      [attr.aria-label]="
+        notifications.unreadCount() > 0
+          ? notifications.unreadCount() + ' okunmamış bildirim'
+          : 'Bildirimler'
+      "
+      (click)="togglePanel()"
+    >
+      <app-icon name="bell" [size]="17" />
+      @if (notifications.hasUnread()) {
+        <span class="header__bell-badge tabular">{{ notifications.unreadCount() }}</span>
+      }
+    </button>
+
+    @if (isPanelOpen()) {
+      <div class="header__panel" role="dialog" aria-label="Bildirimler">
+        <header class="header__panel-head">
+          <span class="text-body-strong">Bildirimler</span>
+          @if (notifications.hasUnread()) {
+            <button type="button" class="header__panel-action" (click)="onMarkAllRead()">
+              Tümünü okundu işaretle
+            </button>
+          }
+        </header>
+
+        <div class="header__panel-body">
+          <app-notification-list
+            [notifications]="notifications.items()"
+            (markRead)="onNotificationRead($event)"
+          />
+        </div>
+      </div>
+    }
+  </div>
+
+  @if (user(); as currentUser) {
+    <div class="header__user">
+      <app-avatar [name]="currentUser.fullName" size="md" />
+      <div class="header__user-text">
+        <span class="text-sm text-body-strong truncate">{{ currentUser.fullName }}</span>
+        <span class="text-xs text-subtle truncate">{{ currentUser.title }}</span>
+      </div>
+      <app-dropdown
+        [items]="userItems()"
+        triggerIcon="chevron-down"
+        triggerLabel="Kullanıcı menüsü"
+        (itemSelect)="onUserAction($event)"
+      />
+    </div>
+  }
+</div>

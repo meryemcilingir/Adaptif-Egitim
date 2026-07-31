@@ -1,0 +1,126 @@
+@use '../../../../../styles/breakpoints' as t;
+
+.map__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 280px;
+
+  app-select {
+    flex: 1;
+  }
+}
+
+.map__alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-danger-subtle);
+  border: var(--border-width) solid var(--color-danger-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-danger-text);
+
+  app-icon {
+    margin-top: 2px;
+    flex: none;
+  }
+}
+
+.map__cycles {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-top: var(--space-2);
+}
+
+.map__cycle {
+  padding: 4px 10px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  border: var(--border-width) solid var(--color-danger-border);
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--color-danger-text);
+}
+
+.map__node {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.map__meta {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-2);
+  margin: var(--space-3) 0;
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    padding: var(--space-2);
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-md);
+    background: var(--color-surface-subtle);
+  }
+}
+
+.map__legend {
+  margin-top: var(--space-5);
+  padding-top: var(--space-4);
+  border-top: var(--border-width) solid var(--color-border);
+
+  ul {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+    margin-top: var(--space-2);
+  }
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--fs-xs);
+    color: var(--color-text-secondary);
+  }
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  flex: none;
+}
+
+.dot--PUBLISHED {
+  background: var(--color-success);
+}
+
+.dot--REVIEW {
+  background: var(--color-warning);
+}
+
+.dot--DRAFT {
+  background: var(--color-text-tertiary);
+}
+
+.dot--ARCHIVED {
+  background: var(--color-border-strong);
+}
+
+.line {
+  width: 18px;
+  height: 0;
+  flex: none;
+  border-top: 2px dashed var(--color-danger);
+}
+
+@media (max-width: t.$bp-md) {
+  .map__controls {
+    width: 100%;
+    min-width: 0;
+  }
+}

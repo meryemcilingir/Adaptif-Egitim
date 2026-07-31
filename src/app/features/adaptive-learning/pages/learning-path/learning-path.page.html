@@ -1,0 +1,130 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Öğrenme yolum</h1>
+      <p class="text-sm text-muted">
+        Yolun; önkoşullara, tamamladığın içeriklere ve kazanım ustalık skorlarına göre otomatik
+        oluşturulur. Her adımın neden burada olduğunu kartların üzerinde görebilirsin.
+      </p>
+    </div>
+  </header>
+
+  @if (facade.isLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="3" message="Öğrenme yolu hazırlanıyor…" />
+  } @else if (facade.hasError()) {
+    <app-error-state [error]="facade.error()" title="Öğrenme yolu yüklenemedi" (retry)="reload()" />
+  } @else if (facade.isEmpty()) {
+    <app-empty-state
+      icon="workflow"
+      title="Henüz bir öğrenme yolun yok"
+      description="Kayıtlı olduğun derslerde yayınlanmış içerik bulunmuyor. Ders içerikleri eklendiğinde yolun burada oluşacak."
+    />
+  } @else {
+    @let overall = summary();
+
+    <section class="summary">
+      <div class="summary__stat">
+        <span class="text-overline text-muted">Genel ilerleme</span>
+        <p class="summary__value tabular">%{{ overall.completionPercent }}</p>
+        <app-progress-bar
+          [value]="overall.completedMinutes"
+          [max]="overall.totalMinutes || 1"
+          tone="primary"
+          label="Genel ilerleme"
+        />
+      </div>
+
+      <div class="summary__stat">
+        <span class="text-overline text-muted">Adımlar</span>
+        <p class="summary__value tabular">
+          {{ overall.completedSteps }}<span class="summary__unit">/ {{ overall.totalSteps }}</span>
+        </p>
+        <p class="text-xs text-subtle">{{ overall.courseCount }} derste tanımlı</p>
+      </div>
+
+      <div class="summary__stat">
+        <span class="text-overline text-muted">Çalışma süresi</span>
+        <p class="summary__value tabular">
+          {{ overall.completedMinutes
+          }}<span class="summary__unit">/ {{ overall.totalMinutes }} dk</span>
+        </p>
+        <p class="text-xs text-subtle">Tahmini toplam süre üzerinden</p>
+      </div>
+    </section>
+
+    <app-tabs [tabs]="tabs()" [activeId]="activeTabId()" (tabChange)="onTabChange($event)" />
+
+    <div class="path-layout">
+      <div class="path-layout__main">
+        @if (facade.activePath(); as path) {
+          <app-card
+            [title]="path.courseCode + ' · ' + path.courseName"
+            [description]="
+              path.currentOutcomeCode
+                ? 'Şu an ' + path.currentOutcomeCode + ' kazanımı üzerinde çalışıyorsun.'
+                : 'Bu dersteki tüm adımları tamamladın.'
+            "
+            [hasActions]="true"
+          >
+            <app-button
+              card-actions
+              variant="primary"
+              icon="circle-play"
+              [disabled]="path.currentStep === null"
+              (pressed)="continueCurrent()"
+            >
+              Devam et
+            </app-button>
+
+            @if (path.sections.length === 0) {
+              <app-empty-state
+                icon="workflow"
+                title="Bu derste adım yok"
+                description="Ders için yayınlanmış kazanım veya içerik bulunmuyor."
+              />
+            } @else {
+              <app-learning-path-timeline [path]="path" (stepSelect)="openStep($event)" />
+            }
+          </app-card>
+        }
+      </div>
+
+      <aside class="path-layout__side">
+        <app-card
+          title="Sana özel öneriler"
+          description="Kural tabanlı motor; her önerinin gerekçesini açıkça gösterir."
+        >
+          @if (facade.isRecommendationLoading()) {
+            <app-loading-state
+              variant="skeleton-card"
+              [rows]="2"
+              message="Öneriler hesaplanıyor…"
+            />
+          } @else if (facade.hasRecommendationError()) {
+            <app-error-state
+              [error]="facade.recommendationError()"
+              title="Öneriler yüklenemedi"
+              (retry)="reload()"
+            />
+          } @else if (facade.isRecommendationEmpty()) {
+            <app-empty-state
+              icon="sparkles"
+              title="Şu an öneri yok"
+              description="Tüm adımlarını tamamladın. Yeni içerik eklendiğinde öneriler burada görünecek."
+            />
+          } @else {
+            <div class="recommendations">
+              @for (item of facade.recommendations(); track item.id) {
+                <app-recommendation-reason-card
+                  class="surface recommendation"
+                  [recommendation]="item"
+                  (start)="startRecommendation($event)"
+                />
+              }
+            </div>
+          }
+        </app-card>
+      </aside>
+    </div>
+  }
+</div>

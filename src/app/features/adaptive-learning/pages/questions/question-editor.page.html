@@ -1,0 +1,533 @@
+@if (isLoading()) {
+  <app-loading-state variant="skeleton-card" [rows]="4" message="Soru yükleniyor…" />
+} @else if (loadError(); as error) {
+  <app-error-state [error]="error" title="Soru yüklenemedi" />
+} @else {
+  <div class="page">
+    <app-breadcrumb [items]="breadcrumbs()" />
+
+    <header class="page-header">
+      <div>
+        <h1 class="text-h1">{{ pageTitle() }}</h1>
+        <p class="text-sm text-muted">{{ meta().description }}</p>
+      </div>
+
+      <div class="row-wrap gap-2">
+        <app-button
+          variant="secondary"
+          [icon]="isPreviewOpen() ? 'square-pen' : 'eye'"
+          (pressed)="togglePreview()"
+        >
+          {{ isPreviewOpen() ? 'Düzenlemeye dön' : 'Önizle' }}
+        </app-button>
+        <app-button variant="ghost" [disabled]="isSaving()" (pressed)="cancel()">Vazgeç</app-button>
+        <app-button variant="primary" [loading]="isSaving()" (pressed)="submit()">
+          {{ isEditMode() ? 'Değişiklikleri kaydet' : 'Soruyu oluştur' }}
+        </app-button>
+      </div>
+    </header>
+
+    @if (isPreviewOpen() && previewQuestion(); as draft) {
+      <app-card title="Önizleme" description="Öğrencinin göreceği hâle yakın gösterim">
+        <app-question-preview [question]="draft" />
+      </app-card>
+    } @else {
+      <form class="editor" [formGroup]="form" (ngSubmit)="submit()">
+        <div class="editor__main">
+          <app-card title="Soru">
+            <div class="form">
+              <div class="form__row">
+                <app-form-field
+                  fieldId="question-code"
+                  label="Soru kodu"
+                  hint="Benzersiz olmalıdır. Örn. MAT101.K1-S3"
+                  [required]="true"
+                  [control]="codeControl"
+                  [maxLength]="limits.code.max"
+                  [forceShowError]="submitted()"
+                >
+                  <app-input
+                    inputId="question-code"
+                    placeholder="Örn. MAT101.K1-S3"
+                    formControlName="code"
+                    [invalid]="codeControl.invalid && (codeControl.touched || submitted())"
+                  />
+                </app-form-field>
+
+                <app-form-field
+                  fieldId="question-type"
+                  label="Soru türü"
+                  [hint]="meta().description"
+                  [required]="true"
+                  [control]="typeControl"
+                  [forceShowError]="submitted()"
+                >
+                  <app-select
+                    selectId="question-type"
+                    [options]="typeOptions"
+                    [placeholder]="null"
+                    formControlName="type"
+                    [invalid]="typeControl.invalid && (typeControl.touched || submitted())"
+                  />
+                </app-form-field>
+              </div>
+
+              <app-form-field
+                fieldId="question-title"
+                label="Soru başlığı"
+                [hint]="'Listede görünen kısa ad. En az ' + limits.title.min + ' karakter.'"
+                [required]="true"
+                [control]="titleControl"
+                [maxLength]="limits.title.max"
+                [forceShowError]="submitted()"
+              >
+                <app-input
+                  inputId="question-title"
+                  placeholder="Örn. Türev kuralları — kavram kontrolü"
+                  formControlName="title"
+                  [invalid]="titleControl.invalid && (titleControl.touched || submitted())"
+                />
+              </app-form-field>
+
+              <app-form-field
+                fieldId="question-stem"
+                label="Soru gövdesi"
+                [hint]="'Zengin metin. ' + stemLength() + ' / ' + limits.stem.max + ' karakter.'"
+                [required]="true"
+                [control]="stemControl"
+                [forceShowError]="submitted()"
+              >
+                <app-rich-text
+                  inputId="question-stem"
+                  placeholder="Soruyu buraya yazın; biçimlendirme ve görsel ekleyebilirsiniz…"
+                  formControlName="stem"
+                  [invalid]="stemControl.invalid && (stemControl.touched || submitted())"
+                />
+              </app-form-field>
+            </div>
+          </app-card>
+
+          <!-- Cevap bloğu: türün cevap yapısına göre seçilir -->
+          <app-card [title]="'Cevap · ' + meta().label">
+            @if (answerIssues().length > 0) {
+              <div class="issues" role="alert">
+                @for (issue of answerIssues(); track issue) {
+                  <p class="text-sm">
+                    <app-icon name="circle-alert" [size]="14" />
+                    {{ issue }}
+                  </p>
+                }
+              </div>
+            }
+
+            @switch (shape()) {
+              @case ('options') {
+                <div class="rows" formArrayName="options">
+                  @for (control of optionsArray.controls; track control; let index = $index) {
+                    <div class="option" [formGroupName]="index">
+                      <label class="option__correct">
+                        <input
+                          type="checkbox"
+                          [checked]="control.get('correct')?.value"
+                          [attr.aria-label]="index + 1 + '. seçenek doğru'"
+                          (change)="onCorrectToggle(index, $any($event.target).checked)"
+                        />
+                        <span class="text-xs">Doğru</span>
+                      </label>
+
+                      <div class="option__fields">
+                        <app-input
+                          [inputId]="'option-text-' + index"
+                          placeholder="Seçenek metni"
+                          formControlName="text"
+                          [invalid]="control.get('text')!.invalid && submitted()"
+                        />
+                        <app-input
+                          [inputId]="'option-rationale-' + index"
+                          placeholder="Çeldirici gerekçesi (isteğe bağlı)"
+                          formControlName="rationale"
+                        />
+                      </div>
+
+                      <app-button
+                        variant="ghost"
+                        size="sm"
+                        icon="trash-2"
+                        ariaLabel="Seçeneği kaldır"
+                        [disabled]="optionsArray.length <= meta().minOptions"
+                        (pressed)="removeOption(index)"
+                      />
+                    </div>
+                  }
+                </div>
+
+                <app-button
+                  variant="secondary"
+                  size="sm"
+                  icon="plus"
+                  [disabled]="optionsArray.length >= meta().maxOptions"
+                  (pressed)="addOption()"
+                >
+                  Seçenek ekle
+                </app-button>
+
+                @if (meta().multipleCorrect) {
+                  <label class="switch">
+                    <input type="checkbox" formControlName="allowPartialCredit" />
+                    <span class="text-sm">Kısmi puan verilsin</span>
+                  </label>
+                }
+              }
+
+              @case ('numeric') {
+                <div class="form__row">
+                  <app-form-field
+                    fieldId="question-expected"
+                    label="Beklenen cevap"
+                    [required]="true"
+                    [control]="expectedAnswerControl"
+                    [forceShowError]="submitted()"
+                  >
+                    <app-input
+                      inputId="question-expected"
+                      placeholder="Örn. 42"
+                      formControlName="expectedAnswer"
+                      [invalid]="expectedAnswerControl.invalid && submitted()"
+                    />
+                  </app-form-field>
+
+                  <app-form-field
+                    fieldId="question-tolerance"
+                    label="Tolerans"
+                    hint="Kabul edilebilir sapma miktarı."
+                    [control]="toleranceControl"
+                  >
+                    <app-number-input
+                      inputId="question-tolerance"
+                      [min]="0"
+                      [max]="100"
+                      formControlName="numericTolerance"
+                    />
+                  </app-form-field>
+                </div>
+              }
+
+              @case ('text') {
+                <app-form-field
+                  fieldId="question-expected"
+                  label="Örnek cevap"
+                  hint="Değerlendiriciye referans olur; öğrenciye gösterilmez."
+                  [required]="true"
+                  [control]="expectedAnswerControl"
+                  [forceShowError]="submitted()"
+                >
+                  <app-input
+                    inputId="question-expected"
+                    placeholder="Beklenen kısa cevap"
+                    formControlName="expectedAnswer"
+                    [invalid]="expectedAnswerControl.invalid && submitted()"
+                  />
+                </app-form-field>
+              }
+
+              @case ('pairs') {
+                <div class="rows" formArrayName="matchPairs">
+                  @for (control of pairsArray.controls; track control; let index = $index) {
+                    <div class="pair-row" [formGroupName]="index">
+                      <app-input
+                        [inputId]="'pair-left-' + index"
+                        placeholder="Sol öğe"
+                        formControlName="left"
+                        [invalid]="control.get('left')!.invalid && submitted()"
+                      />
+                      <app-icon name="arrow-right" [size]="15" />
+                      <app-input
+                        [inputId]="'pair-right-' + index"
+                        placeholder="Doğru karşılığı"
+                        formControlName="right"
+                        [invalid]="control.get('right')!.invalid && submitted()"
+                      />
+                      <app-button
+                        variant="ghost"
+                        size="sm"
+                        icon="trash-2"
+                        ariaLabel="Eşleşmeyi kaldır"
+                        [disabled]="pairsArray.length <= limits.pairCount.min"
+                        (pressed)="removePair(index)"
+                      />
+                    </div>
+                  }
+                </div>
+
+                <app-button
+                  variant="secondary"
+                  size="sm"
+                  icon="plus"
+                  [disabled]="pairsArray.length >= limits.pairCount.max"
+                  (pressed)="addPair()"
+                >
+                  Eşleşme ekle
+                </app-button>
+              }
+
+              @case ('sequence') {
+                <div class="rows" formArrayName="sequenceItems">
+                  @for (control of sequenceArray.controls; track control; let index = $index) {
+                    <div class="sequence-row" [formGroupName]="index">
+                      <app-number-input
+                        [inputId]="'sequence-order-' + index"
+                        [min]="1"
+                        [max]="limits.sequenceCount.max"
+                        formControlName="order"
+                      />
+                      <app-input
+                        [inputId]="'sequence-text-' + index"
+                        placeholder="Adım metni"
+                        formControlName="text"
+                        [invalid]="control.get('text')!.invalid && submitted()"
+                      />
+                      <app-button
+                        variant="ghost"
+                        size="sm"
+                        icon="trash-2"
+                        ariaLabel="Adımı kaldır"
+                        [disabled]="sequenceArray.length <= limits.sequenceCount.min"
+                        (pressed)="removeSequenceItem(index)"
+                      />
+                    </div>
+                  }
+                </div>
+
+                <app-button
+                  variant="secondary"
+                  size="sm"
+                  icon="plus"
+                  [disabled]="sequenceArray.length >= limits.sequenceCount.max"
+                  (pressed)="addSequenceItem()"
+                >
+                  Adım ekle
+                </app-button>
+              }
+
+              @case ('manual') {
+                <p class="text-sm text-muted">
+                  Açık uçlu sorular rubrikle değerlendirilir; cevap anahtarı girilmez.
+                  Değerlendiriciye yol göstermesi için aşağıdaki açıklama alanını doldurun.
+                </p>
+              }
+            }
+          </app-card>
+
+          <app-card title="Açıklama ve ekler">
+            <div class="form">
+              <app-form-field
+                fieldId="question-explanation"
+                label="Açıklama"
+                hint="Doğru cevabın gerekçesi. Sonuç ekranında öğrenciye gösterilir."
+                [control]="explanationControl"
+                [maxLength]="limits.explanation.max"
+                [forceShowError]="submitted()"
+              >
+                <app-textarea
+                  inputId="question-explanation"
+                  [rows]="4"
+                  [maxLength]="limits.explanation.max"
+                  placeholder="Çözüm yolu ve gerekçe…"
+                  formControlName="explanation"
+                  [invalid]="explanationControl.invalid && submitted()"
+                />
+              </app-form-field>
+
+              <div class="rows" formArrayName="attachments">
+                @for (control of attachmentsArray.controls; track control; let index = $index) {
+                  <div class="attachment" [formGroupName]="index">
+                    <app-select
+                      [selectId]="'attachment-kind-' + index"
+                      [options]="attachmentKinds"
+                      [placeholder]="null"
+                      formControlName="kind"
+                    />
+                    <app-input
+                      [inputId]="'attachment-url-' + index"
+                      type="url"
+                      placeholder="https://…"
+                      formControlName="url"
+                      [invalid]="control.get('url')!.invalid && submitted()"
+                    />
+                    <app-input
+                      [inputId]="'attachment-name-' + index"
+                      placeholder="Görünen ad"
+                      formControlName="name"
+                    />
+                    <app-button
+                      variant="ghost"
+                      size="sm"
+                      icon="trash-2"
+                      ariaLabel="Eki kaldır"
+                      (pressed)="removeAttachment(index)"
+                    />
+                  </div>
+                }
+              </div>
+
+              <app-button
+                variant="secondary"
+                size="sm"
+                icon="plus"
+                [disabled]="attachmentsArray.length >= limits.attachmentCount.max"
+                (pressed)="addAttachment()"
+              >
+                Ek ekle
+              </app-button>
+            </div>
+          </app-card>
+        </div>
+
+        <aside class="editor__side">
+          <app-card title="Sınıflandırma">
+            <div class="form">
+              <app-form-field
+                fieldId="question-course"
+                label="Ders"
+                [required]="true"
+                [control]="courseControl"
+                [forceShowError]="submitted()"
+              >
+                <app-select
+                  selectId="question-course"
+                  [options]="courseOptions()"
+                  placeholder="Ders seçin"
+                  formControlName="courseId"
+                  [invalid]="courseControl.invalid && submitted()"
+                />
+              </app-form-field>
+
+              <app-form-field
+                fieldId="question-outcomes"
+                label="Kazanımlar"
+                [hint]="
+                  'Soru en az bir kazanıma bağlanmalıdır (en fazla ' +
+                  limits.outcomeCount.max +
+                  ').'
+                "
+                [required]="true"
+                [control]="outcomeControl"
+                [forceShowError]="submitted()"
+              >
+                <app-multi-select
+                  inputId="question-outcomes"
+                  [options]="outcomeOptions()"
+                  [maxSelected]="limits.outcomeCount.max"
+                  placeholder="Kazanım seçin"
+                  searchPlaceholder="Kazanım kodu veya adı ara…"
+                  emptyMessage="Bu derste kazanım tanımlı değil."
+                  formControlName="outcomeIds"
+                  [invalid]="outcomeControl.invalid && submitted()"
+                />
+              </app-form-field>
+
+              <app-form-field
+                fieldId="question-difficulty"
+                label="Zorluk"
+                [required]="true"
+                [control]="difficultyControl"
+                [forceShowError]="submitted()"
+              >
+                <app-select
+                  selectId="question-difficulty"
+                  [options]="difficultyOptions"
+                  [placeholder]="null"
+                  formControlName="difficulty"
+                  [invalid]="difficultyControl.invalid && submitted()"
+                />
+              </app-form-field>
+
+              <app-form-field
+                fieldId="question-level"
+                label="Bloom seviyesi"
+                hint="Sorunun ölçtüğü bilişsel düzey."
+                [required]="true"
+                [control]="levelControl"
+                [forceShowError]="submitted()"
+              >
+                <app-select
+                  selectId="question-level"
+                  [options]="levelOptions"
+                  [placeholder]="null"
+                  formControlName="level"
+                  [invalid]="levelControl.invalid && submitted()"
+                />
+              </app-form-field>
+            </div>
+          </app-card>
+
+          <app-card title="Puanlama">
+            <div class="form">
+              <app-form-field
+                fieldId="question-points"
+                label="Puan"
+                [hint]="limits.points.min + '–' + limits.points.max"
+                [required]="true"
+                [control]="pointsControl"
+                [forceShowError]="submitted()"
+              >
+                <app-number-input
+                  inputId="question-points"
+                  [min]="limits.points.min"
+                  [max]="limits.points.max"
+                  formControlName="points"
+                  [invalid]="pointsControl.invalid && submitted()"
+                />
+              </app-form-field>
+
+              <app-form-field
+                fieldId="question-time"
+                label="Tahmini çözüm süresi"
+                [hint]="
+                  limits.estimatedSolveTimeSeconds.min +
+                  '–' +
+                  limits.estimatedSolveTimeSeconds.max +
+                  ' saniye'
+                "
+                [required]="true"
+                [control]="solveTimeControl"
+                [forceShowError]="submitted()"
+              >
+                <app-number-input
+                  inputId="question-time"
+                  suffix="sn"
+                  [min]="limits.estimatedSolveTimeSeconds.min"
+                  [max]="limits.estimatedSolveTimeSeconds.max"
+                  formControlName="estimatedSolveTimeSeconds"
+                  [invalid]="solveTimeControl.invalid && submitted()"
+                />
+              </app-form-field>
+
+              <app-form-field
+                fieldId="question-tags"
+                label="Etiketler"
+                [hint]="
+                  'Her etiket en fazla ' +
+                  limits.tag.max +
+                  ' karakter, en çok ' +
+                  limits.tagCount.max +
+                  ' etiket.'
+                "
+                [control]="tagsControl"
+                [forceShowError]="submitted()"
+              >
+                <app-tag-input
+                  inputId="question-tags"
+                  [maxTags]="limits.tagCount.max"
+                  [maxTagLength]="limits.tag.max"
+                  formControlName="tags"
+                  [invalid]="tagsControl.invalid && submitted()"
+                />
+              </app-form-field>
+            </div>
+          </app-card>
+        </aside>
+      </form>
+    }
+  </div>
+}

@@ -1,0 +1,316 @@
+@let dashboard = data();
+@let totals = dashboard.questionTotals;
+
+<!-- 1. Soru bankası büyüklükleri -->
+<section class="bank-totals" aria-label="Soru bankası özeti">
+  <button type="button" class="total" (click)="openQuestionBank()">
+    <span class="text-overline text-muted">Toplam soru</span>
+    <span class="total__value tabular">{{ totals.total }}</span>
+  </button>
+  <button type="button" class="total total--draft" (click)="openQuestionBank()">
+    <span class="text-overline text-muted">Taslak</span>
+    <span class="total__value tabular">{{ totals.draft }}</span>
+  </button>
+  <button type="button" class="total total--review" (click)="openQuestionBank()">
+    <span class="text-overline text-muted">İncelemede</span>
+    <span class="total__value tabular">{{ totals.review }}</span>
+  </button>
+  <button type="button" class="total total--published" (click)="openQuestionBank()">
+    <span class="text-overline text-muted">Yayında</span>
+    <span class="total__value tabular">{{ totals.published }}</span>
+  </button>
+  <button type="button" class="total total--archived" (click)="openQuestionBank()">
+    <span class="text-overline text-muted">Arşiv</span>
+    <span class="total__value tabular">{{ totals.archived }}</span>
+  </button>
+  <button type="button" class="total total--favorite" (click)="openQuestionBank()">
+    <span class="text-overline text-muted">Favorilerim</span>
+    <span class="total__value tabular">{{ totals.favorites }}</span>
+  </button>
+</section>
+
+<app-kpi-grid [cards]="dashboard.kpis" />
+
+<app-quick-actions [actions]="dashboard.quickActions" />
+
+<!-- 2. Soru bankası dağılımları -->
+<section class="grid grid-2-1" aria-label="Soru dağılımları">
+  <app-chart-card
+    title="Soru türü dağılımı"
+    description="Bankadaki soruların türlere göre dağılımı"
+    type="donut"
+    [series]="typeSeries()"
+    [labels]="typeLabels()"
+    [height]="300"
+    emptyMessage="Henüz soru bulunmuyor."
+  />
+
+  <app-chart-card
+    title="Zorluk dağılımı"
+    description="Soruların zorluk seviyesine göre dağılımı"
+    type="bar"
+    [series]="questionDifficultySeries()"
+    [categories]="questionDifficultyCategories()"
+    [height]="300"
+    [showLegend]="false"
+    emptyMessage="Henüz soru bulunmuyor."
+  />
+</section>
+
+<section aria-label="Kazanım kapsaması">
+  <app-card
+    title="Kazanım başına soru sayısı"
+    description="En az soruya sahip kazanımlar önce listelenir — boşluklar görünür olsun"
+    padding="compact"
+  >
+    <app-ranked-list
+      [entries]="dashboard.outcomeDistribution"
+      emptyTitle="Kazanım yok"
+      emptyDescription="Kapsamınızda tanımlı kazanım bulunmuyor."
+    />
+  </app-card>
+</section>
+
+<!-- 3. Soru listeleri -->
+<section class="grid grid-3" aria-label="Soru listeleri">
+  <app-card title="Son düzenlenenler" padding="compact" [hasActions]="true">
+    <app-button
+      card-actions
+      variant="ghost"
+      size="sm"
+      trailingIcon="arrow-right"
+      (pressed)="openQuestionBank()"
+    >
+      Tümü
+    </app-button>
+
+    @if (dashboard.recentlyEdited.length === 0) {
+      <app-empty-state
+        icon="square-pen"
+        title="Kayıt yok"
+        description="Henüz düzenlenmiş soru bulunmuyor."
+        actionLabel="Yeni soru"
+        actionIcon="plus"
+        (action)="openNewQuestion()"
+      />
+    } @else {
+      <ul class="questions">
+        @for (item of dashboard.recentlyEdited; track item.id) {
+          <li>
+            <button type="button" class="question" (click)="openQuestion(item.id)">
+              <span class="question__head">
+                <span class="text-sm text-body-strong truncate">{{ item.title }}</span>
+                <span class="question__version tabular">v{{ item.versionNumber }}</span>
+              </span>
+              <span class="question__meta">
+                <span class="question__type">{{ item.typeLabel }}</span>
+                <app-status-badge
+                  [label]="statusOf(item.state).label"
+                  [tone]="statusOf(item.state).tone"
+                  [subtle]="true"
+                />
+                <span class="text-xs text-subtle">{{ item.courseCode }}</span>
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </app-card>
+
+  <app-card
+    title="En çok kullanılanlar"
+    description="Sınavlarda en sık yer alan sorular"
+    padding="compact"
+  >
+    @if (dashboard.mostUsed.length === 0) {
+      <app-empty-state
+        icon="file-text"
+        title="Kullanım verisi yok"
+        description="Sorular sınavlara eklendikçe burada listelenir."
+      />
+    } @else {
+      <ul class="questions">
+        @for (item of dashboard.mostUsed; track item.id) {
+          <li>
+            <button type="button" class="question" (click)="openQuestion(item.id)">
+              <span class="question__head">
+                <span class="text-sm text-body-strong truncate">{{ item.title }}</span>
+                <span class="question__version tabular">{{ item.usageCount }}×</span>
+              </span>
+              <span class="question__meta">
+                <span class="question__type">{{ item.typeLabel }}</span>
+                <span class="text-xs text-subtle">{{ item.difficultyLabel }}</span>
+                <span class="text-xs text-subtle">{{ item.courseCode }}</span>
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </app-card>
+
+  <app-card title="Favori sorularım" padding="compact">
+    @if (dashboard.favoriteQuestions.length === 0) {
+      <app-empty-state
+        icon="star"
+        title="Favori soru yok"
+        description="Soru listesinden yıldız simgesiyle favorilerinize ekleyebilirsiniz."
+        actionLabel="Soru bankasına git"
+        actionIcon="arrow-right"
+        (action)="openQuestionBank()"
+      />
+    } @else {
+      <ul class="questions">
+        @for (item of dashboard.favoriteQuestions; track item.id) {
+          <li>
+            <button type="button" class="question" (click)="openQuestion(item.id)">
+              <span class="question__head">
+                <span class="text-sm text-body-strong truncate">{{ item.title }}</span>
+              </span>
+              <span class="question__meta">
+                <span class="question__type">{{ item.typeLabel }}</span>
+                <app-status-badge
+                  [label]="statusOf(item.state).label"
+                  [tone]="statusOf(item.state).tone"
+                  [subtle]="true"
+                />
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </app-card>
+</section>
+
+<section class="grid grid-2" aria-label="Madde dağılımları">
+  <app-chart-card
+    title="Zorluk indeksi dağılımı"
+    description="Doğru cevaplama oranına göre madde sayısı"
+    type="bar"
+    [series]="difficultySeries()"
+    [categories]="difficultyCategories()"
+    [height]="280"
+    [showLegend]="false"
+  />
+
+  <app-chart-card
+    title="Ayırt edicilik dağılımı"
+    description="Üst ve alt grup başarı farkına göre madde sayısı"
+    type="bar"
+    [series]="discriminationSeries()"
+    [categories]="discriminationCategories()"
+    [height]="280"
+    [showLegend]="false"
+  />
+</section>
+
+<section class="grid grid-2-1" aria-label="Madde bulutu ve kalite trendi">
+  <app-chart-card
+    title="Zorluk × ayırt edicilik"
+    description="Sağ üst bölge ideal; sol alt bölge gözden geçirilmeli"
+    type="scatter"
+    [series]="scatterSeries()"
+    [height]="320"
+    [showLegend]="false"
+    valueSuffix="%"
+    emptyMessage="Dağılım için yeterli analiz verisi yok."
+  />
+
+  <app-chart-card
+    title="Kalite trendi"
+    description="Sınav tarihine göre ortalama ayırt edicilik"
+    type="area"
+    [series]="qualitySeries()"
+    [categories]="qualityCategories()"
+    valueSuffix="%"
+    [height]="320"
+    [showLegend]="false"
+    emptyMessage="Trend için yeterli sınav verisi yok."
+  />
+</section>
+
+<section class="grid grid-2" aria-label="İnceleme bekleyen maddeler">
+  <app-card
+    title="İnceleme bekleyen maddeler"
+    description="Kalite eşiği dışında kalan sorular"
+    padding="compact"
+  >
+    @if (dashboard.flaggedItems.length === 0) {
+      <app-empty-state
+        icon="circle-check-big"
+        title="Tüm maddeler eşik içinde"
+        description="Şu anda incelenmesi gereken soru bulunmuyor."
+      />
+    } @else {
+      <ul class="flagged">
+        @for (item of dashboard.flaggedItems; track item.questionId) {
+          <li class="flagged__item">
+            <button type="button" class="flagged__button" (click)="openQuestion(item.questionId)">
+              <span class="flagged__head">
+                <span class="text-body-strong">{{ item.questionCode }}</span>
+                <span class="text-xs text-subtle">{{ item.courseCode }}</span>
+              </span>
+
+              <span class="text-sm text-muted clamp-2">{{ item.stem }}</span>
+
+              <span class="flagged__metrics">
+                <span class="text-xs text-muted">
+                  Zorluk <strong class="tabular">{{ item.difficultyIndex }}</strong>
+                </span>
+                <span class="text-xs text-muted">
+                  Ayırt edicilik <strong class="tabular">{{ item.discrimination }}</strong>
+                </span>
+                <span class="text-xs text-muted">
+                  Örneklem <strong class="tabular">{{ item.sampleSize }}</strong>
+                </span>
+              </span>
+
+              <span class="flagged__flags">
+                @for (flag of item.flags; track flag) {
+                  <app-status-badge [label]="flag" tone="warning" />
+                }
+              </span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </app-card>
+
+  <app-card
+    title="Blueprint kapsaması"
+    description="Kazanım kısıtlarını karşılama oranı"
+    padding="compact"
+  >
+    <app-ranked-list
+      [entries]="dashboard.blueprintCoverage"
+      emptyTitle="Blueprint yok"
+      emptyDescription="Tanımlı blueprint bulunmuyor."
+    />
+  </app-card>
+</section>
+
+<section aria-label="En yavaş çözülen maddeler">
+  <app-card
+    title="En yavaş çözülen maddeler"
+    description="Ortalama çözüm süresi en yüksek sorular"
+    padding="compact"
+  >
+    <app-ranked-list
+      [entries]="dashboard.slowestItems"
+      [selectable]="true"
+      emptyTitle="Süre verisi yok"
+      emptyDescription="Yeterli örnekleme sahip madde bulunmuyor."
+      (entrySelect)="openItemAnalysis()"
+    />
+  </app-card>
+</section>
+
+<app-dashboard-common
+  [activity]="dashboard.recentActivity"
+  [notifications]="dashboard.notifications"
+  [statistics]="dashboard.statistics"
+  (notificationRead)="notificationRead.emit($event)"
+/>

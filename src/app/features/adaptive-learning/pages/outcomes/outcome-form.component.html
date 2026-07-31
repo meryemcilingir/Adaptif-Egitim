@@ -1,0 +1,210 @@
+<app-dialog
+  [open]="true"
+  size="xl"
+  [title]="title2()"
+  description="Kazanım bilgileri. Yeni kazanımlar taslak olarak oluşturulur."
+  [closeOnBackdrop]="false"
+  (closed)="onCancel()"
+>
+  <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="form__row">
+      <app-form-field
+        fieldId="outcome-code"
+        label="Kazanım kodu"
+        hint="Benzersiz olmalıdır. Örn. MAT101.K1"
+        [required]="true"
+        [control]="codeControl"
+        [maxLength]="limits.code.max"
+        [forceShowError]="submitted()"
+      >
+        <app-input
+          inputId="outcome-code"
+          placeholder="Örn. MAT101.K1"
+          formControlName="code"
+          [invalid]="codeControl.invalid && (codeControl.touched || submitted())"
+        />
+      </app-form-field>
+
+      <app-form-field
+        fieldId="outcome-course"
+        label="Ders"
+        [required]="true"
+        [control]="courseControl"
+        [forceShowError]="submitted()"
+      >
+        <app-select
+          selectId="outcome-course"
+          [options]="courses()"
+          placeholder="Ders seçin"
+          formControlName="courseId"
+          [invalid]="courseControl.invalid && (courseControl.touched || submitted())"
+        />
+      </app-form-field>
+    </div>
+
+    <app-form-field
+      fieldId="outcome-title"
+      label="Kazanım adı"
+      hint="Ölçülebilir bir eylem ifadesi kullanın."
+      [required]="true"
+      [control]="titleControl"
+      [maxLength]="limits.title.max"
+      [forceShowError]="submitted()"
+    >
+      <app-input
+        inputId="outcome-title"
+        placeholder="Örn. Türev kurallarını uygular"
+        formControlName="title"
+        [invalid]="titleControl.invalid && (titleControl.touched || submitted())"
+      />
+    </app-form-field>
+
+    <app-form-field
+      fieldId="outcome-description"
+      label="Açıklama"
+      [control]="descriptionControl"
+      [maxLength]="limits.description.max"
+      [forceShowError]="submitted()"
+    >
+      <app-textarea
+        inputId="outcome-description"
+        placeholder="Kazanımın kapsamı ve ölçütü…"
+        [rows]="3"
+        [maxLength]="limits.description.max"
+        formControlName="description"
+        [invalid]="descriptionControl.invalid && (descriptionControl.touched || submitted())"
+      />
+    </app-form-field>
+
+    <div class="form__row form__row--three">
+      <app-form-field
+        fieldId="outcome-level"
+        label="Bilişsel seviye"
+        [required]="true"
+        [control]="levelControl"
+        [forceShowError]="submitted()"
+      >
+        <app-select
+          selectId="outcome-level"
+          [options]="levelOptions"
+          [placeholder]="null"
+          formControlName="level"
+          [invalid]="levelControl.invalid && (levelControl.touched || submitted())"
+        />
+      </app-form-field>
+
+      <app-form-field
+        fieldId="outcome-difficulty"
+        label="Zorluk"
+        [required]="true"
+        [control]="difficultyControl"
+        [forceShowError]="submitted()"
+      >
+        <app-select
+          selectId="outcome-difficulty"
+          [options]="difficultyOptions"
+          [placeholder]="null"
+          formControlName="difficulty"
+          [invalid]="difficultyControl.invalid && (difficultyControl.touched || submitted())"
+        />
+      </app-form-field>
+
+      <app-form-field
+        fieldId="outcome-duration"
+        label="Tahmini süre"
+        [hint]="
+          limits.estimatedDurationMinutes.min +
+          '–' +
+          limits.estimatedDurationMinutes.max +
+          ' dakika'
+        "
+        [required]="true"
+        [control]="durationControl"
+        [forceShowError]="submitted()"
+      >
+        <app-number-input
+          inputId="outcome-duration"
+          suffix="dk"
+          [min]="limits.estimatedDurationMinutes.min"
+          [max]="limits.estimatedDurationMinutes.max"
+          formControlName="estimatedDurationMinutes"
+          [invalid]="durationControl.invalid && (durationControl.touched || submitted())"
+        />
+      </app-form-field>
+    </div>
+
+    <div class="form__row">
+      <app-form-field
+        fieldId="outcome-weight"
+        label="Ağırlık"
+        [hint]="
+          'Sınav kapsamındaki göreli önemi (' + limits.weight.min + '–' + limits.weight.max + ')'
+        "
+        [required]="true"
+        [control]="weightControl"
+        [forceShowError]="submitted()"
+      >
+        <app-number-input
+          inputId="outcome-weight"
+          [min]="limits.weight.min"
+          [max]="limits.weight.max"
+          formControlName="weight"
+          [invalid]="weightControl.invalid && (weightControl.touched || submitted())"
+        />
+      </app-form-field>
+
+      <app-form-field
+        fieldId="outcome-tags"
+        label="Etiketler"
+        [hint]="
+          'Her etiket en fazla ' +
+          limits.tag.max +
+          ' karakter, en çok ' +
+          limits.tagCount.max +
+          ' etiket.'
+        "
+        [control]="tagsControl"
+        [forceShowError]="submitted()"
+      >
+        <app-tag-input
+          inputId="outcome-tags"
+          [maxTags]="limits.tagCount.max"
+          [maxTagLength]="limits.tag.max"
+          [suggestions]="tagSuggestions()"
+          formControlName="tags"
+          [invalid]="tagsControl.invalid && (tagsControl.touched || submitted())"
+        />
+      </app-form-field>
+    </div>
+
+    <app-form-field
+      fieldId="outcome-prerequisites"
+      label="Önkoşullar"
+      [hint]="
+        'Bu kazanımdan önce edinilmesi gereken kazanımlar. Döngü oluşturanlar seçilemez (en fazla ' +
+        limits.prerequisiteCount.max +
+        ').'
+      "
+      [control]="prerequisitesControl"
+      [forceShowError]="submitted()"
+    >
+      <app-multi-select
+        inputId="outcome-prerequisites"
+        [options]="prerequisiteOptions()"
+        [maxSelected]="limits.prerequisiteCount.max"
+        placeholder="Önkoşul seçin"
+        searchPlaceholder="Kazanım kodu veya adı ara…"
+        emptyMessage="Seçilebilecek başka kazanım yok."
+        formControlName="prerequisiteIds"
+        [invalid]="prerequisitesControl.invalid && (prerequisitesControl.touched || submitted())"
+      />
+    </app-form-field>
+  </form>
+
+  <div dialog-footer>
+    <app-button variant="ghost" [disabled]="saving()" (pressed)="onCancel()">Vazgeç</app-button>
+    <app-button variant="primary" [loading]="saving()" (pressed)="submit()">
+      {{ isEditMode() ? 'Değişiklikleri kaydet' : 'Kazanımı oluştur' }}
+    </app-button>
+  </div>
+</app-dialog>

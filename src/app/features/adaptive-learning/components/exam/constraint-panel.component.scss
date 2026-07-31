@@ -1,0 +1,232 @@
+@use '../../../../../styles/breakpoints' as t;
+
+:host {
+  display: block;
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-xs);
+
+  /* Wizard boyunca görünür kalır; uzun soru listelerinde kaymaz. */
+  position: sticky;
+  top: var(--space-4);
+  max-height: calc(100vh - var(--space-8));
+  overflow-y: auto;
+
+  @media (max-width: t.$bp-xl) {
+    position: static;
+    max-height: none;
+  }
+}
+
+.panel__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+
+  h3 {
+    margin: 0;
+  }
+}
+
+.panel__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  white-space: nowrap;
+
+  &.is-ready {
+    background: var(--color-success-subtle);
+    color: var(--color-success-text);
+  }
+
+  &.is-blocked {
+    background: var(--color-danger-subtle);
+    color: var(--color-danger-text);
+  }
+}
+
+/* ── Sayısal hedefler ────────────────────────────────────────────────────── */
+
+.metrics {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+}
+
+.metric {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle);
+  border-inline-start: 3px solid var(--color-border-strong);
+
+  dt {
+    font-size: var(--fs-xs);
+    color: var(--color-text-secondary);
+  }
+
+  dd {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin: 0;
+    font-size: var(--fs-sm);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  &.is-ok {
+    border-inline-start-color: var(--color-success);
+    dd {
+      color: var(--color-success-text);
+    }
+  }
+
+  &.is-under {
+    border-inline-start-color: var(--color-warning);
+    dd {
+      color: var(--color-warning-text);
+    }
+  }
+
+  &.is-over {
+    border-inline-start-color: var(--color-danger);
+    dd {
+      color: var(--color-danger-text);
+    }
+  }
+}
+
+.metric__hint {
+  font-size: var(--fs-xs);
+  font-weight: 400;
+  color: var(--color-text-subtle);
+}
+
+/* ── Zorluk dağılımı ─────────────────────────────────────────────────────── */
+
+.difficulty {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  h4 {
+    margin: 0;
+  }
+}
+
+.difficulty__row {
+  display: grid;
+  grid-template-columns: 52px minmax(0, 1fr) 46px;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.difficulty__label {
+  color: var(--color-text-secondary);
+}
+
+.difficulty__count {
+  text-align: end;
+  color: var(--color-text-secondary);
+}
+
+/* ── İhlaller ────────────────────────────────────────────────────────────── */
+
+.issues {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+
+  h4 {
+    display: flex;
+    align-items: center;
+    gap: var(--space-1);
+    margin: 0;
+  }
+}
+
+.issues__count {
+  padding: 0 6px;
+  border-radius: var(--radius-full);
+  background: var(--color-danger-subtle);
+  color: var(--color-danger-text);
+  font-size: var(--fs-xs);
+}
+
+.issues__empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--color-success-text);
+}
+
+.issues__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.issue {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  width: 100%;
+  padding: var(--space-2);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  text-align: start;
+  cursor: pointer;
+  transition: background var(--duration-fast) var(--ease-in-out);
+
+  app-icon {
+    flex: none;
+    margin-block-start: 1px;
+  }
+
+  &.is-error {
+    background: var(--color-danger-subtle);
+    color: var(--color-danger-text);
+
+    &:hover {
+      border-color: var(--color-danger-border);
+    }
+  }
+
+  &.is-warning {
+    background: var(--color-warning-subtle);
+    color: var(--color-warning-text);
+
+    &:hover {
+      border-color: var(--color-warning-border);
+    }
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}

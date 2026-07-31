@@ -1,0 +1,185 @@
+@if (facade.isBlueprintDetailLoading()) {
+  <app-loading-state variant="skeleton-card" [rows]="4" message="Plan yükleniyor…" />
+} @else if (facade.hasBlueprintDetailError()) {
+  <app-error-state
+    [error]="facade.blueprintDetailError()"
+    title="Plan yüklenemedi"
+    (retry)="reload()"
+  />
+} @else if (detail(); as view) {
+  <div class="page">
+    <app-breadcrumb [items]="breadcrumbs()" />
+
+    <header class="page-header">
+      <div class="detail-title">
+        <div class="row-wrap gap-2">
+          <app-status-badge
+            [label]="statusView().label"
+            [tone]="statusView().tone"
+            [icon]="statusView().icon"
+          />
+          <app-status-badge
+            [label]="view.cohortName ?? 'Ders geneli'"
+            [tone]="view.cohortName ? 'info' : 'neutral'"
+            [icon]="view.cohortName ? 'users' : 'book-open'"
+          />
+        </div>
+
+        <h1 class="text-h1">{{ view.blueprint.name }}</h1>
+        <p class="text-sm text-muted">
+          {{ view.courseCode }} · {{ view.courseName }} — bu planı {{ view.examCount }} sınav
+          kullanıyor.
+        </p>
+      </div>
+
+      <div class="row-wrap gap-2">
+        @if (canWrite()) {
+          @if (hasWorkflowActions(view.blueprint.state)) {
+            <app-publish-actions
+              [state]="view.blueprint.state"
+              [disabled]="isDirty()"
+              [pendingTarget]="pendingTarget()"
+              (transitionRequested)="onTransition($event)"
+            />
+          }
+
+          @if (canEdit()) {
+            <app-button
+              variant="primary"
+              icon="check"
+              [disabled]="!isDirty()"
+              [loading]="isSaving()"
+              (pressed)="save()"
+            >
+              Kaydet
+            </app-button>
+          }
+
+          @if (view.blueprint.state === 'DRAFT') {
+            <app-button variant="ghost" icon="trash-2" (pressed)="confirmDelete()">Sil</app-button>
+          }
+        }
+      </div>
+    </header>
+
+    @if (!canEdit() && canWrite()) {
+      <p class="notice text-sm" role="note">
+        <app-icon name="lock" [size]="15" />
+        Yayınlanmış plan düzenlenemez. Bu plana bağlı sınavların ölçme anlamı değişmesin diye
+        tablo kilitlidir; değişiklik için planı taslağa geri alın.
+      </p>
+    } @else if (isDirty()) {
+      <p class="notice is-info text-sm" role="status">
+        <app-icon name="info" [size]="15" />
+        Kaydedilmemiş değişiklikler var. Aşağıdaki özet, kaydedilmemiş hâli gösterir.
+      </p>
+    }
+
+    <div class="stack">
+      <app-card title="Plan bilgisi">
+        <div class="form" [formGroup]="form">
+          <app-form-field
+            fieldId="bp-name"
+            label="Plan adı"
+            [hint]="'En az ' + limits.name.min + ' karakter.'"
+            [required]="true"
+            [maxLength]="limits.name.max"
+            [control]="nameControl"
+          >
+            <app-input
+              inputId="bp-name"
+              placeholder="Örn. MAT101 Ara Sınav Planı"
+              formControlName="name"
+              [disabled]="!canEdit()"
+              [invalid]="nameControl.invalid && nameControl.touched"
+            />
+          </app-form-field>
+
+          <app-form-field
+            fieldId="bp-description"
+            label="Açıklama"
+            [maxLength]="limits.description.max"
+            [control]="descriptionControl"
+          >
+            <app-textarea
+              inputId="bp-description"
+              [rows]="2"
+              [maxLength]="limits.description.max"
+              placeholder="Planın kapsamı ve varsayımları…"
+              formControlName="description"
+              [disabled]="!canEdit()"
+            />
+          </app-form-field>
+
+          <div class="form__row">
+            <app-form-field
+              fieldId="bp-points"
+              label="Hedef toplam puan"
+              hint="Sınavın toplam puanı bu değere eşit olmalıdır."
+              [required]="true"
+              [control]="pointsControl"
+            >
+              <app-number-input
+                inputId="bp-points"
+                [min]="limits.targetTotalPoints.min"
+                [max]="limits.targetTotalPoints.max"
+                formControlName="targetTotalPoints"
+                [disabled]="!canEdit()"
+                [invalid]="pointsControl.invalid && pointsControl.touched"
+              />
+            </app-form-field>
+
+            <app-form-field
+              fieldId="bp-duration"
+              label="Hedef süre"
+              [hint]="
+                limits.targetDurationMinutes.min + '–' + limits.targetDurationMinutes.max +
+                ' dakika'
+              "
+              [required]="true"
+              [control]="durationControl"
+            >
+              <app-number-input
+                inputId="bp-duration"
+                suffix="dk"
+                [min]="limits.targetDurationMinutes.min"
+                [max]="limits.targetDurationMinutes.max"
+                formControlName="targetDurationMinutes"
+                [disabled]="!canEdit()"
+                [invalid]="durationControl.invalid && durationControl.touched"
+              />
+            </app-form-field>
+          </div>
+        </div>
+      </app-card>
+
+      <app-card
+        title="Kazanım × zorluk tablosu"
+        description="Her hücre, o kazanımdan sorulacak soru sayısıdır"
+      >
+        @if (view.outcomes.length === 0) {
+          <app-empty-state
+            icon="target"
+            title="Derse ait kazanım yok"
+            description="Plan kurulabilmesi için önce derse öğrenme kazanımı tanımlanmalıdır."
+          />
+        } @else {
+          <app-blueprint-editor
+            [rows]="rows()"
+            [outcomes]="view.outcomes"
+            [targetTotalPoints]="targets().points"
+            [targetDurationMinutes]="targets().duration"
+            [readonlyMode]="!canEdit()"
+            (cellChange)="onCellChange($event)"
+          />
+        }
+      </app-card>
+    </div>
+  </div>
+} @else {
+  <app-empty-state
+    icon="inbox"
+    title="Plan bulunamadı"
+    description="Aradığınız ölçme planı silinmiş veya kapsamınız dışında olabilir."
+  />
+}

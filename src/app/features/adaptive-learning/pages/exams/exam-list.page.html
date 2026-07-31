@@ -1,0 +1,80 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Sınavlar</h1>
+      <p class="text-sm text-muted">
+        Blueprint tabanlı sınavları oluşturun, doğrulayın ve yayına alın. Takvim sütunu sınavın
+        çalışma durumunu tarihlerden türetir.
+      </p>
+    </div>
+
+    @if (canWrite()) {
+      <app-button
+        variant="primary"
+        icon="plus"
+        [loading]="isCreating()"
+        (pressed)="createExam()"
+      >
+        Yeni sınav
+      </app-button>
+    }
+  </header>
+
+  <app-filter-bar
+    [query]="facade.query()"
+    [filters]="filters()"
+    searchPlaceholder="Sınav adı veya açıklamasında ara…"
+    (searchChange)="facade.setSearch($event)"
+    (filterChange)="facade.setFilter($event.key, $event.value)"
+    (clearAll)="facade.clearFilters()"
+  />
+
+  <app-table
+    [columns]="columns()"
+    [rows]="facade.items()"
+    [query]="facade.query()"
+    [total]="facade.total()"
+    [status]="facade.status()"
+    [error]="facade.error()"
+    [filtered]="facade.isFiltered()"
+    [rowClickable]="true"
+    [mutatingIds]="facade.mutatingIds()"
+    emptyTitle="Sınav bulunamadı"
+    emptyDescription="Bu kapsamda görüntülenecek sınav yok."
+    (sortChange)="facade.toggleSort($event)"
+    (pageChange)="facade.goToPage($event)"
+    (sizeChange)="facade.setPageSize($event)"
+    (rowClick)="openDetail($event)"
+    (retry)="facade.load()"
+    (clearFilters)="facade.clearFilters()"
+  />
+</div>
+
+<ng-template #titleCell let-exam>
+  <div class="cell-stack">
+    <span class="text-body-strong truncate">{{ exam.title }}</span>
+    <span class="text-xs text-subtle truncate">
+      {{ exam.questions.length }} soru · {{ exam.totalPoints }} puan
+    </span>
+  </div>
+</ng-template>
+
+<ng-template #stateCell let-exam>
+  <app-status-badge
+    [label]="toneFor(exam.state).label"
+    [tone]="toneFor(exam.state).tone"
+    [icon]="toneFor(exam.state).icon"
+  />
+</ng-template>
+
+<ng-template #runtimeCell let-exam>
+  <app-status-badge [label]="runtimeLabel(exam)" [tone]="runtimeTone(exam)" [dot]="true" />
+</ng-template>
+
+<ng-template #actionsCell let-exam>
+  <app-dropdown
+    [items]="rowActions(exam)"
+    triggerLabel="Sınav işlemleri"
+    (itemSelect)="onRowAction(exam, $event)"
+  />
+</ng-template>

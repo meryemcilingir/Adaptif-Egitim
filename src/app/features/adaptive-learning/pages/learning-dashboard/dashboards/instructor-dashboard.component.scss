@@ -1,0 +1,56 @@
+@use '../../../../../../styles/breakpoints' as t;
+
+:host {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-6);
+}
+
+.courses {
+  display: flex;
+  flex-direction: column;
+}
+
+.courses__row {
+  display: grid;
+  grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr)) minmax(0, 2fr);
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-4) var(--space-5);
+  border-bottom: var(--border-width) solid var(--color-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+
+  &:hover {
+    background: var(--color-surface-subtle);
+  }
+}
+
+.courses__title {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.courses__metric {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.courses__progress {
+  min-width: 0;
+}
+
+@media (max-width: t.$bp-lg) {
+  .courses__row {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .courses__title,
+  .courses__progress {
+    grid-column: 1 / -1;
+  }
+}

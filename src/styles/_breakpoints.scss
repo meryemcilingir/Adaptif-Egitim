@@ -1,0 +1,14 @@
+/**
+ * Yalnızca SCSS değişkenleri — CSS ÇIKTISI ÜRETMEZ.
+ *
+ * Media query'ler CSS custom property kabul etmediği için breakpoint'ler SCSS
+ * değişkeni olarak tutulur. Bu dosya `_tokens.scss`'ten ayrıdır: component
+ * stilleri token dosyasını `@use` etseydi `:root` bloğunun tamamı her bileşenin
+ * CSS'ine kopyalanırdı.
+ */
+
+$bp-sm: 640px;
+$bp-md: 768px;
+$bp-lg: 1024px;
+$bp-xl: 1280px;
+$bp-2xl: 1536px;

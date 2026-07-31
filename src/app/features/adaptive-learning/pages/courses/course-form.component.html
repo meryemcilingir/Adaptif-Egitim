@@ -1,0 +1,174 @@
+<app-dialog
+  [open]="true"
+  size="lg"
+  [title]="title()"
+  description="Ders bilgileri. Yeni dersler taslak olarak oluşturulur."
+  [closeOnBackdrop]="false"
+  (closed)="onCancel()"
+>
+  <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+    <div class="form__row">
+      <app-form-field
+        fieldId="course-code"
+        label="Ders kodu"
+        hint="Benzersiz olmalıdır."
+        [required]="true"
+        [control]="codeControl"
+        [maxLength]="limits.code.max"
+        [forceShowError]="submitted()"
+      >
+        <app-input
+          inputId="course-code"
+          placeholder="Örn. BIL203"
+          formControlName="code"
+          [invalid]="codeControl.invalid && (codeControl.touched || submitted())"
+        />
+      </app-form-field>
+
+      <app-form-field
+        fieldId="course-program"
+        label="Program"
+        [required]="true"
+        [control]="programControl"
+        [forceShowError]="submitted()"
+      >
+        <app-select
+          selectId="course-program"
+          [options]="programs()"
+          placeholder="Program seçin"
+          formControlName="programId"
+          [invalid]="programControl.invalid && (programControl.touched || submitted())"
+        />
+      </app-form-field>
+    </div>
+
+    <app-form-field
+      fieldId="course-name"
+      label="Ders adı"
+      [required]="true"
+      [control]="nameControl"
+      [maxLength]="limits.name.max"
+      [forceShowError]="submitted()"
+    >
+      <app-input
+        inputId="course-name"
+        placeholder="Örn. Veri Yapıları ve Algoritmalar"
+        formControlName="name"
+        [invalid]="nameControl.invalid && (nameControl.touched || submitted())"
+      />
+    </app-form-field>
+
+    <app-form-field
+      fieldId="course-description"
+      label="Açıklama"
+      hint="Dersin kapsamını kısaca anlatın."
+      [control]="descriptionControl"
+      [maxLength]="limits.description.max"
+      [forceShowError]="submitted()"
+    >
+      <app-textarea
+        inputId="course-description"
+        placeholder="Dersin amacı ve içeriği…"
+        [rows]="3"
+        [maxLength]="limits.description.max"
+        formControlName="description"
+        [invalid]="descriptionControl.invalid && (descriptionControl.touched || submitted())"
+      />
+    </app-form-field>
+
+    <div class="form__row">
+      <app-form-field
+        fieldId="course-instructor"
+        label="Eğitmen"
+        [required]="true"
+        [control]="instructorControl"
+        [forceShowError]="submitted()"
+      >
+        <app-select
+          selectId="course-instructor"
+          [options]="instructors()"
+          placeholder="Eğitmen seçin"
+          formControlName="instructorId"
+          [invalid]="instructorControl.invalid && (instructorControl.touched || submitted())"
+        />
+      </app-form-field>
+
+      <app-form-field
+        fieldId="course-term"
+        label="Dönem"
+        [required]="true"
+        [control]="termControl"
+        [forceShowError]="submitted()"
+      >
+        <app-select
+          selectId="course-term"
+          [options]="terms()"
+          placeholder="Dönem seçin"
+          formControlName="termId"
+          [invalid]="termControl.invalid && (termControl.touched || submitted())"
+        />
+      </app-form-field>
+    </div>
+
+    <div class="form__row form__row--three">
+      <app-form-field
+        fieldId="course-category"
+        label="Kategori"
+        [required]="true"
+        [control]="categoryControl"
+        [forceShowError]="submitted()"
+      >
+        <app-select
+          selectId="course-category"
+          [options]="categoryOptions"
+          [placeholder]="null"
+          formControlName="category"
+          [invalid]="categoryControl.invalid && (categoryControl.touched || submitted())"
+        />
+      </app-form-field>
+
+      <app-form-field
+        fieldId="course-level"
+        label="Seviye"
+        [required]="true"
+        [control]="levelControl"
+        [forceShowError]="submitted()"
+      >
+        <app-select
+          selectId="course-level"
+          [options]="levelOptions"
+          [placeholder]="null"
+          formControlName="level"
+          [invalid]="levelControl.invalid && (levelControl.touched || submitted())"
+        />
+      </app-form-field>
+
+      <app-form-field
+        fieldId="course-duration"
+        label="Tahmini süre"
+        [hint]="
+          limits.estimatedDurationHours.min + '–' + limits.estimatedDurationHours.max + ' saat'
+        "
+        [required]="true"
+        [control]="durationControl"
+        [forceShowError]="submitted()"
+      >
+        <app-number-input
+          inputId="course-duration"
+          suffix="saat"
+          [min]="limits.estimatedDurationHours.min"
+          [max]="limits.estimatedDurationHours.max"
+          formControlName="estimatedDurationHours"
+          [invalid]="durationControl.invalid && (durationControl.touched || submitted())"
+        />
+      </app-form-field>
+    </div>
+  </form>
+
+  <div dialog-footer>
+    <app-button variant="ghost" [disabled]="saving()" (pressed)="onCancel()">Vazgeç</app-button>
+    <app-button variant="primary" [loading]="saving()" (pressed)="submit()">
+      {{ isEditMode() ? 'Değişiklikleri kaydet' : 'Dersi oluştur' }}
+    </app-button>
+  </div>
+</app-dialog>

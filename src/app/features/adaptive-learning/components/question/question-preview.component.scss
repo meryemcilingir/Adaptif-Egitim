@@ -1,0 +1,238 @@
+:host {
+  display: block;
+}
+
+.preview {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.preview__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+.preview__code {
+  font-family: var(--font-mono);
+  font-size: var(--fs-xs);
+  color: var(--color-text-subtle);
+}
+
+.preview__points {
+  font-size: var(--fs-xs);
+  color: var(--color-text-secondary);
+  font-variant-numeric: tabular-nums;
+}
+
+.preview__title {
+  margin: 0;
+}
+
+.preview__body {
+  color: var(--color-text-primary);
+  font-size: var(--fs-body);
+  line-height: var(--lh-body);
+
+  p {
+    margin: 0 0 var(--space-2);
+  }
+
+  ul,
+  ol {
+    margin: 0 0 var(--space-2);
+    padding-inline-start: var(--space-5);
+  }
+
+  pre {
+    margin: 0 0 var(--space-2);
+    padding: var(--space-2) var(--space-3);
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-subtle);
+    font-family: var(--font-mono);
+    font-size: var(--fs-sm);
+    white-space: pre-wrap;
+  }
+
+  img {
+    max-width: 100%;
+    height: auto;
+    border-radius: var(--radius-sm);
+  }
+
+  > :last-child {
+    margin-block-end: 0;
+  }
+}
+
+/* ── Ekler ───────────────────────────────────────────────────────────────── */
+
+.preview__attachments {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.preview__image {
+  max-width: 100%;
+  border-radius: var(--radius-sm);
+  border: var(--border-width) solid var(--color-border);
+}
+
+.preview__link {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-primary);
+  text-decoration: none;
+
+  &:hover {
+    text-decoration: underline;
+  }
+}
+
+/* ── Seçenekler ──────────────────────────────────────────────────────────── */
+
+.answers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.answer {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+
+  &.is-correct {
+    border-color: var(--color-success-border);
+    background: var(--color-success-subtle);
+  }
+}
+
+.answer__marker {
+  flex: none;
+  margin-block-start: 1px;
+  color: var(--color-text-subtle);
+}
+
+.answer.is-correct .answer__marker {
+  color: var(--color-success-text);
+}
+
+.answer__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.answer__rationale {
+  color: var(--color-text-secondary);
+}
+
+/* ── Diğer cevap biçimleri ───────────────────────────────────────────────── */
+
+.answer-box {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: var(--border-width) dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle);
+
+  p {
+    margin: 0;
+  }
+}
+
+.answer-box__blank {
+  color: var(--color-text-tertiary);
+}
+
+.pairs,
+.sequence {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-subtle);
+}
+
+.pair__left,
+.pair__right {
+  min-width: 0;
+  color: var(--color-text-primary);
+}
+
+.sequence__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.sequence__order {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-subtle);
+  color: var(--color-primary);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+}
+
+/* ── Açıklama ────────────────────────────────────────────────────────────── */
+
+.explanation {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-info-subtle);
+  border: var(--border-width) solid var(--color-info-border);
+
+  p {
+    margin: 0;
+  }
+}
+
+.explanation__label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-info-text);
+  font-weight: 600;
+}

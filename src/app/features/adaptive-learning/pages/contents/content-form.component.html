@@ -1,0 +1,223 @@
+<app-dialog
+  [open]="true"
+  size="xl"
+  [title]="dialogTitle()"
+  description="İçerik bilgileri. Yeni içerikler taslak olarak oluşturulur."
+  [closeOnBackdrop]="false"
+  (closed)="onCancel()"
+>
+  <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+    <app-form-field
+      fieldId="content-title"
+      label="Başlık"
+      [hint]="'En az ' + limits.title.min + ', en fazla ' + limits.title.max + ' karakter.'"
+      [required]="true"
+      [control]="titleControl"
+      [maxLength]="limits.title.max"
+      [forceShowError]="submitted()"
+    >
+      <app-input
+        inputId="content-title"
+        placeholder="Örn. Döngüler: while ve for"
+        formControlName="title"
+        [invalid]="titleControl.invalid && (titleControl.touched || submitted())"
+      />
+    </app-form-field>
+
+    <app-form-field
+      fieldId="content-description"
+      label="Açıklama"
+      [control]="descriptionControl"
+      [maxLength]="limits.description.max"
+      [forceShowError]="submitted()"
+    >
+      <app-textarea
+        inputId="content-description"
+        placeholder="İçeriğin kapsamı ve öğrenciye katkısı…"
+        [rows]="3"
+        [maxLength]="limits.description.max"
+        formControlName="description"
+        [invalid]="descriptionControl.invalid && (descriptionControl.touched || submitted())"
+      />
+    </app-form-field>
+
+    <div class="form__row">
+      <app-form-field
+        fieldId="content-type"
+        label="İçerik türü"
+        [required]="true"
+        [control]="typeControl"
+        [forceShowError]="submitted()"
+      >
+        <app-select
+          selectId="content-type"
+          [options]="typeOptions"
+          [placeholder]="null"
+          formControlName="type"
+          [invalid]="typeControl.invalid && (typeControl.touched || submitted())"
+        />
+      </app-form-field>
+
+      <app-form-field
+        fieldId="content-duration"
+        label="Tahmini süre"
+        [hint]="
+          limits.estimatedDurationMinutes.min +
+          '–' +
+          limits.estimatedDurationMinutes.max +
+          ' dakika'
+        "
+        [required]="true"
+        [control]="durationControl"
+        [forceShowError]="submitted()"
+      >
+        <app-number-input
+          inputId="content-duration"
+          suffix="dk"
+          [min]="limits.estimatedDurationMinutes.min"
+          [max]="limits.estimatedDurationMinutes.max"
+          formControlName="estimatedDurationMinutes"
+          [invalid]="durationControl.invalid && (durationControl.touched || submitted())"
+        />
+      </app-form-field>
+    </div>
+
+    <div class="form__row">
+      <app-form-field
+        fieldId="content-course"
+        label="Ders"
+        [required]="true"
+        [control]="courseControl"
+        [forceShowError]="submitted()"
+      >
+        <app-select
+          selectId="content-course"
+          [options]="courses()"
+          placeholder="Ders seçin"
+          formControlName="courseId"
+          [invalid]="courseControl.invalid && (courseControl.touched || submitted())"
+        />
+      </app-form-field>
+
+      <app-form-field
+        fieldId="content-outcome"
+        label="Kazanım"
+        hint="İçerik tek bir kazanıma bağlanır; öğrenme yolu bu ilişkiden kurulur."
+        [required]="true"
+        [control]="outcomeControl"
+        [forceShowError]="submitted()"
+      >
+        <app-select
+          selectId="content-outcome"
+          [options]="outcomeOptions()"
+          [placeholder]="outcomeOptions().length ? 'Kazanım seçin' : 'Bu derste kazanım yok'"
+          formControlName="outcomeId"
+          [invalid]="outcomeControl.invalid && (outcomeControl.touched || submitted())"
+        />
+      </app-form-field>
+    </div>
+
+    <div class="form__row">
+      <app-form-field
+        fieldId="content-difficulty"
+        label="Zorluk"
+        [required]="true"
+        [control]="difficultyControl"
+        [forceShowError]="submitted()"
+      >
+        <app-select
+          selectId="content-difficulty"
+          [options]="difficultyOptions"
+          [placeholder]="null"
+          formControlName="difficulty"
+          [invalid]="difficultyControl.invalid && (difficultyControl.touched || submitted())"
+        />
+      </app-form-field>
+
+      <app-form-field
+        fieldId="content-level"
+        label="Bilişsel seviye"
+        [required]="true"
+        [control]="levelControl"
+        [forceShowError]="submitted()"
+      >
+        <app-select
+          selectId="content-level"
+          [options]="levelOptions"
+          [placeholder]="null"
+          formControlName="level"
+          [invalid]="levelControl.invalid && (levelControl.touched || submitted())"
+        />
+      </app-form-field>
+    </div>
+
+    <app-form-field
+      fieldId="content-tags"
+      label="Etiketler"
+      [hint]="
+        'Her etiket en fazla ' +
+        limits.tag.max +
+        ' karakter, en çok ' +
+        limits.tagCount.max +
+        ' etiket.'
+      "
+      [control]="tagsControl"
+      [forceShowError]="submitted()"
+    >
+      <app-tag-input
+        inputId="content-tags"
+        [maxTags]="limits.tagCount.max"
+        [maxTagLength]="limits.tag.max"
+        [suggestions]="tagSuggestions()"
+        formControlName="tags"
+        [invalid]="tagsControl.invalid && (tagsControl.touched || submitted())"
+      />
+    </app-form-field>
+
+    <app-form-field
+      fieldId="content-resource"
+      label="Kaynak adresi"
+      [hint]="
+        isResourceRequired()
+          ? 'Dış bağlantı türünde zorunludur.'
+          : 'İsteğe bağlı. http:// veya https:// ile başlamalıdır.'
+      "
+      [required]="isResourceRequired()"
+      [control]="resourceControl"
+      [maxLength]="limits.url.max"
+      [forceShowError]="submitted()"
+    >
+      <app-input
+        inputId="content-resource"
+        type="url"
+        placeholder="https://…"
+        formControlName="resourceUrl"
+        [invalid]="resourceControl.invalid && (resourceControl.touched || submitted())"
+      />
+    </app-form-field>
+
+    <app-form-field
+      fieldId="content-thumbnail"
+      label="Kapak görseli"
+      hint="İsteğe bağlı. Liste kartlarında görsel olarak gösterilir."
+      [control]="thumbnailControl"
+      [maxLength]="limits.url.max"
+      [forceShowError]="submitted()"
+    >
+      <app-input
+        inputId="content-thumbnail"
+        type="url"
+        placeholder="https://…"
+        formControlName="thumbnailUrl"
+        [invalid]="thumbnailControl.invalid && (thumbnailControl.touched || submitted())"
+      />
+    </app-form-field>
+  </form>
+
+  <div dialog-footer>
+    <app-button variant="ghost" [disabled]="saving()" (pressed)="onCancel()">Vazgeç</app-button>
+    <app-button variant="primary" [loading]="saving()" (pressed)="submit()">
+      {{ isEditMode() ? 'Değişiklikleri kaydet' : 'İçeriği oluştur' }}
+    </app-button>
+  </div>
+</app-dialog>

@@ -1,0 +1,99 @@
+@if (isEditing()) {
+  <div class="editor">
+    <app-multi-select
+      inputId="prerequisite-editor"
+      [options]="options()"
+      [maxSelected]="maxPrerequisites()"
+      placeholder="Önkoşul seçin"
+      searchPlaceholder="Kazanım kodu veya adı ara…"
+      emptyMessage="Seçilebilecek başka kazanım yok."
+      [ngModel]="draft()"
+      (ngModelChange)="onDraftChange($event)"
+    />
+
+    <p class="text-xs text-subtle">
+      Döngü oluşturacak kazanımlar listede devre dışıdır. En fazla
+      {{ maxPrerequisites() }} önkoşul seçilebilir.
+    </p>
+
+    <div class="editor__actions">
+      <app-button variant="ghost" size="sm" [disabled]="saving()" (pressed)="cancelEditing()">
+        Vazgeç
+      </app-button>
+      <app-button
+        variant="primary"
+        size="sm"
+        [loading]="saving()"
+        [disabled]="!hasChanges()"
+        (pressed)="commit()"
+      >
+        Kaydet
+      </app-button>
+    </div>
+  </div>
+} @else {
+  @if (prerequisites().length === 0) {
+    <app-empty-state
+      icon="workflow"
+      title="Önkoşul tanımlı değil"
+      description="Bu kazanım doğrudan çalışılabilir."
+      [actionLabel]="editable() ? 'Önkoşul ekle' : null"
+      actionIcon="plus"
+      (action)="startEditing()"
+    />
+  } @else {
+    <ul class="list">
+      @for (outcome of prerequisites(); track outcome.id) {
+        <li class="list__item">
+          <button type="button" class="list__link" (click)="outcomeSelect.emit(outcome)">
+            <app-icon name="arrow-right" [size]="14" />
+            <span class="list__labels">
+              <span class="text-body-strong">{{ outcome.code }}</span>
+              <span class="text-xs text-muted truncate">{{ outcome.title }}</span>
+            </span>
+          </button>
+
+          <div class="list__end">
+            <app-status-badge
+              [label]="toneFor(outcome.state).label"
+              [tone]="toneFor(outcome.state).tone"
+            />
+            @if (editable()) {
+              <app-button
+                variant="ghost"
+                size="sm"
+                icon="x"
+                ariaLabel="Önkoşulu kaldır"
+                [disabled]="saving()"
+                (pressed)="removeOne(outcome)"
+              />
+            }
+          </div>
+        </li>
+      }
+    </ul>
+
+    @if (editable()) {
+      <div class="editor__actions">
+        <app-button variant="secondary" size="sm" icon="plus" (pressed)="startEditing()">
+          Önkoşulları düzenle
+        </app-button>
+      </div>
+    }
+  }
+}
+
+@if (dependents().length > 0) {
+  <div class="dependents">
+    <p class="text-overline text-muted">Bu kazanımı önkoşul gösterenler</p>
+    <ul class="dependents__list">
+      @for (outcome of dependents(); track outcome.id) {
+        <li>
+          <button type="button" class="dependents__chip" (click)="outcomeSelect.emit(outcome)">
+            {{ outcome.code }}
+          </button>
+        </li>
+      }
+    </ul>
+  </div>
+}

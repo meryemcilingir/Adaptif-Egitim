@@ -1,0 +1,158 @@
+@use '../../../../../styles/breakpoints' as t;
+
+:host {
+  display: block;
+}
+
+.editor {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+/* ── Canlı özet ──────────────────────────────────────────────────────────── */
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: var(--space-3);
+
+  @media (max-width: t.$bp-md) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.summary__stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle);
+}
+
+.summary__value {
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--color-text-primary);
+}
+
+.shares {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.share {
+  padding: 3px var(--space-3);
+  border-radius: var(--radius-full);
+  border: var(--border-width) solid var(--color-border);
+  font-size: var(--fs-xs);
+  color: var(--color-text-secondary);
+}
+
+.share--easy {
+  border-color: var(--color-success-border);
+  background: var(--color-success-subtle);
+  color: var(--color-success-text);
+}
+.share--medium {
+  border-color: var(--color-warning-border);
+  background: var(--color-warning-subtle);
+  color: var(--color-warning-text);
+}
+.share--hard {
+  border-color: var(--color-danger-border);
+  background: var(--color-danger-subtle);
+  color: var(--color-danger-text);
+}
+
+/* ── Tablo ───────────────────────────────────────────────────────────────── */
+
+.grid {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 520px;
+
+  th,
+  td {
+    padding: var(--space-2) var(--space-3);
+    border-block-end: var(--border-width) solid var(--color-border);
+    text-align: start;
+  }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    background: var(--color-surface-subtle);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+    color: var(--color-text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  tbody tr:hover {
+    background: var(--color-surface-subtle);
+  }
+
+  /* Soru istenmeyen kazanım soluk görünür — dikkat dolu satırlarda kalsın. */
+  tbody tr.is-empty .grid__outcome {
+    opacity: 0.6;
+  }
+}
+
+.grid__outcome {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  font-weight: 400;
+}
+
+.grid__cell {
+  width: 88px;
+  text-align: center;
+}
+
+thead .grid__cell {
+  text-align: center;
+}
+
+.grid__total {
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.cell-input {
+  width: 64px;
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  font-size: var(--fs-sm);
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  color: var(--color-text-primary);
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-border-focus);
+    box-shadow: var(--shadow-focus);
+  }
+
+  &:disabled {
+    background: var(--color-surface-muted);
+    cursor: not-allowed;
+  }
+}
+
+.hint {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  margin: 0;
+  color: var(--color-text-secondary);
+}

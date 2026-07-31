@@ -1,0 +1,119 @@
+@let data = snapshot();
+
+<aside class="panel" aria-label="Kısıt paneli">
+  <header class="panel__head">
+    <h3 class="text-h3">Kısıtlar</h3>
+    <span
+      class="panel__status"
+      [class.is-ready]="validation().publishReady"
+      [class.is-blocked]="!validation().publishReady"
+    >
+      <app-icon
+        [name]="validation().publishReady ? 'circle-check-big' : 'circle-alert'"
+        [size]="13"
+      />
+      {{ validation().publishReady ? 'Yayına hazır' : 'Yayına hazır değil' }}
+    </span>
+  </header>
+
+  <!-- Sayısal hedefler -->
+  <dl class="metrics">
+    <div class="metric" [class]="'is-' + toneFor(data.totalQuestions, data.targetQuestions)">
+      <dt>Toplam soru</dt>
+      <dd>
+        <app-icon [name]="iconFor(data.totalQuestions, data.targetQuestions)" [size]="13" />
+        <span class="tabular">{{ data.totalQuestions }} / {{ data.targetQuestions }}</span>
+      </dd>
+    </div>
+
+    <div class="metric" [class]="'is-' + toneFor(data.totalPoints, data.targetPoints)">
+      <dt>Toplam puan</dt>
+      <dd>
+        <app-icon [name]="iconFor(data.totalPoints, data.targetPoints)" [size]="13" />
+        <span class="tabular">{{ data.totalPoints }} / {{ data.targetPoints }}</span>
+      </dd>
+    </div>
+
+    <div class="metric">
+      <dt>Süre</dt>
+      <dd>
+        <span class="tabular">{{ data.durationMinutes }} dk</span>
+        <span class="metric__hint">tahmini {{ data.estimatedMinutes }} dk</span>
+      </dd>
+    </div>
+
+    <div class="metric" [class]="'is-' + toneFor(data.coveredOutcomes, data.targetOutcomes)">
+      <dt>Kazanım kapsaması</dt>
+      <dd>
+        <app-icon [name]="iconFor(data.coveredOutcomes, data.targetOutcomes)" [size]="13" />
+        <span class="tabular">{{ data.coveredOutcomes }} / {{ data.targetOutcomes }}</span>
+      </dd>
+    </div>
+
+    <div class="metric" [class.is-over]="data.duplicateCount > 0">
+      <dt>Yinelenen soru</dt>
+      <dd>
+        <app-icon
+          [name]="data.duplicateCount > 0 ? 'triangle-alert' : 'circle-check-big'"
+          [size]="13"
+        />
+        <span class="tabular">{{ data.duplicateCount }}</span>
+      </dd>
+    </div>
+  </dl>
+
+  <!-- Zorluk dağılımı -->
+  <section class="difficulty" aria-label="Zorluk dağılımı">
+    <h4 class="text-overline text-muted">Zorluk dağılımı</h4>
+
+    @for (entry of data.difficulty; track entry.difficulty) {
+      <div class="difficulty__row">
+        <span class="difficulty__label text-xs">{{ entry.label }}</span>
+        <app-progress-bar
+          class="difficulty__bar"
+          [value]="entry.count"
+          [max]="entry.target || entry.count || 1"
+          [tone]="entry.count === entry.target ? 'success' : 'warning'"
+          [label]="entry.label + ' soru sayısı'"
+        />
+        <span class="difficulty__count tabular text-xs">{{ entry.count }}/{{ entry.target }}</span>
+      </div>
+    }
+  </section>
+
+  <!-- Kural ihlalleri -->
+  <section class="issues" aria-label="Doğrulama sonuçları">
+    <h4 class="text-overline text-muted">
+      Doğrulama
+      @if (validation().issues.length > 0) {
+        <span class="issues__count">{{ validation().issues.length }}</span>
+      }
+    </h4>
+
+    @if (validation().issues.length === 0) {
+      <p class="issues__empty text-xs">
+        <app-icon name="circle-check-big" [size]="13" />
+        Tüm kurallar sağlanıyor.
+      </p>
+    } @else {
+      <ul class="issues__list">
+        @for (issue of errors(); track issue.rule + issue.message) {
+          <li>
+            <button type="button" class="issue is-error" (click)="issueSelect.emit(issue.step)">
+              <app-icon name="circle-alert" [size]="13" />
+              <span class="text-xs">{{ issue.message }}</span>
+            </button>
+          </li>
+        }
+        @for (issue of warnings(); track issue.rule + issue.message) {
+          <li>
+            <button type="button" class="issue is-warning" (click)="issueSelect.emit(issue.step)">
+              <app-icon name="triangle-alert" [size]="13" />
+              <span class="text-xs">{{ issue.message }}</span>
+            </button>
+          </li>
+        }
+      </ul>
+    }
+  </section>
+</aside>

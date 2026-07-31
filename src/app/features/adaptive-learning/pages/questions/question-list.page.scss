@@ -1,0 +1,51 @@
+@use '../../../../../styles/breakpoints' as t;
+
+.bulk-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--color-primary-border);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-subtle);
+
+  @media (max-width: t.$bp-md) {
+    flex-direction: column;
+    align-items: stretch;
+  }
+}
+
+.row-select {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.favorite {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: 0;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--color-text-subtle);
+  cursor: pointer;
+  transition: color var(--duration-fast) var(--ease-in-out);
+
+  &:hover {
+    color: var(--color-warning);
+  }
+
+  &.is-on {
+    color: var(--color-warning);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}

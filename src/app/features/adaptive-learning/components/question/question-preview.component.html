@@ -1,0 +1,127 @@
+@let item = question();
+
+<article class="preview">
+  <header class="preview__head">
+    <span class="preview__code">{{ item.code }}</span>
+    <span class="preview__points">{{ item.points }} puan</span>
+  </header>
+
+  <h3 class="preview__title text-h3">{{ item.title }}</h3>
+
+  <!-- Gövde zengin metindir; Angular bağlamayı sanitize eder. -->
+  <div class="preview__body" [innerHTML]="item.stem"></div>
+
+  @if (item.attachments.length > 0) {
+    <ul class="preview__attachments">
+      @for (attachment of item.attachments; track attachment.id) {
+        <li>
+          @if (attachment.kind === 'image') {
+            <img class="preview__image" [src]="attachment.url" [alt]="attachment.name" />
+          } @else {
+            <a
+              class="preview__link text-sm"
+              [href]="attachment.url"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <app-icon [name]="attachmentIcon(attachment.kind)" [size]="14" />
+              {{ attachment.name || attachment.url }}
+            </a>
+          }
+        </li>
+      }
+    </ul>
+  }
+
+  <!-- Cevap alanı: yapıya göre seçilir -->
+  @switch (shape()) {
+    @case ('options') {
+      <ul class="answers">
+        @for (option of item.options; track option.id) {
+          <li class="answer" [class.is-correct]="showAnswers() && option.correct">
+            <app-icon
+              class="answer__marker"
+              [name]="showAnswers() && option.correct ? optionMarker() : 'circle-dashed'"
+              [size]="16"
+            />
+            <div class="answer__body">
+              <span class="text-sm">{{ option.text }}</span>
+              @if (showAnswers() && option.rationale) {
+                <span class="answer__rationale text-xs">{{ option.rationale }}</span>
+              }
+            </div>
+          </li>
+        }
+      </ul>
+    }
+
+    @case ('numeric') {
+      <div class="answer-box">
+        <span class="text-xs text-subtle">Sayısal cevap</span>
+        @if (showAnswers()) {
+          <p class="text-body-strong tabular">
+            {{ item.expectedAnswer ?? '—' }}
+            @if (item.numericTolerance) {
+              <span class="text-xs text-subtle">± {{ item.numericTolerance }}</span>
+            }
+          </p>
+        } @else {
+          <p class="answer-box__blank">…</p>
+        }
+      </div>
+    }
+
+    @case ('text') {
+      <div class="answer-box">
+        <span class="text-xs text-subtle">Kısa cevap</span>
+        @if (showAnswers()) {
+          <p class="text-body-strong">{{ item.expectedAnswer ?? '—' }}</p>
+        } @else {
+          <p class="answer-box__blank">…</p>
+        }
+      </div>
+    }
+
+    @case ('pairs') {
+      <ul class="pairs">
+        @for (pair of item.matchPairs; track pair.id) {
+          <li class="pair">
+            <span class="pair__left text-sm">{{ pair.left }}</span>
+            <app-icon name="arrow-right" [size]="14" />
+            <span class="pair__right text-sm">
+              {{ showAnswers() ? pair.right : '…' }}
+            </span>
+          </li>
+        }
+      </ul>
+    }
+
+    @case ('sequence') {
+      <ol class="sequence">
+        @for (step of orderedItems(); track step.id) {
+          <li class="sequence__item">
+            <span class="sequence__order tabular">{{ showAnswers() ? step.order : '?' }}</span>
+            <span class="text-sm">{{ step.text }}</span>
+          </li>
+        }
+      </ol>
+    }
+
+    @case ('manual') {
+      <div class="answer-box">
+        <span class="text-xs text-subtle">Açık uçlu cevap alanı</span>
+        <p class="answer-box__blank">Öğrenci cevabı rubrik ile değerlendirilir.</p>
+      </div>
+    }
+  }
+
+  @if (showAnswers() && item.explanation) {
+    <div class="explanation">
+      <span class="explanation__label text-xs">
+        <app-icon name="lightbulb" [size]="13" />
+        Açıklama
+      </span>
+      <p class="text-sm">{{ item.explanation }}</p>
+    </div>
+  }
+</article>

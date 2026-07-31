@@ -1,0 +1,82 @@
+<div class="filter__search">
+  <app-icon name="search" [size]="15" />
+  <input
+    type="search"
+    class="filter__input"
+    [placeholder]="searchPlaceholder()"
+    [value]="draft()"
+    [disabled]="disabled()"
+    [attr.aria-label]="searchPlaceholder()"
+    (input)="onSearchInput($event)"
+  />
+</div>
+
+@for (definition of filters(); track definition.key) {
+  <div class="filter__group">
+    @if (definition.kind === 'boolean') {
+      <button
+        type="button"
+        class="filter__trigger"
+        [class.is-active]="isFlagOn(definition.key)"
+        [disabled]="disabled()"
+        [attr.aria-pressed]="isFlagOn(definition.key)"
+        (click)="onFlagToggle(definition)"
+      >
+        <span class="filter__check" [class.is-checked]="isFlagOn(definition.key)">
+          @if (isFlagOn(definition.key)) {
+            <app-icon name="check" [size]="11" [strokeWidth]="2.5" />
+          }
+        </span>
+        <span class="truncate">{{ definition.label }}</span>
+      </button>
+    } @else {
+      <button
+        type="button"
+        class="filter__trigger"
+        [class.is-active]="selectedValues(definition.key).length > 0"
+        [disabled]="disabled()"
+        [attr.aria-expanded]="isOpen(definition.key)"
+        aria-haspopup="listbox"
+        (click)="toggle(definition.key)"
+      >
+        <span class="truncate">{{ selectionLabel(definition) }}</span>
+        <app-icon name="chevron-down" [size]="14" />
+      </button>
+    }
+
+    @if (isOpen(definition.key)) {
+      <div class="filter__menu" role="listbox" [attr.aria-label]="definition.label">
+        @for (option of definition.options ?? []; track option.value) {
+          <button
+            type="button"
+            class="filter__option"
+            role="option"
+            [attr.aria-selected]="isSelected(definition.key, option)"
+            (click)="onOptionToggle(definition, option)"
+          >
+            <span class="filter__check" [class.is-checked]="isSelected(definition.key, option)">
+              @if (isSelected(definition.key, option)) {
+                <app-icon name="check" [size]="11" [strokeWidth]="2.5" />
+              }
+            </span>
+            <span class="grow truncate">{{ option.label }}</span>
+            @if (option.count !== undefined) {
+              <span class="text-xs text-subtle tabular">{{ option.count }}</span>
+            }
+          </button>
+        }
+      </div>
+    }
+  </div>
+}
+
+@if (hasActiveFilters()) {
+  <div class="filter__meta">
+    @if (activeCount() > 0) {
+      <span class="filter__badge">{{ activeCount() }} filtre</span>
+    }
+    <app-button variant="ghost" size="sm" icon="x" (pressed)="onClearAll()">Temizle</app-button>
+  </div>
+}
+
+<div class="filter__extra"><ng-content /></div>

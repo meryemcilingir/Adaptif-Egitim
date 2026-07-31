@@ -1,0 +1,134 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Soru bankası</h1>
+      <p class="text-sm text-muted">
+        Soruları oluşturun, versiyonlayın ve yayın durumlarını yönetin. Liste binlerce kayıt
+        varsayımıyla sunucu tarafında filtrelenir.
+      </p>
+    </div>
+
+    <div class="row-wrap gap-2">
+      <app-dropdown
+        [items]="columnMenu()"
+        triggerText="Kolonlar"
+        triggerIcon="columns-3"
+        triggerVariant="secondary"
+        triggerSize="md"
+        (itemSelect)="onColumnToggle($event)"
+      />
+
+      @if (canWrite()) {
+        <app-button variant="secondary" icon="upload" (pressed)="openImport()">
+          İçe aktar
+        </app-button>
+        <app-button variant="primary" icon="plus" (pressed)="openEditor(null)">
+          Yeni soru
+        </app-button>
+      }
+    </div>
+  </header>
+
+  <app-filter-bar
+    [query]="facade.query()"
+    [filters]="filters()"
+    searchPlaceholder="Soru kodu, başlığı, gövdesi veya etiketinde ara…"
+    (searchChange)="facade.setSearch($event)"
+    (filterChange)="facade.setFilter($event.key, $event.value)"
+    (clearAll)="facade.clearFilters()"
+  />
+
+  @if (facade.hasSelection()) {
+    <div class="bulk-bar" role="region" aria-label="Toplu işlemler">
+      <span class="text-sm text-body-strong">{{ facade.selectedCount() }} soru seçildi</span>
+      <div class="row gap-2">
+        <app-dropdown
+          [items]="bulkActions"
+          triggerText="Toplu işlem"
+          triggerIcon="square-check"
+          triggerVariant="secondary"
+          triggerSize="md"
+          (itemSelect)="onBulkAction($event)"
+        />
+        <app-button variant="ghost" (pressed)="facade.clearSelection()">Seçimi temizle</app-button>
+      </div>
+    </div>
+  }
+
+  <app-table
+    [columns]="columns()"
+    [rows]="facade.items()"
+    [query]="facade.query()"
+    [total]="facade.total()"
+    [status]="facade.status()"
+    [error]="facade.error()"
+    [filtered]="facade.isFiltered()"
+    [rowClickable]="true"
+    [mutatingIds]="facade.mutatingIds()"
+    emptyTitle="Soru bulunamadı"
+    emptyDescription="Bu kapsamda görüntülenecek soru yok."
+    (sortChange)="facade.toggleSort($event)"
+    (pageChange)="facade.goToPage($event)"
+    (sizeChange)="facade.setPageSize($event)"
+    (rowClick)="openDetail($event)"
+    (retry)="facade.load()"
+    (clearFilters)="facade.clearFilters()"
+  />
+</div>
+
+<ng-template #selectCell let-question>
+  <label class="row-select" (click)="$event.stopPropagation()">
+    <input
+      type="checkbox"
+      [checked]="facade.isSelected(question.id)"
+      [attr.aria-label]="question.title + ' seç'"
+      (change)="facade.toggleSelection(question.id)"
+    />
+  </label>
+</ng-template>
+
+<ng-template #favoriteCell let-question>
+  <button
+    type="button"
+    class="favorite"
+    [class.is-on]="isFavorite(question)"
+    [attr.aria-label]="isFavorite(question) ? 'Favoriden çıkar' : 'Favorilere ekle'"
+    [attr.aria-pressed]="isFavorite(question)"
+    (click)="$event.stopPropagation(); toggleFavorite(question)"
+  >
+    <app-icon name="star" [size]="15" />
+  </button>
+</ng-template>
+
+<ng-template #titleCell let-question>
+  <div class="cell-stack">
+    <span class="text-body-strong truncate">{{ question.title }}</span>
+    <span class="text-xs text-subtle truncate">
+      {{ question.code }} · {{ plainStem(question.stem) }}
+    </span>
+  </div>
+</ng-template>
+
+<ng-template #badgesCell let-question>
+  <app-question-badges [question]="question" [showDetails]="false" />
+</ng-template>
+
+<ng-template #outcomeCell let-question>
+  <span class="text-sm">{{ outcomeCode(question) }}</span>
+</ng-template>
+
+<ng-template #actionsCell let-question>
+  <app-dropdown
+    [items]="rowActions(question)"
+    triggerLabel="Soru işlemleri"
+    (itemSelect)="onRowAction(question, $event)"
+  />
+</ng-template>
+
+@if (preview(); as item) {
+  <app-question-preview-dialog
+    [question]="item"
+    (openDetail)="openDetail(item)"
+    (closed)="closePreview()"
+  />
+}
