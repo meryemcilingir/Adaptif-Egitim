@@ -1,0 +1,41 @@
+# Satır sonlarını depoda TEK biçimde tut.
+#
+# Windows'ta çalışılıyor ama depoda her şey LF olarak saklanır ve LF olarak
+# çıkarılır. Böylece başka bir makineye klonlandığında sahte satır sonu farkları
+# oluşmaz ve diff'ler yalnızca gerçek değişiklikleri gösterir.
+* text=auto eol=lf
+
+# Windows'a özgü betikler CRLF olmak ZORUNDA; aksi hâlde cmd.exe çalıştıramaz.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Kaynak ve yapılandırma — açıkça metin.
+*.ts    text
+*.js    text
+*.mjs   text
+*.html  text
+*.scss  text
+*.css   text
+*.json  text
+*.md    text
+*.yml   text
+*.yaml  text
+*.svg   text
+
+# İkili dosyalar: dönüştürme yapılmaz, diff üretilmez.
+*.png   binary
+*.jpg   binary
+*.jpeg  binary
+*.gif   binary
+*.ico   binary
+*.webp  binary
+*.woff  binary
+*.woff2 binary
+*.ttf   binary
+*.eot   binary
+*.pdf   binary
+*.docx  binary
+*.xlsx  binary
+
+# Kilit dosyası: üretilmiş dosyadır, incelemede diff gürültüsü yapmasın.
+package-lock.json -diff linguist-generated
