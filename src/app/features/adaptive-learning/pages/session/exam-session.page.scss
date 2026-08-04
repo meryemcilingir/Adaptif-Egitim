@@ -1,0 +1,208 @@
+@use '../../../../../styles/breakpoints' as t;
+
+/* Yükleme ve hata durumları da kabuğun dışında olduğu için kendi çerçevesini alır. */
+.session-shell {
+  max-inline-size: 720px;
+  margin-inline: auto;
+  padding: var(--space-6) var(--space-4);
+}
+
+.player {
+  display: flex;
+  flex-direction: column;
+  min-block-size: 100dvh;
+  background: var(--color-bg);
+}
+
+/* ── Başlık ──────────────────────────────────────────────────────────────── */
+
+.player__header {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: var(--z-sticky);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-block-end: var(--border-width) solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.player__identity {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/* Sayaç ve kayıt durumu ortada: sınav boyunca en çok bakılan iki bilgi. */
+.player__status {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-3);
+}
+
+.player__tools {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+/* ── Gövde ───────────────────────────────────────────────────────────────── */
+
+.player__body {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: var(--space-4);
+  align-items: start;
+  inline-size: 100%;
+  max-inline-size: 1180px;
+  margin-inline: auto;
+  padding: var(--space-4);
+
+  @media (max-width: t.$bp-lg) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.player__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* Dar ekranda navigatör soru alanının ALTINA iner: sınavda öncelik sorudur. */
+.player__side {
+  position: sticky;
+  inset-block-start: 76px;
+
+  @media (max-width: t.$bp-lg) {
+    position: static;
+  }
+}
+
+.player__submit {
+  margin-block-start: var(--space-3);
+}
+
+/* ── Soru ────────────────────────────────────────────────────────────────── */
+
+.question__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+  margin-block-end: var(--space-4);
+}
+
+.question__meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.question__number {
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+}
+
+.question__stem {
+  margin-block-end: var(--space-5);
+  font-size: var(--fs-h4);
+  line-height: var(--lh-relaxed);
+  color: var(--color-text-primary);
+
+  :where(p) {
+    margin: 0 0 var(--space-3);
+  }
+
+  :where(p):last-child {
+    margin-block-end: 0;
+  }
+
+  :where(code) {
+    padding: 2px 6px;
+    border-radius: var(--radius-sm);
+    background: var(--color-surface-subtle);
+    font-family: var(--font-mono);
+    font-size: 0.9em;
+  }
+}
+
+.attachments {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+  padding: 0;
+  list-style: none;
+
+  img {
+    max-inline-size: 100%;
+    border: var(--border-width) solid var(--color-border);
+    border-radius: var(--radius-md);
+  }
+
+  a {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-primary-text);
+  }
+}
+
+.player__nav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+}
+
+/* ── Teslim özeti ────────────────────────────────────────────────────────── */
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: var(--z-modal);
+  display: grid;
+  place-items: center;
+  padding: var(--space-4);
+  background: var(--color-overlay);
+}
+
+.overlay__panel {
+  inline-size: 100%;
+  max-inline-size: 560px;
+  max-block-size: 90dvh;
+  overflow-y: auto;
+  padding: var(--space-5);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  box-shadow: var(--shadow-lg);
+
+  h2 {
+    margin: 0 0 var(--space-4);
+  }
+}
+
+/* ── Dar ekran ───────────────────────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .player__header {
+    flex-wrap: wrap;
+    gap: var(--space-2);
+  }
+
+  .player__status {
+    order: 3;
+    inline-size: 100%;
+    justify-content: space-between;
+  }
+
+  .player__identity {
+    flex: 1;
+  }
+}

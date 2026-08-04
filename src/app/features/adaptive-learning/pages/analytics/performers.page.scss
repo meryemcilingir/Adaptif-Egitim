@@ -1,0 +1,157 @@
+@use '../../../../../styles/breakpoints' as t;
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.metric__label,
+.metric__hint {
+  color: var(--color-text-subtle);
+}
+
+.metric__value {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--color-text-primary);
+
+  &.is-warn {
+    color: var(--color-warning-text);
+  }
+
+  &.is-muted {
+    color: var(--color-text-secondary);
+  }
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+}
+
+.boards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+  align-items: start;
+
+  @media (max-width: t.$bp-lg) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.row {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr) 110px 42px 16px;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-md);
+  background: none;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color var(--motion-fast), border-color var(--motion-fast);
+
+  &:hover {
+    background: var(--color-surface-hover);
+    border-color: var(--color-border);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 1px;
+  }
+
+  /* Risk satırı sıra numarası taşımaz: risk bir yarış değildir. */
+  &--risk {
+    grid-template-columns: minmax(0, 1fr) auto 16px;
+    align-items: start;
+  }
+
+  app-icon {
+    color: var(--color-text-subtle);
+    align-self: center;
+  }
+}
+
+.row__rank {
+  font-weight: 600;
+  color: var(--color-text-subtle);
+}
+
+.row__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.row__score {
+  text-align: end;
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.reasons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-1);
+  margin-top: var(--space-1);
+}
+
+.row__stats {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  align-items: flex-end;
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 640px) {
+  .row {
+    grid-template-columns: 24px minmax(0, 1fr) 42px 16px;
+  }
+
+  .row__bar {
+    display: none;
+  }
+
+  .row__stats {
+    display: none;
+  }
+
+  .row--risk {
+    grid-template-columns: minmax(0, 1fr) 16px;
+  }
+}

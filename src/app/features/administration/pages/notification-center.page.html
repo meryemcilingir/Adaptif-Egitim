@@ -1,0 +1,197 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Bildirim merkezi</h1>
+      <p class="text-sm text-muted">
+        Uygulama içi bildirim gönderin. Alıcılar gönderim anında hedeften
+        çözülür; e-posta gönderimi bu projede yapılmaz.
+      </p>
+    </div>
+
+    @if (exportTable(); as table) {
+      <app-export-menu [table]="table" />
+    }
+  </header>
+
+  <div class="layout">
+    <section class="composer">
+      <app-card
+        [title]="editing() ? 'Bildirimi düzenle' : 'Yeni bildirim'"
+        description="Taslak olarak kaydedin, hazır olunca gönderin."
+      >
+        <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+          <app-form-field
+            fieldId="ntf-title"
+            label="Başlık"
+            [required]="true"
+            [control]="form.controls.title"
+            [maxLength]="limits.title.max"
+          >
+            <app-input inputId="ntf-title" formControlName="title" placeholder="Kısa ve net bir başlık" />
+          </app-form-field>
+
+          <app-form-field
+            fieldId="ntf-body"
+            label="İçerik"
+            [required]="true"
+            [control]="form.controls.body"
+            [maxLength]="limits.body.max"
+            hint="Ne olduğunu ve kullanıcının ne yapması gerektiğini yazın."
+          >
+            <app-textarea inputId="ntf-body" formControlName="body" [rows]="5" />
+          </app-form-field>
+
+          <div class="grid">
+            <app-form-field fieldId="ntf-kind" label="Tür">
+              <app-select
+                selectId="ntf-kind"
+                [options]="kindOptions"
+                [placeholder]="null"
+                formControlName="kind"
+              />
+            </app-form-field>
+
+            <app-form-field fieldId="ntf-audience" label="Hedef kitle">
+              <app-select
+                selectId="ntf-audience"
+                [options]="audienceOptions"
+                [placeholder]="null"
+                formControlName="audience"
+              />
+            </app-form-field>
+          </div>
+
+          @if (needsTarget()) {
+            <app-form-field
+              fieldId="ntf-target"
+              label="Hedef"
+              [required]="true"
+              hint="Bildirimin gideceği kayıt."
+            >
+              <app-select
+                selectId="ntf-target"
+                [options]="targetOptions()"
+                placeholder="Seçiniz"
+                formControlName="audienceValue"
+              />
+            </app-form-field>
+          }
+
+          <app-form-field
+            fieldId="ntf-schedule"
+            label="Zamanlama (isteğe bağlı)"
+            hint="Bu projede zamanlayıcı yoktur; tarih yalnızca kayıt için saklanır ve gönderim elle yapılır."
+          >
+            <app-input inputId="ntf-schedule" type="date" formControlName="scheduledFor" />
+          </app-form-field>
+
+          @if (preview(); as audience) {
+            <p class="preview text-sm" [class.is-empty]="audience.recipientCount === 0">
+              <app-icon
+                [name]="audience.recipientCount === 0 ? 'triangle-alert' : 'users'"
+                [size]="15"
+              />
+              @if (audience.recipientCount === 0) {
+                Bu hedefe uyan aktif kullanıcı yok. Bildirim kimseye ulaşmaz.
+              } @else {
+                {{ audience.label }} · <strong>{{ audience.recipientCount }}</strong> kullanıcıya
+                gidecek.
+              }
+            </p>
+          }
+
+          <div class="form__actions">
+            @if (editing()) {
+              <app-button variant="ghost" (pressed)="resetForm()">Vazgeç</app-button>
+            }
+
+            <app-button
+              variant="primary"
+              icon="save"
+              type="submit"
+              [loading]="saving()"
+              [disabled]="!canSubmit()"
+            >
+              {{ editing() ? 'Değişiklikleri kaydet' : 'Taslak olarak kaydet' }}
+            </app-button>
+          </div>
+        </form>
+      </app-card>
+    </section>
+
+    <section class="history">
+      <app-card title="Gönderim geçmişi" [description]="total() + ' kayıt'">
+        @if (isLoading()) {
+          <app-loading-state variant="skeleton-card" [rows]="4" message="Bildirimler yükleniyor…" />
+        } @else if (hasError()) {
+          <app-error-state
+            [error]="error()"
+            title="Bildirimler yüklenemedi"
+            (retry)="facade.load()"
+          />
+        } @else if (isEmpty()) {
+          <app-empty-state
+            icon="bell"
+            title="Henüz bildirim yok"
+            description="Soldaki formdan ilk bildiriminizi oluşturun."
+          />
+        } @else {
+          <ul class="campaigns">
+            @for (campaign of items(); track campaign.id) {
+              <li class="campaign">
+                <div class="campaign__head">
+                  <span class="text-sm text-body-strong truncate">{{ campaign.title }}</span>
+                  <app-status-badge
+                    [label]="stateLabels[campaign.state]"
+                    [tone]="toneOf(campaign.state)"
+                  />
+                </div>
+
+                <p class="campaign__body text-xs">{{ campaign.body }}</p>
+
+                <p class="campaign__meta text-xs">
+                  {{ kindLabels[campaign.kind] }}
+                  <span class="dot">·</span>
+                  {{ campaign.audienceLabel }}
+                  <span class="dot">·</span>
+                  {{ campaign.createdByName }}
+                  <span class="dot">·</span>
+                  {{ campaign.createdAt | date: 'dd MMM' }}
+                </p>
+
+                @if (campaign.state === 'SENT') {
+                  <p class="campaign__delivery text-xs">
+                    <app-icon name="check" [size]="12" />
+                    {{ campaign.recipientCount }} alıcı ·
+                    {{ campaign.sentAt | date: 'dd MMM HH:mm' }} · {{ campaign.deliveryNote }}
+                  </p>
+                } @else {
+                  <div class="campaign__actions">
+                    <app-button variant="secondary" size="sm" icon="send" (pressed)="send(campaign)">
+                      Gönder
+                    </app-button>
+                    <app-button
+                      variant="ghost"
+                      size="sm"
+                      icon="pencil-line"
+                      (pressed)="edit(campaign)"
+                    >
+                      Düzenle
+                    </app-button>
+                    <app-button
+                      variant="ghost"
+                      size="sm"
+                      icon="trash-2"
+                      ariaLabel="Bildirimi sil"
+                      (pressed)="remove(campaign)"
+                    />
+                  </div>
+                }
+              </li>
+            }
+          </ul>
+        }
+      </app-card>
+    </section>
+  </div>
+</div>

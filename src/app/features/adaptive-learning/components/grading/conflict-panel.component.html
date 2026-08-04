@@ -1,0 +1,109 @@
+<section class="conflict" [class.is-resolved]="isResolved()">
+  <header class="conflict__head">
+    <app-icon [name]="isResolved() ? 'circle-check-big' : 'triangle-alert'" [size]="18" />
+
+    <div class="conflict__title">
+      <span class="text-sm text-body-strong">{{ conflict().questionTitle }}</span>
+      <span class="text-xs">
+        @if (isResolved()) {
+          Çakışma sonuçlandırıldı
+        } @else {
+          Değerlendiriciler arasında {{ conflict().spread }} puan fark var
+        }
+      </span>
+    </div>
+
+    <app-status-badge
+      [label]="isResolved() ? 'Karar verildi' : 'İnceleme gerekiyor'"
+      [tone]="isResolved() ? 'success' : 'warning'"
+    />
+  </header>
+
+  <ul class="scores">
+    @for (score of conflict().scores; track score.graderId) {
+      <li class="score">
+        <span class="score__name text-sm">{{ score.graderName }}</span>
+        <span class="score__points tabular">{{ score.points }}</span>
+      </li>
+    }
+  </ul>
+
+  @if (isResolved()) {
+    <div class="decision">
+      <div class="decision__row">
+        <span class="text-xs text-subtle">Nihai puan</span>
+        <span class="decision__points tabular">
+          {{ conflict().resolvedPoints }} / {{ maxPoints() }}
+        </span>
+      </div>
+      <p class="text-xs">
+        {{ conflict().resolvedBy }} — {{ conflict().resolvedReason }}
+      </p>
+    </div>
+  } @else if (canResolve()) {
+    <div class="resolve">
+      <div class="resolve__points">
+        <span class="text-xs text-subtle">Nihai puan</span>
+
+        <div class="resolve__row">
+          @for (suggestion of suggestions(); track suggestion) {
+            <button
+              type="button"
+              class="chip"
+              [class.is-selected]="points() === suggestion"
+              [disabled]="busy()"
+              (click)="setPoints(suggestion)"
+            >
+              {{ suggestion }}
+            </button>
+          }
+
+          <input
+            class="resolve__input tabular"
+            type="text"
+            inputmode="decimal"
+            aria-label="Nihai puan"
+            [value]="points()"
+            [disabled]="busy()"
+            (input)="setPointsFromInput($any($event.target).value)"
+          />
+          <span class="text-sm text-subtle">/ {{ maxPoints() }}</span>
+        </div>
+      </div>
+
+      <div class="resolve__reason">
+        <label class="text-xs text-subtle" [attr.for]="'reason-' + conflict().questionId">
+          Karar gerekçesi (en az 10 karakter, zorunlu)
+        </label>
+        <textarea
+          class="resolve__input-text"
+          rows="2"
+          [id]="'reason-' + conflict().questionId"
+          [value]="reason()"
+          [disabled]="busy()"
+          [attr.maxlength]="reasonLimit"
+          (input)="setReason($any($event.target).value)"
+        ></textarea>
+        <span class="resolve__counter text-xs tabular">
+          {{ reason().length }} / {{ reasonLimit }}
+        </span>
+      </div>
+
+      <app-button
+        variant="primary"
+        size="sm"
+        icon="check"
+        [disabled]="!canSubmit()"
+        [loading]="busy()"
+        (pressed)="submit()"
+      >
+        Kararı kaydet
+      </app-button>
+    </div>
+  } @else {
+    <p class="conflict__note text-xs">
+      <app-icon name="lock" [size]="14" />
+      Çakışmayı sonuçlandırma yetkisi rolünüzde yok. Program yöneticisi karar verebilir.
+    </p>
+  }
+</section>

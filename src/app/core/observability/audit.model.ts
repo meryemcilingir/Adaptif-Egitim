@@ -61,7 +61,30 @@ export const AUDIT_ACTIONS = [
   'attempt.released',
   'permission.denied',
   'auth.login',
+  'auth.login_failed',
   'auth.logout',
+  'user.created',
+  'user.updated',
+  'user.disabled',
+  'user.enabled',
+  'user.archived',
+  'user.restored',
+  'user.password_reset',
+  'user.unlocked',
+  'user.roles_changed',
+  'role.created',
+  'role.updated',
+  'role.duplicated',
+  'role.archived',
+  'role.restored',
+  'term.created',
+  'term.updated',
+  'term.archived',
+  'settings.updated',
+  'notification.created',
+  'notification.updated',
+  'notification.sent',
+  'notification.deleted',
 ] as const;
 
 export type AuditAction = (typeof AUDIT_ACTIONS)[number];
@@ -124,8 +147,64 @@ export const AUDIT_ACTION_LABELS: Readonly<Record<AuditAction, string>> = {
   'attempt.released': 'Sonuç açıklandı',
   'permission.denied': 'Yetkisiz erişim denemesi',
   'auth.login': 'Giriş yapıldı',
+  'auth.login_failed': 'Giriş denemesi başarısız',
   'auth.logout': 'Çıkış yapıldı',
+  'user.created': 'Kullanıcı oluşturuldu',
+  'user.updated': 'Kullanıcı güncellendi',
+  'user.disabled': 'Kullanıcı askıya alındı',
+  'user.enabled': 'Kullanıcı yeniden etkinleştirildi',
+  'user.archived': 'Kullanıcı arşivlendi',
+  'user.restored': 'Kullanıcı arşivden çıkarıldı',
+  'user.password_reset': 'Parola sıfırlandı',
+  'user.unlocked': 'Hesap kilidi açıldı',
+  'user.roles_changed': 'Kullanıcı rolleri değiştirildi',
+  'role.created': 'Rol oluşturuldu',
+  'role.updated': 'Rol güncellendi',
+  'role.duplicated': 'Rol kopyalandı',
+  'role.archived': 'Rol arşivlendi',
+  'role.restored': 'Rol arşivden çıkarıldı',
+  'term.created': 'Dönem oluşturuldu',
+  'term.updated': 'Dönem güncellendi',
+  'term.archived': 'Dönem arşivlendi',
+  'settings.updated': 'Sistem ayarları güncellendi',
+  'notification.created': 'Bildirim taslağı oluşturuldu',
+  'notification.updated': 'Bildirim güncellendi',
+  'notification.sent': 'Bildirim gönderildi',
+  'notification.deleted': 'Bildirim silindi',
 };
+
+/**
+ * Eylemin ait olduğu modül.
+ *
+ * Eylem adının ÖNEKİNDEN türetilir; ikinci bir eşleme tablosu tutulmaz. Yeni
+ * bir eylem eklendiğinde modülü kendiliğinden doğru çıkar (Open/Closed).
+ */
+export const AUDIT_MODULE_LABELS: Readonly<Record<string, string>> = {
+  program: 'Programlar',
+  course: 'Dersler',
+  outcome: 'Kazanımlar',
+  content: 'İçerikler',
+  question: 'Soru bankası',
+  blueprint: 'Blueprint',
+  exam: 'Sınavlar',
+  session: 'Sınav oturumu',
+  attempt: 'Değerlendirme',
+  permission: 'Yetkilendirme',
+  auth: 'Kimlik doğrulama',
+  user: 'Kullanıcılar',
+  role: 'Roller',
+  term: 'Akademik dönem',
+  settings: 'Sistem ayarları',
+  notification: 'Bildirimler',
+};
+
+export function auditModuleOf(action: string): string {
+  const prefix = action.split('.')[0] ?? '';
+  return AUDIT_MODULE_LABELS[prefix] ?? 'Diğer';
+}
+
+/** Denetim ekranındaki modül filtresinin seçenekleri. */
+export const AUDIT_MODULES: readonly string[] = Object.keys(AUDIT_MODULE_LABELS);
 
 /** Değişen alanın eski ve yeni değeri — audit ekranında okunabilir diff için. */
 export interface AuditChange {
@@ -147,10 +226,26 @@ export interface AuditEvent {
   readonly reason: string | null;
   readonly changes: readonly AuditChange[];
   readonly correlationId: string | null;
+  /**
+   * İstemci adresi.
+   *
+   * Tarayıcıda çalışan bir mock gerçek IP göremez; değer örnektir ve denetim
+   * ekranı bunu açıkça işaretler. Alanın var olması, gerçek bir arka uca
+   * geçildiğinde sözleşmenin değişmemesini sağlar.
+   */
+  readonly ipAddress: string;
+  /** İşlem başarılı mı — reddedilen denemeler de kayda girer. */
+  readonly success: boolean;
   readonly createdAt: string;
 }
 
+/**
+ * İstemcinin gönderebileceği alanlar.
+ *
+ * Kim, ne zaman, hangi adresten — bunların hiçbiri istemciden alınmaz. Alınsaydı
+ * denetim kaydı, kaydı yazan tarafın beyanı olurdu; denetimin anlamı da kalmazdı.
+ */
 export type AuditEventInput = Omit<
   AuditEvent,
-  'id' | 'actorId' | 'actorName' | 'actorRole' | 'createdAt'
->;
+  'id' | 'actorId' | 'actorName' | 'actorRole' | 'createdAt' | 'ipAddress' | 'success'
+> & { readonly success?: boolean };

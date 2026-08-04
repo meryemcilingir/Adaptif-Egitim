@@ -34,14 +34,26 @@
   display: none;
 }
 
+.header__search-wrap {
+  position: relative;
+  flex: 1 1 auto;
+  max-width: 380px;
+  margin-inline: auto;
+}
+
+/* Panel arama kutusunun altına, kutunun genişliğinde açılır. */
+.header__search-panel {
+  position: absolute;
+  inset-inline: 0;
+  top: calc(100% + var(--space-2));
+  z-index: var(--z-dropdown, 40);
+}
+
 .header__search {
   display: flex;
   align-items: center;
   gap: var(--space-2);
   height: 34px;
-  flex: 1 1 auto;
-  max-width: 380px;
-  margin-inline: auto;
   padding-inline: var(--space-3);
   background: var(--color-surface-subtle);
   border: var(--border-width) solid var(--color-border);

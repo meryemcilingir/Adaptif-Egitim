@@ -1,0 +1,188 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Roller ve izinler</h1>
+      <p class="text-sm text-muted">
+        İzinler modül bazında yönetilir. Değişiklikler kullanıcıların bir sonraki
+        oturumunda geçerli olur; sistem rolleri silinemez.
+      </p>
+    </div>
+
+    <div class="page-header__actions">
+      @if (exportTable(); as table) {
+        <app-export-menu [table]="table" />
+      }
+
+      <app-button variant="primary" icon="plus" (pressed)="openCreate()">Yeni rol</app-button>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="3" message="Roller yükleniyor…" />
+  } @else if (hasError()) {
+    <app-error-state [error]="error()" title="Roller yüklenemedi" (retry)="facade.loadRoles()" />
+  } @else if (roles().length === 0) {
+    <app-empty-state
+      icon="shield-check"
+      title="Tanımlı rol yok"
+      description="Sistem rolleri tohumlanmamış görünüyor. Geliştirici panelinden demo veriyi sıfırlayabilirsiniz."
+    />
+  } @else {
+    <div class="layout">
+      <aside class="roles">
+        <ul class="roles__list">
+          @for (role of roles(); track role.id) {
+            <li>
+              <div class="role" [class.is-active]="selected()?.id === role.id">
+                <button type="button" class="role__main" (click)="select(role)">
+                  <span class="role__title">
+                    <span class="text-sm text-body-strong truncate">{{ role.name }}</span>
+                    @if (role.system) {
+                      <app-status-badge label="Sistem" tone="neutral" />
+                    }
+                    @if (role.archivedAt) {
+                      <app-status-badge label="Arşiv" tone="danger" />
+                    }
+                  </span>
+
+                  <span class="role__meta text-xs">
+                    {{ role.permissions.length }} izin · {{ role.userCount }} kullanıcı
+                  </span>
+                </button>
+
+                <app-dropdown
+                  [items]="actionsFor(role)"
+                  (itemSelect)="onAction($event, role)"
+                />
+              </div>
+            </li>
+          }
+        </ul>
+      </aside>
+
+      @if (selected(); as role) {
+        <section class="detail">
+          <app-card [title]="role.name" [description]="role.description || 'Açıklama girilmemiş.'">
+            <form class="meta" [formGroup]="form">
+              <app-form-field
+                fieldId="role-name"
+                label="Rol adı"
+                [required]="true"
+                [control]="form.controls.name"
+                [maxLength]="nameLimits.max"
+                [hint]="role.system ? 'Sistem rolünün adı değiştirilemez.' : 'En az 3 karakter.'"
+              >
+                <app-input inputId="role-name" formControlName="name" />
+              </app-form-field>
+
+              <app-form-field
+                fieldId="role-description"
+                label="Açıklama"
+                [control]="form.controls.description"
+                [maxLength]="descriptionMax"
+                hint="Bu rolün ne işe yaradığını bir cümleyle yazın."
+              >
+                <app-textarea inputId="role-description" formControlName="description" [rows]="2" />
+              </app-form-field>
+            </form>
+
+            <p class="hint text-xs">
+              <app-icon name="info" [size]="13" />
+              Anahtar: <code>{{ role.key }}</code> · Bu rolü {{ role.userCount }} kullanıcı taşıyor.
+            </p>
+          </app-card>
+
+          <app-card
+            title="İzinler"
+            description="Modül bazında seçin. Kilitli izinler bu rolden kaldırılamaz."
+          >
+            <app-permission-matrix
+              [selected]="draftPermissions()"
+              [roleKey]="role.key"
+              [disabled]="role.archivedAt !== null"
+              (toggle)="onTogglePermission($event)"
+              (toggleGroup)="onToggleGroup($event)"
+            />
+          </app-card>
+
+          <div class="actions">
+            @if (hasChanges()) {
+              <span class="actions__note text-xs">
+                <app-icon name="circle-alert" [size]="13" />
+                Kaydedilmemiş izin değişikliği var.
+              </span>
+            }
+
+            <app-button variant="ghost" [disabled]="!hasChanges()" (pressed)="reset()">
+              Geri al
+            </app-button>
+
+            <app-button
+              variant="primary"
+              icon="save"
+              [loading]="saving()"
+              [disabled]="role.archivedAt !== null"
+              (pressed)="save()"
+            >
+              Kaydet
+            </app-button>
+          </div>
+        </section>
+      }
+    </div>
+  }
+</div>
+
+@if (isCreating()) {
+  <app-dialog
+    [open]="true"
+    title="Yeni rol"
+    description="Rol oluşturulduktan sonra izinlerini matristen genişletebilirsiniz."
+    (closed)="closeCreate()"
+  >
+    <form class="create" [formGroup]="createForm" (ngSubmit)="submitCreate()">
+      <app-form-field
+        fieldId="new-role-name"
+        label="Rol adı"
+        [required]="true"
+        [control]="createForm.controls.name"
+        [maxLength]="nameLimits.max"
+        hint="En az 3 karakter. Var olan bir rolle aynı olamaz."
+      >
+        <app-input inputId="new-role-name" formControlName="name" placeholder="Örn. Bölüm Koordinatörü" />
+      </app-form-field>
+
+      <app-form-field
+        fieldId="new-role-description"
+        label="Açıklama"
+        [control]="createForm.controls.description"
+        [maxLength]="descriptionMax"
+      >
+        <app-textarea
+          inputId="new-role-description"
+          formControlName="description"
+          [rows]="3"
+          placeholder="Bu rol ne yapar?"
+        />
+      </app-form-field>
+
+      <p class="create__note text-xs">
+        <app-icon name="info" [size]="13" />
+        Yeni rol yalnızca “Ders görüntüleme” izniyle başlar; kalanını matristen eklersiniz.
+      </p>
+    </form>
+
+    <div dialog-footer class="dialog-footer">
+      <app-button variant="ghost" (pressed)="closeCreate()">Vazgeç</app-button>
+      <app-button
+        variant="primary"
+        icon="plus"
+        [loading]="saving()"
+        [disabled]="createForm.invalid"
+        (pressed)="submitCreate()"
+      >
+        Oluştur
+      </app-button>
+    </div>
+  </app-dialog>
+}

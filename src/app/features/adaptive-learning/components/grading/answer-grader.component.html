@@ -1,0 +1,102 @@
+<article class="grader" [class.is-pending]="answer().correct === null && !answer().autoGraded">
+  <header class="grader__head">
+    <span class="grader__order tabular">{{ answer().order }}</span>
+
+    <div class="grader__title">
+      <span class="text-sm text-body-strong">{{ answer().title }}</span>
+      <span class="text-xs text-subtle">
+        {{ answer().code }} · {{ answer().typeLabel }} · {{ answer().maxPoints }} puan
+      </span>
+    </div>
+
+    <div class="row gap-2">
+      <app-status-badge [label]="correctnessLabel()" [tone]="correctnessTone()" />
+      @if (answer().autoGraded) {
+        <app-status-badge label="Otomatik" tone="info" icon="zap" />
+      }
+    </div>
+  </header>
+
+  <dl class="grader__answers">
+    <div>
+      <dt>Öğrencinin cevabı</dt>
+      <dd class="grader__student">{{ answer().displayAnswer }}</dd>
+    </div>
+    <div>
+      <dt>Beklenen cevap</dt>
+      <dd class="grader__expected">{{ answer().expectedAnswer }}</dd>
+    </div>
+  </dl>
+
+  @if (rubric(); as activeRubric) {
+    <app-rubric-grader
+      [rubric]="activeRubric"
+      [scores]="draft().rubricScores"
+      [questionPoints]="answer().maxPoints"
+      [disabled]="disabled()"
+      (criterionChange)="onCriterionChange($event)"
+    />
+  }
+
+  <div class="grader__score">
+    <div class="score-field">
+      <label class="text-sm" [attr.for]="'score-' + answer().questionId">Puan</label>
+
+      @if (isRubricGraded()) {
+        <!-- Rubrikli cevapta puan elle girilemez; kriterlerden hesaplanır (BR-13). -->
+        <output class="score-field__computed tabular" [attr.for]="'score-' + answer().questionId">
+          {{ effectivePoints() }} / {{ answer().maxPoints }}
+        </output>
+        <span class="text-xs text-subtle">Rubrik kriterlerinden hesaplanır.</span>
+      } @else {
+        <div class="score-field__input-row">
+          <input
+            class="score-field__input tabular"
+            type="text"
+            inputmode="decimal"
+            autocomplete="off"
+            [id]="'score-' + answer().questionId"
+            [value]="draft().awardedPoints"
+            [disabled]="disabled() || answer().autoGraded"
+            [attr.aria-invalid]="scoreIssue() !== null"
+            (input)="setPoints($any($event.target).value)"
+          />
+          <span class="text-sm text-subtle">/ {{ answer().maxPoints }}</span>
+        </div>
+
+        @if (scoreIssue(); as issue) {
+          <span class="score-field__error text-xs" role="alert">{{ issue.message }}</span>
+        }
+      }
+    </div>
+
+    <div class="feedback-field">
+      <label class="text-sm" [attr.for]="'feedback-' + answer().questionId">
+        Geri bildirim
+      </label>
+      <textarea
+        class="feedback-field__input"
+        rows="3"
+        placeholder="Öğrenciye gösterilecek açıklama"
+        [id]="'feedback-' + answer().questionId"
+        [value]="draft().feedback"
+        [disabled]="disabled()"
+        [attr.maxlength]="feedbackLimit"
+        (input)="setFeedback($any($event.target).value)"
+      ></textarea>
+      <span
+        class="feedback-field__counter text-xs tabular"
+        [class.is-low]="feedbackLimit - feedbackLength() < 100"
+      >
+        {{ feedbackLength() }} / {{ feedbackLimit }}
+      </span>
+    </div>
+  </div>
+
+  @if (answer().graderScores.length > 1) {
+    <p class="grader__note text-xs">
+      <app-icon name="users" [size]="14" />
+      Bu cevabı {{ answer().graderScores.length }} değerlendirici puanladı.
+    </p>
+  }
+</article>

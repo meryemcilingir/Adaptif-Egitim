@@ -1,0 +1,74 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Kullanıcılar</h1>
+      <p class="text-sm text-muted">
+        Hesap oluşturma, rol atama ve yaşam döngüsü işlemleri. Yeni hesaplar
+        “Davet edildi” durumunda başlar; ilk girişte aktifleşir.
+      </p>
+    </div>
+
+    <div class="page-header__actions">
+      @if (exportTable(); as table) {
+        <app-export-menu [table]="table" />
+      }
+
+      @if (canManage()) {
+        <app-button variant="primary" icon="plus" (pressed)="create()">
+          Yeni kullanıcı
+        </app-button>
+      }
+    </div>
+  </header>
+
+  <app-filter-bar
+    [query]="query()"
+    [filters]="filters"
+    searchPlaceholder="Ad, e-posta, kullanıcı adı veya birimde ara…"
+    (searchChange)="onSearch($event)"
+    (filterChange)="onFilter($event.key, $event.value)"
+    (clearAll)="onClearFilters()"
+  />
+
+  <app-table
+    [columns]="columns()"
+    [rows]="items()"
+    [query]="query()"
+    [total]="total()"
+    [status]="status()"
+    [error]="errorOf()"
+    [filtered]="isFiltered()"
+    [rowClickable]="true"
+    emptyTitle="Kullanıcı bulunamadı"
+    emptyDescription="Bu filtrelerle eşleşen kullanıcı yok."
+    (sortChange)="onSort($event)"
+    (pageChange)="onPage($event)"
+    (sizeChange)="onSize($event)"
+    (rowClick)="openRow($event)"
+    (retry)="retry()"
+    (clearFilters)="onClearFilters()"
+  />
+</div>
+
+<ng-template #identityCell let-row>
+  <div class="identity">
+    <span class="text-body-strong truncate">{{ row.fullName }}</span>
+    <span class="text-xs text-subtle truncate">{{ row.email }} · {{ row.username }}</span>
+  </div>
+</ng-template>
+
+<ng-template #rolesCell let-row>
+  <div class="roles">
+    @for (name of roleNames(row.roles); track name) {
+      <span class="role-chip text-xs">{{ name }}</span>
+    }
+  </div>
+</ng-template>
+
+<ng-template #stateCell let-row>
+  <app-status-badge [label]="stateLabel(row.state)" [tone]="toneOf(row.state)" />
+</ng-template>
+
+<ng-template #actionsCell let-row>
+  <app-dropdown [items]="actionsFor(row)" (itemSelect)="onAction($event, row)" />
+</ng-template>

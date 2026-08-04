@@ -1,0 +1,273 @@
+/* ── Seçenekler ──────────────────────────────────────────────────────────── */
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  inline-size: 100%;
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  text-align: start;
+  cursor: pointer;
+  transition:
+    border-color var(--motion-fast) ease,
+    background var(--motion-fast) ease;
+
+  &:hover:not(:disabled) {
+    border-color: var(--color-border-strong);
+    background: var(--color-surface-subtle);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.7;
+  }
+
+  &.is-selected {
+    border-color: var(--color-primary);
+    background: var(--color-primary-subtle);
+  }
+}
+
+.option__marker {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 28px;
+  block-size: 28px;
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+
+  /* Çoklu seçimde kare: "birden fazla seçilebilir" bilgisini biçim de taşır. */
+  &.is-multi {
+    border-radius: var(--radius-sm);
+  }
+
+  .is-selected & {
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    color: var(--color-on-primary);
+  }
+}
+
+.option__text {
+  flex: 1;
+  font-size: var(--fs-body);
+  color: var(--color-text-primary);
+}
+
+.hint {
+  margin: var(--space-2) 0 0;
+}
+
+/* ── Sayısal ─────────────────────────────────────────────────────────────── */
+
+.numeric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-inline-size: 320px;
+}
+
+.numeric__input {
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-size: var(--fs-h4);
+  font-family: inherit;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-text-primary);
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-border-focus);
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+/* ── Metin ───────────────────────────────────────────────────────────────── */
+
+.text-answer {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+.text-answer__input {
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-size: var(--fs-body);
+  font-family: inherit;
+  line-height: var(--lh-relaxed);
+  color: var(--color-text-primary);
+  resize: vertical;
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-border-focus);
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.text-answer__counter {
+  align-self: flex-end;
+  color: var(--color-text-subtle);
+  font-variant-numeric: tabular-nums;
+
+  &.is-low {
+    color: var(--color-warning-text);
+  }
+}
+
+/* ── Eşleştirme ──────────────────────────────────────────────────────────── */
+
+.pairs {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pair {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.pair__left {
+  min-width: 0;
+  color: var(--color-text-primary);
+}
+
+/* Tasarım sistemi token'larıyla biçimlenmiş yerel seçim alanı: `AppSelect`
+   yalnızca Reactive Forms ile çalışır, buradaki değer ise sinyalden gelir. */
+.pair__select {
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-size: var(--fs-body);
+  font-family: inherit;
+  color: var(--color-text-primary);
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-border-focus);
+    box-shadow: var(--shadow-focus);
+  }
+
+  &:disabled {
+    background: var(--color-surface-subtle);
+    cursor: not-allowed;
+  }
+}
+
+/* ── Sıralama ────────────────────────────────────────────────────────────── */
+
+.sequence {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.sequence__item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.sequence__order {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 26px;
+  block-size: 26px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-subtle);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--color-primary-text);
+}
+
+.sequence__text {
+  flex: 1;
+  min-width: 0;
+  color: var(--color-text-primary);
+}
+
+.sequence__actions {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sequence__move {
+  display: grid;
+  place-items: center;
+  inline-size: 26px;
+  block-size: 20px;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  cursor: pointer;
+
+  &:hover:not(:disabled) {
+    background: var(--color-surface-subtle);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.4;
+  }
+}
+
+/* Dar ekranda eşleştirme satırı alt alta düşer. */
+@media (max-width: 640px) {
+  .pair {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-2);
+
+    app-icon {
+      display: none;
+    }
+  }
+}

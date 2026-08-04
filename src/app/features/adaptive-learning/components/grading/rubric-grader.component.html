@@ -1,0 +1,86 @@
+<div class="rubric">
+  <header class="rubric__header">
+    <div>
+      <span class="text-overline text-muted">Rubrik</span>
+      <p class="text-sm text-body-strong">{{ rubric().name }}</p>
+    </div>
+
+    <div class="rubric__total" [class.is-incomplete]="!evaluation().complete">
+      <span class="text-xs text-subtle">Hesaplanan puan</span>
+      <span class="rubric__points tabular">
+        {{ evaluation().scaledPoints }} / {{ questionPoints() }}
+      </span>
+    </div>
+  </header>
+
+  <app-progress-bar
+    [value]="evaluation().percent"
+    [max]="100"
+    [tone]="evaluation().complete ? 'success' : 'warning'"
+  />
+
+  <ul class="criteria">
+    @for (criterion of rubric().criteria; track criterion.id) {
+      <li class="criterion" [class.is-missing]="isMissing(criterion.id)">
+        <div class="criterion__head">
+          <div class="criterion__title">
+            <span class="text-sm text-body-strong">{{ criterion.title }}</span>
+            @if (criterion.description) {
+              <span class="text-xs text-subtle">{{ criterion.description }}</span>
+            }
+          </div>
+          <span class="text-xs text-subtle tabular">
+            en fazla {{ maxOf(criterion.id) }} puan
+            @if (criterion.weight !== 1) {
+              · ×{{ criterion.weight }}
+            }
+          </span>
+        </div>
+
+        <div class="levels" role="radiogroup" [attr.aria-label]="criterion.title">
+          @for (level of criterion.levels; track level.id) {
+            <button
+              type="button"
+              class="level"
+              role="radio"
+              [class.is-selected]="selectedLevel(criterion.id) === level.id"
+              [attr.aria-checked]="selectedLevel(criterion.id) === level.id"
+              [disabled]="disabled()"
+              [attr.title]="level.description"
+              (click)="selectLevel(criterion.id, level.id)"
+            >
+              <span class="level__points tabular">{{ level.points }}</span>
+              <span class="level__label text-xs">{{ level.label }}</span>
+            </button>
+          }
+        </div>
+
+        @if (selectedLevel(criterion.id)) {
+          <div class="criterion__comment">
+            <textarea
+              class="criterion__input"
+              rows="2"
+              placeholder="Bu kritere ilişkin not (isteğe bağlı)"
+              [value]="commentFor(criterion.id)"
+              [disabled]="disabled()"
+              [attr.maxlength]="commentLimit"
+              [attr.aria-label]="criterion.title + ' için yorum'"
+              (input)="setComment(criterion.id, $any($event.target).value)"
+            ></textarea>
+            <span class="criterion__counter text-xs tabular">
+              {{ commentFor(criterion.id).length }} / {{ commentLimit }}
+            </span>
+          </div>
+        }
+      </li>
+    }
+  </ul>
+
+  @if (!evaluation().complete) {
+    <p class="rubric__warning text-xs">
+      <app-icon name="triangle-alert" [size]="14" />
+      {{ evaluation().missingCriterionIds.length }} kriter için henüz seviye seçilmedi. Puan
+      yalnızca seçilen kriterlerden hesaplanıyor.
+    </p>
+  }
+</div>

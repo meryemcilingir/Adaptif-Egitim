@@ -7,7 +7,7 @@
 
 > **Sprint eşlemesi:** Sprint 1 → Faz 0–1 · Sprint 2 → Faz A (veri modeli + dashboard) ·
 > Sprint 3 → Faz B (katalog yönetimi: program, ders, kazanım, grafik, yayın akışı) ·
-> **Sprint 6 → Faz 4 (blueprint, sınav sihirbazı, kısıt paneli, doğrulama motoru)**
+> **Sprint 7 → Faz 5–6 (sınav oturumu, autosave/offline, değerlendirme ve rubrik)**
 
 ---
 
@@ -22,6 +22,7 @@
 | C | **İçerik yönetimi, öğrenme yolu, öneri motoru, öğrenci paneli (Sprint 4)** | `[x]` |
 | 3 | **Soru bankası & versiyonlama (Sprint 5)** | `[x]` |
 | 4 | **Blueprint, sınav sihirbazı, doğrulama motoru (Sprint 6)** | `[x]` |
+| 5–6 | **Sınav oturumu, öğrenci deneyimi ve değerlendirme (Sprint 7)** | `[x]` |
 | 4 | Blueprint & sınav oluşturucu | `[ ]` |
 | 5 | Sınav oturumu & autosave | `[ ]` |
 | 6 | Değerlendirme & rubrik | `[ ]` |
@@ -319,30 +320,36 @@
 
 ---
 
-## Faz 5 — Sınav Oturumu & Autosave `[ ]`
+## Faz 5 — Sınav Oturumu & Autosave (Sprint 7) `[x]`
 
-- [ ] `ExamSession`, `AnswerDraft` modelleri + handler'lar
-- [ ] `/exam-session/:token` — tam ekran focus layout
-- [ ] `ExamTimer` — `serverTimeOffset` tabanlı sayaç + test (BR-07, sekme pasifliği, saat değişimi)
-- [ ] Soru navigasyonu, işaretleme, ilerleme paneli, klavye kısayolları
-- [ ] Autosave (debounce + versiyon) + `AutosaveIndicator` (saving/saved/offline/conflict/error)
-- [ ] `OutboxQueue` — bağlantı kesilince sıralı kuyruk, yeniden bağlanınca senkron (BR-10)
-- [ ] 409 conflict UI'ı — iki sekme senaryosu açıklaması (BR-09)
-- [ ] Tek aktif oturum kuralı (BR-06)
-- [ ] Geç cevap reddi (BR-08)
-- [ ] **Integration test:** başlat → cevapla → offline → reconnect → conflict → gönder
+- [x] `ExamSession`, `AnswerDraft` modelleri + handler'lar (`handlers/session/`)
+- [x] `/exams/:id/waiting-room` — bekleme odası, sunucu saatli geri sayım, kural listesi
+- [x] `/session/:token` — kabuk dışı odak düzeni (menü ve gezinme yok)
+- [x] `ExamTimer` — `serverOffset` tabanlı sayaç + test (BR-07, saat değişimi, eşik uyarıları)
+- [x] `domain/exam-clock.ts` — 10/5/1 dakika eşikleri, her eşik bir kez uyarır
+- [x] Soru navigasyonu, işaretleme, beş durumlu navigatör, klavye kısayolları
+- [x] Autosave (900 ms debounce + 30 sn periyodik) + `SaveIndicator`
+- [x] `OutboxQueue` — sıralı kuyruk, `dedupeKey` ile birleştirme, yeniden bağlanınca senkron (BR-10)
+- [x] 409 çakışma çözümü — sunucu değeri alınır, kullanıcı bilgilendirilir (BR-09)
+- [x] Tek aktif oturum kuralı (BR-06) · geç cevap reddi (BR-08)
+- [x] Sunucu taraflı otomatik teslim — sekme kapansa da süre dolunca kapanır
+- [x] Teslim özeti (boş/işaretli soru numaralarıyla) ve makbuz ekranı (puan gösterilmez, BR-49)
+- [x] `/my-exams` — öğrencinin yaklaşan sınavları ve deneme geçmişi
 
 ---
 
-## Faz 6 — Değerlendirme & Rubrik `[ ]`
+## Faz 6 — Değerlendirme & Rubrik (Sprint 7) `[x]`
 
-- [ ] `Attempt`, `Rubric` modelleri + handler'lar
-- [ ] `domain/scoring.ts` — objektif + kısmi puan + **unit test** (BR-11)
-- [ ] `/grading` — değerlendirme kuyruğu, filtre, toplu atama
-- [ ] `/grading/:attemptId` — `RubricGrader` (kriter bazlı puan, yorum, toplam) (BR-13)
-- [ ] Puan değişikliğinde zorunlu gerekçe + yeniden değerlendirme geçmişi (BR-12)
-- [ ] Optimistic puan kaydı + hata halinde rollback + toast
-- [ ] **Integration test:** gerekçesiz kayıt engellenir → gerekçeli kayıt → audit görünür
+- [x] `Attempt`, `Rubric` handler'ları (`handlers/grading/`)
+- [x] `domain/scoring.ts` — objektif + kısmi puan + **unit test** (BR-11)
+- [x] `domain/rubric.calculator.ts` — kriter toplamı = puan + test (BR-13)
+- [x] `domain/grading.rules.ts` — puan sınırı, gerekçe zorunluluğu, çakışma tespiti + test
+- [x] `/grading` — değerlendirme kuyruğu; yalnızca iş bekleyen denemeler, bekleme süresine göre
+- [x] `/grading/:attemptId` — `RubricGrader`, `AnswerGrader`, toplu kaydetme
+- [x] Puan değişikliğinde zorunlu gerekçe + puan geçmişi (BR-12)
+- [x] İtiraz incelemesi (`UNDER_REVIEW`) ve çakışma çözümü (BR-52)
+- [x] `/attempts` ve `/attempts/:id` — deneme listesi ve detayı (cevaplar, zaman çizelgesi, bütünlük, puan geçmişi)
+- [x] Ölçme uzmanı panelinde değerlendirme kartları
 
 ---
 
@@ -357,28 +364,90 @@
 
 ---
 
-## Faz 8 — Analitik & Dashboard `[ ]`
+## Faz 8 — Analitik, Raporlama ve Öğrenme İçgörüleri `[x]`
 
-- [ ] `/learning/dashboard` — rol bazlı kompozisyon (`DESIGN_SYSTEM.md` §9)
-- [ ] `MasteryHeatmap` — kazanım × zaman
-- [ ] `/student/:id/analytics` — ilerleme trendi, kazanım kırılımı, deneme geçmişi
-- [ ] `/cohort-analytics` — cohort karşılaştırma + `domain/privacy.rules.ts` (BR-17) + **test**
-- [ ] `/item-analysis` — zorluk, ayırt edicilik, çeldirici analizi (BR-19) + **test**
-- [ ] Memoized selector + `@defer` ile lazy chart rendering
+**Domain (saf, Angular'sız, tamamı testli)**
+- [x] `statistics.ts` — ortalama, medyan, std. sapma, yüzdelik, bantlama, not dağılımı
+- [x] `analytics-range.ts` — 7/30/90/özel aralık, doğrulama (BR-59), önceki dönem
+- [x] `insights.ts` — kural tabanlı içgörüler; her iddia KANITIYLA birlikte
+- [x] `learning-velocity.ts` — hız bantları, bileşik skor, risk sinyalleri (BR-55, BR-56)
+
+**Mock backend — `handlers/analytics/`**
+- [x] `buildReportScope()` — role göre kapsam, tek noktada (ADR-057)
+- [x] 15 rapor ucu: genel bakış, öğrenci, cohort, kazanım, ustalık matrisi, zorluk,
+      trend, öneri, hız, başarı panosu, karşılaştırma, madde analizi + kayıtlı rapor CRUD
+- [x] `seed-reports.ts` — her demo rol için bir kayıtlı rapor
+
+**Ekranlar**
+- [x] `/analytics` — 10 KPI, içgörüler, drill-down bağlantıları
+- [x] `/student/:id/analytics` — 14 metrik, kazanım kırılımı, öneri geçmişi, rozetler
+- [x] `/cohort-analytics` — dağılımlar, eğilim, öğrenci listesi
+- [x] `/analytics/outcomes` — sayfalama/arama/filtre/sıralama ile kazanım tablosu
+- [x] `/item-analysis` — zorluk, ayırt edicilik, çeldirici, kalite bayrakları
+- [x] `/analytics/difficulty` — beyan edilen ↔ ölçülen zorluk, madde kalitesi saçılımı
+- [x] `/analytics/mastery` — kazanım × ders ısı haritası, tıklanabilir hücreler (ADR-063)
+- [x] `/analytics/trends` — beş eğilim, ortak zaman ekseni
+- [x] `/analytics/recommendations` — öneri motoru performansı (BR-57)
+- [x] `/analytics/velocity` — öğrenme hızı, hızlı/yavaş ilerleyenler
+- [x] `/analytics/performers` — başarı panosu + gerekçeli risk listesi
+- [x] `/analytics/compare` — 2–4 kayıt karşılaştırma (BR-58)
+- [x] `/analytics/reports` — kayıtlı rapor, rapor oluşturucu, zamanlama (örnek, BR-60)
+
+**Ortak bileşenler**
+- [x] `AnalyticsFilterBar`, `ReportHeader`, `ExportMenu`, `InsightList`,
+      `MasteryHeatmap`, `ReportBuilder`
+
+**Kalite**
+- [x] 400 unit test yeşil · production build temiz · 6 rolde yetki doğrulaması
+- [ ] Memoized selector + `@defer` ile lazy chart rendering — Faz 10'a ertelendi
 
 ---
 
-## Faz 9 — Audit, İleri Senaryolar, Gerçek Zamanlı `[ ]`
+## Faz 9 — Yönetim, Sistem Operasyonları ve Denetim `[x]`
 
-- [ ] `/audit-log` — tür/kullanıcı/zaman/hedef filtreleri, eski↔yeni değer diff'i
-- [ ] `AuditService` entegrasyonu: yayın, puan, oturum sonlandırma, override (BR-18)
-- [ ] `RealtimeGateway` — SSE/WebSocket simülasyonu (oturum tik'i, canlı istatistik, audit akışı)
-- [ ] Dev panel: latency / hata oranı / offline anahtarı
-- [ ] Rate limit (429) ve retry davranışı gösterimi
+**Domain (saf, Angular'sız, tamamı testli)**
+- [x] `academic-term.rules.ts` — çakışma, tek aktif dönem, geçmiş dönem kilidi, akademik yıl biçimi
+- [x] `role-definition.ts` — modül bazlı izin gruplaması, sistem rolü koruması, kilitli izinler
+- [x] `notification-targeting.ts` — hedef → alıcı çözümü, kampanya doğrulaması
+- [x] `system-settings.rules.ts` — ayar sınırları, çapraz kural, parola politikası
+
+**Mock backend — `handlers/admin/`**
+- [x] Yönetim panosu ve sistem sağlığı (örnek veri, ölçülebilenden türetilir)
+- [x] Kullanıcı CRUD + yaşam döngüsü (askıya al / etkinleştir / arşivle / geri al / kilit aç / parola sıfırla)
+- [x] Rol CRUD + kopyala + arşivle; oturum izinleri artık veritabanından hesaplanır
+- [x] Akademik dönem CRUD + arşiv, bütünlük kontrolüyle
+- [x] Sistem ayarları (tek satırlık koleksiyon, alan bazlı denetim farkı)
+- [x] Bildirim kampanyaları + hedef önizlemesi + gönderim
+- [x] Genel arama (yetkiye göre süzülen altı kategori)
+- [x] Denetim kaydı: modül/sonuç filtresi, gün bazlı zaman çizelgesi, IP ve başarı alanı
+- [x] Giriş geçmişi ve hesap kilidi (`auth.handlers`)
+
+**Ekranlar — `features/administration/`**
+- [x] `/admin` — 10 KPI, 5 grafik, hızlı işlemler, sistem sağlığı
+- [x] `/admin/users` — liste (sayfalama/arama/çoklu filtre/sıralama), satır işlemleri
+- [x] `/admin/users/:id` — 5 sekmeli detay (genel, atamalar, giriş, bildirim, denetim)
+- [x] `/admin/users/new` · `/admin/users/:id/edit` — tek editör, iki mod
+- [x] `/admin/roles` — rol listesi + modül bazlı izin matrisi
+- [x] `/admin/terms` — dönem yönetimi, canlı çakışma doğrulaması
+- [x] `/admin/settings` — beş bölüm, gerçek/örnek ayrımı yazılı
+- [x] `/admin/notifications` — kampanya oluşturucu + gönderim geçmişi
+- [x] `/audit-log` — liste ve zaman çizelgesi görünümü
+
+**Ortak bileşenler**
+- [x] `AppExportMenu` shared'a taşındı (CSV gerçek, Excel/PDF örnek)
+- [x] `ActivityTimeline`, `PermissionMatrix`, `SystemHealthCard`, `GlobalSearchPanel`
+
+**Kalite**
+- [x] 464 unit test yeşil · production build temiz
+- [x] 6 rolde yetki doğrulaması; Gözlemci salt okunur
+- [x] Yer tutucu ekran kalmadı (`ModulePlaceholderPage` kaldırıldı)
 
 ---
 
 ## Faz 10 — Test, Performans, A11y, Teslim `[ ]`
+
+- [ ] Gerçek zamanlı akış (SSE/WebSocket simülasyonu) — Faz 9'dan ertelendi
+- [ ] `@defer` ile lazy chart rendering — Faz 8'den ertelendi
 
 - [ ] Tüm zorunlu unit testler yeşil (`PROJECT_RULES.md` §9)
 - [ ] En az 2 integration testi yeşil

@@ -11,7 +11,16 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { AppIconName } from '../../icons/app-icons';
 import { AppIconComponent } from '../app-icon/app-icon.component';
 
-export type InputType = 'text' | 'email' | 'password' | 'number' | 'search' | 'url' | 'tel';
+export type InputType =
+  | 'text'
+  | 'email'
+  | 'password'
+  | 'number'
+  | 'search'
+  | 'url'
+  | 'tel'
+  /** Tarayıcının kendi tarih seçicisi — ayrı bir takvim bileşeni yazılmadı. */
+  | 'date';
 
 /**
  * Metin girişi (ControlValueAccessor).

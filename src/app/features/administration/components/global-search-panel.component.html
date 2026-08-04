@@ -1,0 +1,38 @@
+<div class="panel" role="listbox" aria-label="Arama sonuçları">
+  @if (isTooShort()) {
+    <p class="panel__hint text-sm">Aramak için en az iki karakter yazın.</p>
+  } @else if (loading()) {
+    <p class="panel__hint text-sm">Aranıyor…</p>
+  } @else if (isEmpty()) {
+    <p class="panel__hint text-sm">
+      “{{ result()?.term }}” için sonuç bulunamadı.
+    </p>
+  } @else if (result(); as data) {
+    @for (group of data.groups; track group.category) {
+      <section class="group">
+        <h3 class="group__title text-xs">
+          <app-icon [name]="categoryIcons[group.category]" [size]="13" />
+          {{ categoryLabels[group.category] }}
+          <span class="group__count tabular">{{ group.total }}</span>
+        </h3>
+
+        <ul class="hits">
+          @for (hit of group.hits; track hit.id) {
+            <li>
+              <a class="hit" [routerLink]="hit.link" (click)="navigate.emit()">
+                <span class="hit__label text-sm truncate">{{ hit.label }}</span>
+                <span class="hit__sub text-xs truncate">{{ hit.sublabel }}</span>
+              </a>
+            </li>
+          }
+
+          @if (hiddenCount(group.hits.length, group.total) > 0) {
+            <li class="hits__more text-xs">
+              ve {{ hiddenCount(group.hits.length, group.total) }} sonuç daha
+            </li>
+          }
+        </ul>
+      </section>
+    }
+  }
+</div>

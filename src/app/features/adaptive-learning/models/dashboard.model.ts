@@ -181,15 +181,6 @@ export interface WeeklyProgress {
   readonly quizSuccessPercent: number;
 }
 
-/** Deneyim puanı göstergesi. */
-export interface ExperienceCard {
-  readonly totalXp: number;
-  readonly level: number;
-  readonly xpIntoLevel: number;
-  readonly xpForNextLevel: number;
-  readonly percentToNextLevel: number;
-}
-
 export interface AchievementCard {
   readonly id: string;
   readonly title: string;
@@ -218,12 +209,10 @@ export interface StudentDashboard extends DashboardCommon {
   readonly continueLearning: ContinueLearningCard | null;
   readonly dailyGoal: DailyGoal;
   readonly streak: StreakCard;
-  readonly experience: ExperienceCard;
   readonly weeklyProgress: WeeklyProgress;
   readonly achievements: readonly AchievementCard[];
   readonly progress: readonly ProgressCard[];
   readonly masteryTrend: readonly TimeSeriesPoint[];
-  readonly outcomeDistribution: readonly CategoryValue[];
   readonly masteryHeatmap: MatrixData;
   readonly recommendations: readonly Recommendation[];
   /** Öğrencinin aktif dersindeki yol — stepper görünümü. */

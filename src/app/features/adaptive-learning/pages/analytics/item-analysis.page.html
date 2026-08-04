@@ -1,0 +1,83 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Madde analizi</h1>
+      <p class="text-sm text-muted">
+        Soru bankasındaki her maddenin doğru cevaplanma oranı, çözüm süresi ve ayırt
+        ediciliği. En sorunlu maddeler üstte listelenir.
+      </p>
+    </div>
+
+    <app-export-menu [table]="exportTable()" />
+  </header>
+
+  <app-filter-bar
+    [query]="query()"
+    [filters]="filters()"
+    searchPlaceholder="Soru kodu veya gövdesinde ara…"
+    (searchChange)="onSearch($event)"
+    (filterChange)="onFilter($event.key, $event.value)"
+    (clearAll)="onClearFilters()"
+  />
+
+  <app-table
+    [columns]="columns()"
+    [rows]="items()"
+    [query]="query()"
+    [total]="totalCount()"
+    [status]="tableStatus()"
+    [error]="error()"
+    [filtered]="isFiltered()"
+    [rowClickable]="true"
+    emptyTitle="Analiz edilmiş madde yok"
+    emptyDescription="Bu filtrelerle görüntülenecek madde analizi bulunmuyor. Analiz için sorunun yeterli sayıda cevaplanmış olması gerekir."
+    (sortChange)="onSort($event)"
+    (pageChange)="onPage($event)"
+    (sizeChange)="onSize($event)"
+    (rowClick)="openQuestion($event)"
+    (retry)="load()"
+    (clearFilters)="onClearFilters()"
+  />
+</div>
+
+<ng-template #questionCell let-row>
+  <div class="cell-stack">
+    <span class="text-body-strong">{{ row.questionCode }}</span>
+    <span class="text-xs text-subtle truncate">{{ row.questionStem }}</span>
+  </div>
+</ng-template>
+
+<ng-template #ratesCell let-row>
+  <div class="rates">
+    <div class="rates__bar" role="img" [attr.aria-label]="'Doğru %' + correctRate(row)">
+      <span class="rates__correct" [style.inline-size.%]="correctRate(row)"></span>
+    </div>
+    <span class="text-xs tabular">
+      %{{ correctRate(row) }} / %{{ 100 - correctRate(row) }}
+    </span>
+  </div>
+</ng-template>
+
+<ng-template #qualityCell let-row>
+  <div class="quality">
+    <app-status-badge
+      [label]="qualityLabel(row.discrimination)"
+      [tone]="qualityTone(row.discrimination)"
+    />
+    <span class="text-xs text-subtle tabular">
+      d={{ row.discrimination.toFixed(2) }} · p={{ row.difficultyIndex.toFixed(2) }}
+    </span>
+  </div>
+</ng-template>
+
+<ng-template #flagsCell let-row>
+  @if (row.flags.length === 0) {
+    <span class="text-xs text-subtle">—</span>
+  } @else {
+    <div class="row-wrap gap-1">
+      @for (flag of row.flags; track flag) {
+        <app-status-badge [label]="flagLabel(flag)" tone="warning" />
+      }
+    </div>
+  }
+</ng-template>

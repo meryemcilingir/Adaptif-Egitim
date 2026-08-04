@@ -1,0 +1,142 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Öğrenme hızı</h1>
+      <p class="text-sm text-muted">
+        Hız, harcanan süre değil birim zamanda tamamlanan içeriktir. Çok çalışan
+        öğrenci ile hızlı ilerleyen öğrenci farklı desteklere ihtiyaç duyar.
+      </p>
+    </div>
+  </header>
+
+  <app-analytics-filter-bar
+    [value]="facade.filters()"
+    [filters]="filterDefinitions()"
+    [busy]="isRefreshing()"
+    (valueChange)="onFilterChange($event)"
+    (apply)="onApply()"
+    (reset)="onReset()"
+  />
+
+  @if (isLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="3" message="Hız analizi hesaplanıyor…" />
+  } @else if (hasError()) {
+    <app-error-state [error]="error()" title="Analiz yüklenemedi" (retry)="load()" />
+  } @else if (report(); as data) {
+    <app-report-header [meta]="data.meta" [exportTable]="exportTable()" />
+
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="gauge"
+        title="Hız ölçümü için veri yok"
+        description="Seçili kapsamda tamamlanmış içerik bulunmuyor. Filtreleri genişletin."
+        actionLabel="Filtreleri temizle"
+        actionIcon="x"
+        (action)="onReset()"
+      />
+    } @else {
+      <section class="metrics" aria-label="Hız göstergeleri">
+        <div class="metric">
+          <span class="metric__label text-xs">Haftalık ortalama içerik</span>
+          <span class="metric__value tabular">{{ data.averageItemsPerWeek }}</span>
+          <span class="metric__hint text-xs">öğrenci başına tamamlanan</span>
+        </div>
+        <div class="metric">
+          <span class="metric__label text-xs">İçerik başına süre</span>
+          <span class="metric__value tabular">{{ data.averageMinutesPerItem }} dk</span>
+          <span class="metric__hint text-xs">ortalama çalışma süresi</span>
+        </div>
+        <div class="metric">
+          <span class="metric__label text-xs">Hızlı ilerleyen</span>
+          <span class="metric__value tabular is-good">{{ data.fastLearners.length }}</span>
+          <span class="metric__hint text-xs">haftada 4+ içerik</span>
+        </div>
+        <div class="metric">
+          <span class="metric__label text-xs">Yavaş ilerleyen</span>
+          <span class="metric__value tabular is-warn">{{ data.slowLearners.length }}</span>
+          <span class="metric__hint text-xs">haftada 1,5 içerikten az</span>
+        </div>
+      </section>
+
+      <div class="charts">
+        <app-chart-card
+          title="Haftalık ilerleme"
+          description="Haftalara göre tamamlanan içerik sayısı"
+          type="area"
+          [series]="weeklySeries()"
+          [categories]="weeklyCategories()"
+        />
+
+        <app-chart-card
+          title="Aylık ilerleme"
+          description="Aylara göre tamamlanan içerik sayısı"
+          type="bar"
+          [series]="monthlySeries()"
+          [categories]="monthlyCategories()"
+        />
+      </div>
+
+      <div class="lists">
+        <app-card
+          title="Hızlı ilerleyenler"
+          description="Kısa sürede çok kazanım tamamlayan öğrenciler"
+        >
+          @if (data.fastLearners.length === 0) {
+            <app-empty-state
+              icon="gauge"
+              title="Bu eşiği geçen öğrenci yok"
+              description="Seçili dönemde haftada 4 içerik ve üzeri tamamlayan öğrenci bulunmuyor."
+            />
+          } @else {
+            <ul class="rows">
+              @for (row of data.fastLearners; track row.studentId) {
+                <li>
+                  <button type="button" class="row" (click)="openStudent(row)">
+                    <span class="row__name text-sm text-body-strong truncate">
+                      {{ row.studentName }}
+                    </span>
+                    <span class="row__stat tabular">{{ row.itemsPerWeek }} /hafta</span>
+                    <span class="row__stat text-xs text-subtle">
+                      %{{ row.masteryPercent }} ustalık
+                    </span>
+                    <app-icon name="chevron-right" [size]="15" />
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+
+        <app-card
+          title="Yavaş ilerleyenler"
+          description="Tempo düşük — içerik ağırlığı veya destek ihtiyacı gözden geçirilmeli"
+        >
+          @if (data.slowLearners.length === 0) {
+            <app-empty-state
+              icon="circle-check"
+              title="Yavaş ilerleyen öğrenci yok"
+              description="Seçili kapsamdaki tüm öğrenciler beklenen tempoda ilerliyor."
+            />
+          } @else {
+            <ul class="rows">
+              @for (row of data.slowLearners; track row.studentId) {
+                <li>
+                  <button type="button" class="row" (click)="openStudent(row)">
+                    <span class="row__name text-sm text-body-strong truncate">
+                      {{ row.studentName }}
+                    </span>
+                    <span class="row__stat tabular">{{ row.itemsPerWeek }} /hafta</span>
+                    <span class="row__stat text-xs text-subtle">
+                      {{ row.averageMinutesPerItem }} dk/içerik
+                    </span>
+                    <app-icon name="chevron-right" [size]="15" />
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+      </div>
+    }
+  }
+</div>

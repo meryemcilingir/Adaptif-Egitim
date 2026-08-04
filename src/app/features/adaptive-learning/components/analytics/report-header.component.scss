@@ -1,0 +1,37 @@
+.report-header {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.report-header__meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: 4px var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-subtle);
+  font-size: var(--fs-xs);
+  color: var(--color-text-secondary);
+
+  &.is-info {
+    border-color: var(--color-info-border);
+    background: var(--color-info-subtle);
+    color: var(--color-info-text);
+  }
+
+  &.is-warning {
+    border-color: var(--color-warning-border);
+    background: var(--color-warning-subtle);
+    color: var(--color-warning-text);
+  }
+}

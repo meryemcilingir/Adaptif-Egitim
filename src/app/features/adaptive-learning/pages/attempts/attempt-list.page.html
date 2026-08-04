@@ -1,0 +1,70 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Denemeler</h1>
+      <p class="text-sm text-muted">
+        Tamamlanan tüm sınav denemeleri. Puan, değerlendirme bittikten sonra görünür.
+      </p>
+    </div>
+  </header>
+
+  <app-filter-bar
+    [query]="facade.attemptsQuery()"
+    [filters]="filters()"
+    searchPlaceholder="Öğrenci veya sınav adında ara…"
+    (searchChange)="facade.setAttemptSearch($event)"
+    (filterChange)="facade.setAttemptFilter($event.key, $event.value)"
+    (clearAll)="facade.clearAttemptFilters()"
+  />
+
+  <app-table
+    [columns]="columns()"
+    [rows]="facade.attempts()"
+    [query]="facade.attemptsQuery()"
+    [total]="facade.attemptsTotal()"
+    [status]="facade.attemptsStatus()"
+    [error]="facade.attemptsError()"
+    [filtered]="facade.attemptsFiltered()"
+    [rowClickable]="true"
+    emptyTitle="Deneme bulunamadı"
+    emptyDescription="Bu kapsamda görüntülenecek sınav denemesi yok."
+    (sortChange)="facade.toggleAttemptSort($event)"
+    (pageChange)="facade.goToAttemptPage($event)"
+    (sizeChange)="facade.setAttemptPageSize($event)"
+    (rowClick)="open($event)"
+    (retry)="facade.loadAttempts()"
+    (clearFilters)="facade.clearAttemptFilters()"
+  />
+</div>
+
+<ng-template #studentCell let-attempt>
+  <div class="cell-stack">
+    <span class="text-body-strong truncate">{{ attempt.studentName }}</span>
+    <span class="text-xs text-subtle truncate">
+      {{ attempt.attemptNumber }}. deneme
+    </span>
+  </div>
+</ng-template>
+
+<ng-template #stateCell let-attempt>
+  <app-status-badge
+    [label]="toneFor(attempt.state).label"
+    [tone]="toneFor(attempt.state).tone"
+    [icon]="toneFor(attempt.state).icon"
+  />
+</ng-template>
+
+<ng-template #scoreCell let-attempt>
+  @if (hasScore(attempt)) {
+    <div class="cell-stack cell-stack--end">
+      <span class="text-body-strong tabular">
+        {{ attempt.totalScore }} / {{ attempt.maxScore }}
+      </span>
+      <span class="text-xs" [class.is-pass]="attempt.passed" [class.is-fail]="!attempt.passed">
+        %{{ attempt.scorePercent }} · {{ attempt.passed ? 'Geçti' : 'Kaldı' }}
+      </span>
+    </div>
+  } @else {
+    <span class="text-subtle">—</span>
+  }
+</ng-template>

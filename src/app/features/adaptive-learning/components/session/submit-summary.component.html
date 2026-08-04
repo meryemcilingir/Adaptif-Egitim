@@ -1,0 +1,64 @@
+<div class="summary">
+  <dl class="summary__stats">
+    <div>
+      <dt>Toplam soru</dt>
+      <dd class="tabular">{{ summary().totalQuestions }}</dd>
+    </div>
+    <div class="is-good">
+      <dt>Cevaplanan</dt>
+      <dd class="tabular">{{ summary().answered }}</dd>
+    </div>
+    <div [class.is-warn]="summary().unanswered > 0">
+      <dt>Boş</dt>
+      <dd class="tabular">{{ summary().unanswered }}</dd>
+    </div>
+    <div [class.is-warn]="summary().flagged > 0">
+      <dt>İşaretli</dt>
+      <dd class="tabular">{{ summary().flagged }}</dd>
+    </div>
+  </dl>
+
+  @if (summary().unanswered > 0) {
+    <div class="notice is-warn">
+      <app-icon name="circle-alert" [size]="16" />
+      <div class="notice__body">
+        <span class="text-sm text-body-strong">Cevaplanmamış sorular var</span>
+        <span class="text-xs">{{ formatNumbers(summary().unansweredNumbers) }}</span>
+      </div>
+      <app-button variant="ghost" size="sm" (pressed)="goToUnanswered.emit()">
+        İlkine git
+      </app-button>
+    </div>
+  }
+
+  @if (summary().flagged > 0) {
+    <div class="notice">
+      <app-icon name="flag" [size]="16" />
+      <div class="notice__body">
+        <span class="text-sm text-body-strong">İşaretlediğiniz sorular var</span>
+        <span class="text-xs">{{ formatNumbers(summary().flaggedNumbers) }}</span>
+      </div>
+      <app-button variant="ghost" size="sm" (pressed)="goToFlagged.emit()">İlkine git</app-button>
+    </div>
+  }
+
+  @if (!hasWarnings()) {
+    <p class="notice is-good">
+      <app-icon name="circle-check-big" [size]="16" />
+      <span class="text-sm">Tüm sorular cevaplandı, işaretli soru kalmadı.</span>
+    </p>
+  }
+
+  <p class="summary__warning text-sm">
+    Sınavı teslim ettikten sonra cevaplarınızı değiştiremezsiniz.
+  </p>
+
+  <footer class="summary__actions">
+    <app-button variant="secondary" [disabled]="busy()" (pressed)="cancel.emit()">
+      Sınava dön
+    </app-button>
+    <app-button variant="primary" icon="send" [loading]="busy()" (pressed)="confirm.emit()">
+      Sınavı teslim et
+    </app-button>
+  </footer>
+</div>

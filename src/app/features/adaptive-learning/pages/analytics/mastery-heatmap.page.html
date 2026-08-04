@@ -1,0 +1,45 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Ustalık ısı haritası</h1>
+      <p class="text-sm text-muted">
+        Kazanım × ders matrisi. Hücreye tıklayarak kazanım detayına gidebilirsiniz.
+      </p>
+    </div>
+  </header>
+
+  <app-analytics-filter-bar
+    [value]="facade.filters()"
+    [filters]="filterDefinitions()"
+    [busy]="isRefreshing()"
+    (valueChange)="onFilterChange($event)"
+    (apply)="onApply()"
+    (reset)="onReset()"
+  />
+
+  @if (isLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="5" message="Matris hazırlanıyor…" />
+  } @else if (hasError()) {
+    <app-error-state [error]="error()" title="Matris yüklenemedi" (retry)="load()" />
+  } @else if (matrix(); as data) {
+    <app-report-header [meta]="meta()" [exportTable]="exportTable()" />
+
+    <app-card
+      title="Kazanım başarı matrisi"
+      description="Renkler ortalama ustalık yüzdesini gösterir; ölçülmemiş hücreler boş bırakılır"
+    >
+      @if (hasData()) {
+        <app-mastery-heatmap [matrix]="data" (select)="onSelect($event)" />
+      } @else {
+        <app-empty-state
+          icon="target"
+          title="Ölçülmüş kazanım yok"
+          description="Bu kapsamda ustalık skoru hesaplanmış kazanım bulunmuyor. Öğrenciler soru çözdükçe matris dolacaktır."
+          actionLabel="Filtreleri temizle"
+          actionIcon="x"
+          (action)="onReset()"
+        />
+      }
+    </app-card>
+  }
+</div>

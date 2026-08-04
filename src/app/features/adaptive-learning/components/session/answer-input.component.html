@@ -1,0 +1,181 @@
+@switch (question().answerKind) {
+  <!-- Çoktan seçmeli / çoklu seçim -->
+  @case ('choice') {
+    <div
+      class="options"
+      [attr.role]="question().multipleCorrect ? 'group' : 'radiogroup'"
+      aria-label="Cevap seçenekleri"
+    >
+      @for (option of question().options; track option.id; let index = $index) {
+        <button
+          type="button"
+          class="option"
+          [class.is-selected]="isSelected(option.id)"
+          [disabled]="disabled()"
+          [attr.role]="question().multipleCorrect ? 'checkbox' : 'radio'"
+          [attr.aria-checked]="isSelected(option.id)"
+          (click)="toggleOption(option.id)"
+        >
+          <span class="option__marker" [class.is-multi]="question().multipleCorrect">
+            @if (isSelected(option.id)) {
+              <app-icon name="check" [size]="13" />
+            } @else {
+              {{ letterOf(index) }}
+            }
+          </span>
+          <span class="option__text">{{ option.text }}</span>
+        </button>
+      }
+    </div>
+
+    @if (question().multipleCorrect) {
+      <p class="hint text-xs text-subtle">Birden fazla seçenek işaretleyebilirsiniz.</p>
+    }
+  }
+
+  <!-- Doğru / yanlış -->
+  @case ('boolean') {
+    <div class="options" role="radiogroup" aria-label="Doğru veya yanlış">
+      <button
+        type="button"
+        class="option"
+        [class.is-selected]="booleanValue() === true"
+        [disabled]="disabled()"
+        role="radio"
+        [attr.aria-checked]="booleanValue() === true"
+        (click)="setBoolean(true)"
+      >
+        <span class="option__marker">
+          @if (booleanValue() === true) {
+            <app-icon name="check" [size]="13" />
+          } @else {
+            D
+          }
+        </span>
+        <span class="option__text">Doğru</span>
+      </button>
+
+      <button
+        type="button"
+        class="option"
+        [class.is-selected]="booleanValue() === false"
+        [disabled]="disabled()"
+        role="radio"
+        [attr.aria-checked]="booleanValue() === false"
+        (click)="setBoolean(false)"
+      >
+        <span class="option__marker">
+          @if (booleanValue() === false) {
+            <app-icon name="check" [size]="13" />
+          } @else {
+            Y
+          }
+        </span>
+        <span class="option__text">Yanlış</span>
+      </button>
+    </div>
+  }
+
+  <!-- Sayısal -->
+  @case ('numeric') {
+    <div class="numeric">
+      <label class="text-sm" [attr.for]="'answer-' + question().questionId">Cevabınız</label>
+      <input
+        class="numeric__input tabular"
+        type="text"
+        inputmode="decimal"
+        autocomplete="off"
+        [id]="'answer-' + question().questionId"
+        [value]="numericValue()"
+        [disabled]="disabled()"
+        (input)="onNumeric($any($event.target).value)"
+      />
+      @if (question().numericTolerance !== null) {
+        <span class="text-xs text-subtle">
+          ±{{ question().numericTolerance }} sapma kabul edilir.
+        </span>
+      }
+    </div>
+  }
+
+  <!-- Kısa cevap / açık uçlu -->
+  @case ('text') {
+    <div class="text-answer">
+      <label class="text-sm" [attr.for]="'answer-' + question().questionId">Cevabınız</label>
+      <textarea
+        class="text-answer__input"
+        rows="6"
+        [id]="'answer-' + question().questionId"
+        [value]="textValue()"
+        [disabled]="disabled()"
+        [attr.maxlength]="textLimit"
+        (input)="onText($any($event.target).value)"
+      ></textarea>
+      <span class="text-answer__counter text-xs" [class.is-low]="textRemaining() < 200">
+        {{ textValue().length }} / {{ textLimit }}
+      </span>
+    </div>
+  }
+
+  <!-- Eşleştirme -->
+  @case ('pairs') {
+    <ul class="pairs">
+      @for (pair of question().matchPairs; track pair.id) {
+        <li class="pair">
+          <span class="pair__left text-sm">{{ pair.left }}</span>
+          <app-icon name="arrow-right" [size]="14" />
+          <select
+            class="pair__select"
+            [id]="'match-' + pair.id"
+            [value]="matchValueFor(pair.id)"
+            [disabled]="disabled()"
+            [attr.aria-label]="pair.left + ' için karşılık'"
+            (change)="setMatch(pair.id, $any($event.target).value)"
+          >
+            <option value="">Karşılığını seçin</option>
+            @for (choice of pair.rightChoices; track choice.id) {
+              <option [value]="choice.id" [selected]="matchValueFor(pair.id) === choice.id">
+                {{ choice.text }}
+              </option>
+            }
+          </select>
+        </li>
+      }
+    </ul>
+  }
+
+  <!-- Sıralama -->
+  @case ('sequence') {
+    <ol class="sequence">
+      @for (item of sequenceOrder(); track item.id; let index = $index; let count = $count) {
+        <li class="sequence__item">
+          <span class="sequence__order tabular">{{ index + 1 }}</span>
+          <span class="sequence__text text-sm">{{ item.text }}</span>
+
+          <span class="sequence__actions">
+            <button
+              type="button"
+              class="sequence__move"
+              [disabled]="disabled() || index === 0"
+              [attr.aria-label]="item.text + ' — yukarı taşı'"
+              (click)="moveSequence(index, -1)"
+            >
+              <app-icon name="chevron-up" [size]="14" />
+            </button>
+            <button
+              type="button"
+              class="sequence__move"
+              [disabled]="disabled() || index === count - 1"
+              [attr.aria-label]="item.text + ' — aşağı taşı'"
+              (click)="moveSequence(index, 1)"
+            >
+              <app-icon name="chevron-down" [size]="14" />
+            </button>
+          </span>
+        </li>
+      }
+    </ol>
+
+    <p class="hint text-xs text-subtle">Öğeleri ok düğmeleriyle doğru sıraya getirin.</p>
+  }
+}

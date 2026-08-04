@@ -1,0 +1,137 @@
+.timeline__empty {
+  margin: 0;
+  padding: var(--space-6) 0;
+  text-align: center;
+}
+
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.day__label {
+  margin: 0 0 var(--space-2);
+  color: var(--color-text-subtle);
+  font-weight: 600;
+  text-transform: none;
+}
+
+.entries {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Saat · işaret · gövde. Dikey çizgi işaret sütununda çizilir. */
+.entry {
+  display: grid;
+  grid-template-columns: 46px 26px minmax(0, 1fr);
+  align-items: start;
+  gap: var(--space-2);
+  position: relative;
+  padding-block: var(--space-1);
+}
+
+.entry__time {
+  padding-top: 5px;
+  color: var(--color-text-subtle);
+  text-align: end;
+}
+
+.entry__marker {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  z-index: 1;
+}
+
+/* Çizgi son öğede kesilir; aksi hâlde boşluğa doğru uzar. */
+.entry:not(:last-child) .entry__marker::after {
+  content: '';
+  position: absolute;
+  top: 30px;
+  bottom: -4px;
+  left: 57px;
+  width: 1px;
+  background: var(--color-border);
+}
+
+.entry__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--space-1) var(--space-2);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-md);
+  background: none;
+  color: inherit;
+  text-align: start;
+  font: inherit;
+  cursor: pointer;
+  transition: background-color var(--motion-fast), border-color var(--motion-fast);
+
+  &:hover {
+    background: var(--color-surface-hover);
+    border-color: var(--color-border);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 1px;
+  }
+
+  &--static {
+    cursor: default;
+
+    &:hover {
+      background: none;
+      border-color: transparent;
+    }
+  }
+}
+
+.entry__title {
+  color: var(--color-text-primary);
+}
+
+.entry__meta,
+.entry__reason {
+  color: var(--color-text-subtle);
+}
+
+.entry__dot {
+  margin-inline: 4px;
+}
+
+.entry__failed {
+  margin-inline-start: var(--space-1);
+  padding: 0 var(--space-1);
+  border-radius: var(--radius-sm);
+  background: var(--color-danger-surface);
+  color: var(--color-danger-text);
+}
+
+.entry.is-failed .entry__marker {
+  border-color: var(--color-danger-border, var(--color-border));
+  color: var(--color-danger-text);
+}
+
+@media (max-width: 640px) {
+  .entry {
+    grid-template-columns: 40px 24px minmax(0, 1fr);
+  }
+
+  .entry:not(:last-child) .entry__marker::after {
+    left: 51px;
+  }
+}

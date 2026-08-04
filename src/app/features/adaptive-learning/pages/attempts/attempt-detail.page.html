@@ -1,0 +1,189 @@
+@if (facade.isDetailLoading()) {
+  <app-loading-state variant="skeleton-card" [rows]="4" message="Deneme yükleniyor…" />
+} @else if (facade.hasDetailError()) {
+  <app-error-state [error]="facade.detailError()" title="Deneme yüklenemedi" (retry)="reload()" />
+} @else if (detail(); as view) {
+  <div class="page">
+    <app-breadcrumb [items]="breadcrumbs()" />
+
+    <header class="page-header">
+      <div class="detail-title">
+        <app-status-badge
+          [label]="statusView().label"
+          [tone]="statusView().tone"
+          [icon]="statusView().icon"
+        />
+        <h1 class="text-h1">{{ view.attempt.studentName }}</h1>
+        <p class="text-sm text-muted">
+          {{ view.studentEmail }} · {{ view.cohortName }}
+        </p>
+      </div>
+
+      @if (canGrade()) {
+        <app-button variant="secondary" icon="pen-line" (pressed)="openGrading()">
+          Puanlama ekranı
+        </app-button>
+      }
+    </header>
+
+    <!-- ── Özet ────────────────────────────────────────────────────────── -->
+    <app-card title="Deneme bilgisi">
+      <dl class="meta">
+        <div class="meta__wide">
+          <dt>Sınav</dt>
+          <dd>{{ view.attempt.examTitle }} · {{ view.courseCode }} {{ view.courseName }}</dd>
+        </div>
+        <div>
+          <dt>Deneme</dt>
+          <dd class="tabular">{{ view.attempt.attemptNumber }}.</dd>
+        </div>
+        <div>
+          <dt>Başlangıç</dt>
+          <dd>{{ formatDateTime(view.attempt.startedAt) }}</dd>
+        </div>
+        <div>
+          <dt>Teslim</dt>
+          <dd>{{ formatDateTime(view.attempt.submittedAt) }}</dd>
+        </div>
+        <div>
+          <dt>Süre</dt>
+          <dd class="tabular">{{ duration() }}</dd>
+        </div>
+        <div>
+          <dt>Puan</dt>
+          <dd class="tabular">
+            @if (hasScore()) {
+              {{ view.attempt.totalScore }} / {{ view.attempt.maxScore }}
+              <span
+                class="verdict"
+                [class.is-pass]="view.attempt.passed"
+                [class.is-fail]="!view.attempt.passed"
+              >
+                %{{ view.attempt.scorePercent }}
+              </span>
+            } @else {
+              <span class="text-subtle">Değerlendirme sürüyor</span>
+            }
+          </dd>
+        </div>
+      </dl>
+    </app-card>
+
+    <app-tabs [tabs]="tabs" [activeId]="tab()" (tabChange)="onTabChange($event)" />
+
+    @switch (tab()) {
+      <!-- ── Cevaplar ──────────────────────────────────────────────────── -->
+      @case ('answers') {
+        <app-card [title]="'Cevaplar · ' + view.answers.length">
+          @if (view.answers.length === 0) {
+            <app-empty-state
+              icon="list-checks"
+              title="Cevap yok"
+              description="Bu denemede kayıtlı cevap bulunmuyor."
+            />
+          } @else {
+            <ol class="answers">
+              @for (answer of view.answers; track answer.questionId) {
+                <li class="answer">
+                  <span class="answer__order tabular">{{ answer.order }}</span>
+
+                  <div class="answer__body">
+                    <span class="text-sm text-body-strong">{{ answer.title }}</span>
+                    <span class="text-xs text-subtle">
+                      {{ answer.code }} · {{ answer.typeLabel }}
+                    </span>
+
+                    <div class="answer__values">
+                      <div>
+                        <span class="text-xs text-subtle">Öğrencinin cevabı</span>
+                        <p class="answer__student">{{ answer.displayAnswer }}</p>
+                      </div>
+                      <div>
+                        <span class="text-xs text-subtle">Beklenen</span>
+                        <p class="answer__expected">{{ answer.expectedAnswer }}</p>
+                      </div>
+                    </div>
+
+                    @if (answer.feedback) {
+                      <p class="answer__feedback text-xs">{{ answer.feedback }}</p>
+                    }
+                  </div>
+
+                  <div class="answer__score">
+                    <span class="tabular">{{ answer.awardedPoints }} / {{ answer.maxPoints }}</span>
+                    @if (answer.autoGraded) {
+                      <app-status-badge label="Otomatik" tone="info" />
+                    } @else if (answer.graderScores.length === 0) {
+                      <app-status-badge label="Bekliyor" tone="warning" />
+                    }
+                  </div>
+                </li>
+              }
+            </ol>
+          }
+        </app-card>
+      }
+
+      <!-- ── Zaman çizelgesi ───────────────────────────────────────────── -->
+      @case ('timeline') {
+        <app-card
+          title="Oturum zaman çizelgesi"
+          description="Başlangıç, cevaplar, otomatik kayıtlar, bağlantı olayları ve teslim"
+        >
+          <app-timeline
+            [items]="timelineItems()"
+            emptyMessage="Bu deneme için oturum kaydı bulunmuyor."
+          />
+        </app-card>
+      }
+
+      <!-- ── Bütünlük ──────────────────────────────────────────────────── -->
+      @case ('integrity') {
+        <app-card title="Sınav bütünlüğü">
+          <app-integrity-panel [signals]="view.integrity" />
+        </app-card>
+      }
+
+      <!-- ── Puan geçmişi ──────────────────────────────────────────────── -->
+      @case ('history') {
+        <app-card title="Puan geçmişi" description="Her değişiklik gerekçesiyle saklanır">
+          @if (view.attempt.scoreHistory.length === 0) {
+            <app-empty-state
+              icon="refresh-cw"
+              title="Puan değişikliği yok"
+              description="Bu denemenin puanı henüz değiştirilmedi."
+            />
+          } @else {
+            <ul class="history">
+              @for (change of view.attempt.scoreHistory; track change.id) {
+                <li class="history__item">
+                  <span class="history__delta tabular">
+                    {{ change.previousScore }} → {{ change.newScore }}
+                  </span>
+                  <div class="history__body">
+                    <span class="text-sm">{{ change.reason }}</span>
+                    <span class="text-xs text-subtle">
+                      {{ change.changedByName }} · {{ formatDateTime(change.changedAt) }}
+                    </span>
+                  </div>
+                </li>
+              }
+            </ul>
+          }
+
+          @if (view.regrades.length > 0) {
+            <p class="history__note text-xs">
+              Bu denemede {{ view.regrades.length }} itiraz kaydı bulunuyor.
+            </p>
+          }
+        </app-card>
+      }
+    }
+  </div>
+} @else {
+  <app-empty-state
+    icon="inbox"
+    title="Deneme bulunamadı"
+    description="Aradığınız deneme silinmiş veya kapsamınız dışında olabilir."
+  />
+}

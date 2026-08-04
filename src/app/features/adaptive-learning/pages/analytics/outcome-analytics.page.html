@@ -1,0 +1,78 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Kazanım analitiği</h1>
+      <p class="text-sm text-muted">
+        Her kazanımın ustalık düzeyi, sınavlarda ne kadar ölçüldüğü ve soru havuzu.
+      </p>
+    </div>
+
+    <app-export-menu [table]="exportTable()" />
+  </header>
+
+  <app-analytics-filter-bar
+    [value]="facade.filters()"
+    [filters]="analyticsFilters()"
+    [busy]="tableStatus() === 'refreshing'"
+    (valueChange)="onAnalyticsFilterChange($event)"
+    (apply)="onApply()"
+    (reset)="onAnalyticsReset()"
+  />
+
+  <app-filter-bar
+    [query]="query()"
+    [filters]="tableFilters"
+    searchPlaceholder="Kazanım kodu, başlığı veya ders kodunda ara…"
+    (searchChange)="onSearch($event)"
+    (filterChange)="onFilter($event.key, $event.value)"
+    (clearAll)="onClearFilters()"
+  />
+
+  <app-table
+    [columns]="columns()"
+    [rows]="items()"
+    [query]="query()"
+    [total]="totalCount()"
+    [status]="tableStatus()"
+    [error]="error()"
+    [filtered]="isFiltered()"
+    [rowClickable]="true"
+    emptyTitle="Kazanım bulunamadı"
+    emptyDescription="Bu filtrelerle görüntülenecek kazanım yok. Tarih aralığını veya filtreleri gözden geçirin."
+    (sortChange)="onSort($event)"
+    (pageChange)="onPage($event)"
+    (sizeChange)="onSize($event)"
+    (rowClick)="openOutcome($event)"
+    (retry)="load()"
+    (clearFilters)="onClearFilters()"
+  />
+</div>
+
+<ng-template #codeCell let-row>
+  <div class="cell-stack">
+    <span class="text-body-strong">{{ row.outcomeCode }}</span>
+    <span class="text-xs text-subtle truncate">{{ row.outcomeTitle }}</span>
+  </div>
+</ng-template>
+
+<ng-template #masteryCell let-row>
+  <div class="bar-cell">
+    <app-progress-bar [value]="row.masteryPercent" [max]="100" [tone]="toneOf(row.status)" />
+    <span class="text-xs tabular">%{{ row.masteryPercent }}</span>
+  </div>
+</ng-template>
+
+<ng-template #coverageCell let-row>
+  <div class="bar-cell">
+    <app-progress-bar
+      [value]="row.coveragePercent"
+      [max]="100"
+      [tone]="coverageTone(row.coveragePercent)"
+    />
+    <span class="text-xs tabular">%{{ row.coveragePercent }}</span>
+  </div>
+</ng-template>
+
+<ng-template #statusCell let-row>
+  <app-status-badge [label]="statusLabel(row.status)" [tone]="toneOf(row.status)" />
+</ng-template>

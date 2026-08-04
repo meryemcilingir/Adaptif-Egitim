@@ -1,0 +1,33 @@
+@if (hasInsights()) {
+  <ul class="insights">
+    @for (insight of insights(); track insight.id) {
+      <li class="insight" [class]="'is-' + insight.kind">
+        <span class="insight__icon" aria-hidden="true">
+          <app-icon [name]="iconOf(insight.kind)" [size]="16" />
+        </span>
+
+        <div class="insight__body">
+          <span class="text-sm text-body-strong">{{ insight.title }}</span>
+          <!-- Kanıt: yorumun hangi ölçümden çıktığı. -->
+          <span class="insight__evidence text-xs">{{ insight.evidence }}</span>
+        </div>
+
+        @if (insight.link) {
+          <button
+            type="button"
+            class="insight__link"
+            [attr.aria-label]="insight.title + ' — detaya git'"
+            (click)="select.emit(insight)"
+          >
+            <app-icon name="arrow-right" [size]="15" />
+          </button>
+        }
+      </li>
+    }
+  </ul>
+} @else {
+  <p class="insights__empty text-sm">
+    <app-icon name="circle-check-big" [size]="16" />
+    {{ emptyMessage() }}
+  </p>
+}

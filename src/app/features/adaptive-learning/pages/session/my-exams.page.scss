@@ -1,0 +1,80 @@
+.exam-list,
+.history-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.exam {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+
+  /* Girilebilir sınav öne çıkar: öğrencinin şimdi yapabileceği tek iş budur. */
+  &.is-open {
+    border-color: var(--color-success-border);
+    background: var(--color-success-subtle);
+  }
+}
+
+.exam__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+}
+
+.history-row {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--motion-fast) ease;
+
+  &:hover {
+    background: var(--color-surface-subtle);
+  }
+}
+
+.history-row__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.history-row__result {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-subtle);
+}
+
+.history-row__score {
+  font-size: var(--fs-body-strong);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+@media (max-width: 560px) {
+  .exam,
+  .history-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .history-row__result {
+    justify-content: space-between;
+  }
+}

@@ -35,11 +35,18 @@ export interface BreadcrumbItem {
     </nav>
   `,
   styles: `
+    /* Dar ekranda kırılım, yanındaki aramayı taşırmak yerine kısalır. */
+    :host {
+      display: block;
+      min-width: 0;
+      overflow: hidden;
+    }
+
     .breadcrumb {
       display: flex;
       align-items: center;
       gap: var(--space-1);
-      flex-wrap: wrap;
+      flex-wrap: nowrap;
       min-width: 0;
     }
 
@@ -53,6 +60,9 @@ export interface BreadcrumbItem {
 
     .breadcrumb__link {
       color: var(--color-text-secondary);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
       border-radius: var(--radius-sm);
 
       &:hover {

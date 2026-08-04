@@ -84,13 +84,14 @@
   }
 }
 
+/*
+ * Panel `fixed`: tablonun kaydırma kabı onu kırpamaz ve ekranın altına
+ * taşıdığında yukarı çevrilebilir. Konum bileşende hesaplanır (ADR-074).
+ */
 .filter__menu {
-  position: absolute;
-  top: calc(100% + 4px);
-  inset-inline-start: 0;
+  position: fixed;
   z-index: var(--z-dropdown);
   min-width: 220px;
-  max-height: 280px;
   overflow-y: auto;
   padding: var(--space-1);
   background: var(--color-surface);
@@ -98,6 +99,12 @@
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
   animation: app-scale-in var(--duration-fast) var(--ease-out);
+  transform-origin: top center;
+
+  /* Yukarı açılan panel aşağıdan büyür. */
+  &.is-flipped {
+    transform-origin: bottom center;
+  }
 }
 
 .filter__option {

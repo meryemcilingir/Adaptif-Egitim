@@ -133,9 +133,15 @@
 
   --border-width: 1px;
 
-  /* ── Z-index ──────────────────────────────────────────────── */
-  --z-dropdown: 1000;
-  --z-sticky: 1010;
+  /*
+   * ── Z-index ────────────────────────────────────────────────
+   *
+   * Açılır menüler YAPIŞKAN öğelerin ÜSTÜNDEDİR. Ters sırada, tablo başlığı ve
+   * uygulama kabuğu filtre/aksiyon menülerinin üzerine boyanıyor ve menünün
+   * ortası görünmez oluyordu.
+   */
+  --z-sticky: 1000;
+  --z-dropdown: 1010;
   --z-drawer: 1020;
   --z-overlay: 1030;
   --z-dialog: 1040;

@@ -104,3 +104,10 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+
+/* Kırpılan öneri sayısı: listenin devamı olduğunu söyler. */
+.recommendations__more {
+  margin: var(--space-2) 0 0;
+  color: var(--color-text-subtle);
+}
+

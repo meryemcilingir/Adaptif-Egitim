@@ -1,0 +1,83 @@
+.health {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.health__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+}
+
+/* Uyarı, göstergelerin ÜSTÜNDE durur: dipnot olarak okunmama riski taşırdı. */
+.health__note {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) dashed var(--color-border);
+  border-radius: var(--radius-md);
+  color: var(--color-text-secondary);
+}
+
+.components {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.component {
+  display: grid;
+  grid-template-columns: 30px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) 0;
+  border-bottom: var(--border-width) solid var(--color-border);
+
+  &:last-child {
+    border-bottom: none;
+  }
+}
+
+.component__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+
+  &.is-degraded {
+    color: var(--color-warning-text);
+  }
+
+  &.is-down {
+    color: var(--color-danger-text);
+  }
+}
+
+.component__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+@media (max-width: 640px) {
+  .component {
+    grid-template-columns: 30px minmax(0, 1fr);
+  }
+
+  .component app-status-badge {
+    grid-column: 2;
+  }
+}

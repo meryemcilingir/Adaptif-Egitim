@@ -1,0 +1,224 @@
+<app-dialog
+  [open]="true"
+  [title]="title()"
+  description="Rapor düzeni ve zamanlama ayarları. Kaydederken güncel analitik filtreleri saklanır."
+  size="lg"
+  (closed)="cancel.emit()"
+>
+  <form class="builder" [formGroup]="form" (ngSubmit)="submit()">
+    <app-form-field
+      fieldId="report-name"
+      label="Rapor adı"
+      [required]="true"
+      [control]="form.controls.name"
+      [maxLength]="limits.name.max"
+      hint="En az 3 karakter."
+    >
+      <app-input
+        inputId="report-name"
+        formControlName="name"
+        placeholder="Örn. Haftalık kazanım özeti"
+      />
+    </app-form-field>
+
+    <app-form-field
+      fieldId="report-description"
+      label="Açıklama"
+      [control]="form.controls.description"
+      [maxLength]="limits.description.max"
+      hint="Raporun kimin için ve neyi yanıtladığını yazın."
+    >
+      <app-textarea
+        inputId="report-description"
+        formControlName="description"
+        [rows]="3"
+        placeholder="Bu rapor hangi soruyu yanıtlıyor?"
+      />
+    </app-form-field>
+
+    <section class="section">
+      <header class="section__head">
+        <div>
+          <h3 class="text-sm text-body-strong">Rapor bileşenleri</h3>
+          <p class="text-xs text-subtle">
+            {{ widgets.length }} / {{ limits.widgets.max }} bileşen · sıra, raporun okuma
+            sırasıdır
+          </p>
+        </div>
+
+        <app-button
+          variant="secondary"
+          size="sm"
+          icon="plus"
+          [disabled]="widgets.length >= limits.widgets.max"
+          (pressed)="addWidget()"
+        >
+          Bileşen ekle
+        </app-button>
+      </header>
+
+      @if (widgets.length === 0) {
+        <p class="hint-box text-sm">
+          <app-icon name="info" [size]="15" />
+          Henüz bileşen yok. Rapor en az bir bileşenle anlamlı olur.
+        </p>
+      } @else {
+        <ul class="widgets" formArrayName="widgets">
+          @for (widget of widgets.controls; track widget.controls.id.value; let index = $index) {
+            <li class="widget" [formGroupName]="index">
+              <span class="widget__order tabular">{{ index + 1 }}</span>
+
+              <div class="widget__fields">
+                <app-form-field
+                  [fieldId]="'widget-title-' + index"
+                  label="Başlık"
+                  [control]="widget.controls.title"
+                  [maxLength]="60"
+                >
+                  <app-input [inputId]="'widget-title-' + index" formControlName="title" />
+                </app-form-field>
+
+                <app-form-field [fieldId]="'widget-kind-' + index" label="Tür">
+                  <app-select
+                    [selectId]="'widget-kind-' + index"
+                    [options]="kindOptions"
+                    [placeholder]="null"
+                    formControlName="kind"
+                  />
+                </app-form-field>
+
+                <app-form-field [fieldId]="'widget-source-' + index" label="Veri kaynağı">
+                  <app-select
+                    [selectId]="'widget-source-' + index"
+                    [options]="sourceOptions"
+                    [placeholder]="null"
+                    formControlName="source"
+                  />
+                </app-form-field>
+
+                <app-form-field [fieldId]="'widget-span-' + index" label="Genişlik">
+                  <app-select
+                    [selectId]="'widget-span-' + index"
+                    [options]="spanOptions"
+                    [placeholder]="null"
+                    formControlName="span"
+                  />
+                </app-form-field>
+              </div>
+
+              <div class="widget__actions">
+                <app-button
+                  variant="ghost"
+                  size="sm"
+                  icon="chevron-up"
+                  ariaLabel="Yukarı taşı"
+                  [disabled]="index === 0"
+                  (pressed)="moveWidget(index, -1)"
+                />
+                <app-button
+                  variant="ghost"
+                  size="sm"
+                  icon="chevron-down"
+                  ariaLabel="Aşağı taşı"
+                  [disabled]="index === widgets.length - 1"
+                  (pressed)="moveWidget(index, 1)"
+                />
+                <app-button
+                  variant="ghost"
+                  size="sm"
+                  icon="trash-2"
+                  ariaLabel="Bileşeni kaldır"
+                  (pressed)="removeWidget(index)"
+                />
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </section>
+
+    <section class="section">
+      <header class="section__head">
+        <div>
+          <h3 class="text-sm text-body-strong">Zamanlama</h3>
+          <p class="text-xs text-subtle">
+            Bu projede gerçek bir zamanlayıcı ve e-posta gönderimi yoktur; ayarlar
+            örnek olarak saklanır.
+          </p>
+        </div>
+
+        <label class="switch">
+          <input type="checkbox" formControlName="scheduleEnabled" />
+          <span class="text-sm">Zamanlanmış rapor</span>
+        </label>
+      </header>
+
+      @if (form.controls.scheduleEnabled.value) {
+        <div class="schedule">
+          <app-form-field fieldId="report-frequency" label="Sıklık">
+            <app-select
+              selectId="report-frequency"
+              [options]="frequencyOptions"
+              [placeholder]="null"
+              formControlName="frequency"
+            />
+          </app-form-field>
+
+          <app-form-field
+            fieldId="report-day"
+            label="Gün"
+            [hint]="
+              form.controls.frequency.value === 'weekly'
+                ? '1 = Pazartesi, 7 = Pazar'
+                : 'Ayın günü (1-28)'
+            "
+          >
+            <app-number-input
+              inputId="report-day"
+              formControlName="dayOfPeriod"
+              [min]="1"
+              [max]="maxDay()"
+            />
+          </app-form-field>
+
+          <app-form-field fieldId="report-hour" label="Saat">
+            <app-number-input
+              inputId="report-hour"
+              formControlName="hour"
+              [min]="0"
+              [max]="23"
+              suffix=":00"
+            />
+          </app-form-field>
+
+          <app-form-field
+            fieldId="report-recipients"
+            label="Alıcılar"
+            [hint]="'En fazla ' + limits.recipients.max + ' alıcı. Gönderim yapılmaz.'"
+          >
+            <app-tag-input
+              inputId="report-recipients"
+              formControlName="recipients"
+              [maxTags]="limits.recipients.max"
+              [maxTagLength]="60"
+              placeholder="E-posta yazıp Enter’a basın"
+            />
+          </app-form-field>
+        </div>
+      }
+    </section>
+  </form>
+
+  <div dialog-footer class="footer">
+    <app-button variant="ghost" (pressed)="cancel.emit()">Vazgeç</app-button>
+    <app-button
+      variant="primary"
+      icon="save"
+      [loading]="saving()"
+      [disabled]="form.invalid"
+      (pressed)="submit()"
+    >
+      Kaydet
+    </app-button>
+  </div>
+</app-dialog>

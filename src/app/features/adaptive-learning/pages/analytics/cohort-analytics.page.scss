@@ -1,0 +1,142 @@
+@use '../../../../../styles/breakpoints' as t;
+
+/* ── Özet ────────────────────────────────────────────────────────────────── */
+
+.summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--space-3);
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.metric__label {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-subtle);
+}
+
+.metric__value {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--color-text-primary);
+
+  &.is-good {
+    color: var(--color-success-text);
+  }
+
+  &.is-bad {
+    color: var(--color-danger-text);
+  }
+}
+
+/* Gerçek olmayan veriler açıkça işaretlenir; okuyucu neye baktığını bilmeli. */
+.badge-mock {
+  padding: 0 4px;
+  border-radius: var(--radius-sm);
+  background: var(--color-warning-subtle);
+  font-size: 10px;
+  color: var(--color-warning-text);
+}
+
+.spread {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+
+  @media (max-width: t.$bp-lg) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── Öğrenci listesi ─────────────────────────────────────────────────────── */
+
+.students {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.student {
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-surface-subtle);
+  }
+
+  &.is-risk {
+    border-inline-start: 3px solid var(--color-danger-border);
+
+    .student__body .text-xs {
+      color: var(--color-danger-text);
+    }
+  }
+}
+
+.student__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.student__metrics {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  align-items: flex-end;
+  inline-size: 84px;
+
+  .tabular {
+    font-size: var(--fs-body-strong);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+}
+
+@media (max-width: 720px) {
+  .student {
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .student__body {
+    flex-basis: 100%;
+  }
+
+  .student__metrics {
+    align-items: flex-start;
+    inline-size: auto;
+    flex: 1;
+  }
+}

@@ -1,0 +1,203 @@
+@if (facade.isDetailLoading()) {
+  <app-loading-state variant="skeleton-card" [rows]="4" message="Deneme yükleniyor…" />
+} @else if (facade.hasDetailError()) {
+  <app-error-state [error]="facade.detailError()" title="Deneme yüklenemedi" (retry)="reload()" />
+} @else if (detail(); as view) {
+  <div class="page">
+    <app-breadcrumb [items]="breadcrumbs()" />
+
+    <header class="page-header">
+      <div class="detail-title">
+        <app-status-badge
+          [label]="statusView().label"
+          [tone]="statusView().tone"
+          [icon]="statusView().icon"
+        />
+        <h1 class="text-h1">{{ view.attempt.studentName }}</h1>
+        <p class="text-sm text-muted">
+          {{ view.attempt.examTitle }} · {{ view.courseCode }} · {{ view.cohortName }}
+        </p>
+      </div>
+
+      <div class="row-wrap gap-2">
+        <app-button variant="ghost" icon="external-link" (pressed)="openAttempt()">
+          Deneme detayı
+        </app-button>
+
+        @if (canGrade()) {
+          <app-button variant="ghost" icon="history" (pressed)="openRegrade()">
+            İtiraz incelemesi
+          </app-button>
+
+          @if (canRelease()) {
+            <app-button variant="secondary" icon="send" (pressed)="release()">
+              Sonucu açıkla
+            </app-button>
+          }
+        }
+      </div>
+    </header>
+
+    @if (!view.isGradable) {
+      <p class="notice" role="note">
+        <app-icon name="lock" [size]="15" />
+        Bu denemenin sonucu öğrenciye açıklandı ve doğrudan puanlanamaz. Değişiklik için
+        itiraz incelemesi başlatın.
+      </p>
+    }
+
+    <div class="grading-grid">
+      <div class="grading-grid__main">
+        <!-- ── Çakışmalar ─────────────────────────────────────────────── -->
+        @if (view.conflicts.length > 0) {
+          <app-card
+            [title]="'Değerlendirici çakışmaları · ' + openConflicts().length"
+            description="Aynı cevaba farklı puan verilmiş; nihai karar kayıt altına alınır"
+          >
+            <div class="conflicts">
+              @for (conflict of view.conflicts; track conflict.questionId) {
+                <app-conflict-panel
+                  [conflict]="conflict"
+                  [maxPoints]="maxPointsOf(conflict.questionId)"
+                  [canResolve]="canOverride() && view.isGradable"
+                  [busy]="facade.isSaving()"
+                  (resolve)="onResolveConflict($event)"
+                />
+              }
+            </div>
+          </app-card>
+        }
+
+        <!-- ── Cevaplar ───────────────────────────────────────────────── -->
+        <app-card [title]="'Cevaplar · ' + visibleAnswers().length" [hasActions]="true">
+          <div card-actions>
+            <app-button variant="ghost" size="sm" (pressed)="toggleShowAll()">
+              {{ showAll() ? 'Yalnızca elle puanlananlar' : 'Tümünü göster' }}
+            </app-button>
+          </div>
+
+          @if (visibleAnswers().length === 0) {
+            <app-empty-state
+              icon="circle-check-big"
+              title="Elle puanlanacak cevap yok"
+              description="Bu denemedeki tüm sorular otomatik puanlandı."
+            />
+          } @else {
+            <div class="answers">
+              @for (answer of visibleAnswers(); track answer.questionId) {
+                <app-answer-grader
+                  [answer]="answer"
+                  [rubric]="rubricFor(answer)"
+                  [draft]="draftFor(answer.questionId)"
+                  [disabled]="!canGrade() || !view.isGradable || facade.isSaving()"
+                  (draftChange)="onDraftChange($event)"
+                  (criterionChange)="onCriterionChange(answer, $event)"
+                />
+              }
+            </div>
+          }
+        </app-card>
+
+        <!-- ── Puan geçmişi ───────────────────────────────────────────── -->
+        @if (view.attempt.scoreHistory.length > 0) {
+          <app-card title="Puan geçmişi" description="Her değişiklik gerekçesiyle saklanır">
+            <ul class="history">
+              @for (change of view.attempt.scoreHistory; track change.id) {
+                <li class="history__item">
+                  <span class="history__delta tabular">
+                    {{ change.previousScore }} → {{ change.newScore }}
+                  </span>
+                  <div class="history__body">
+                    <span class="text-sm">{{ change.reason }}</span>
+                    <span class="text-xs text-subtle">
+                      {{ change.changedByName }} · {{ formatDate(change.changedAt) }}
+                    </span>
+                  </div>
+                </li>
+              }
+            </ul>
+          </app-card>
+        }
+      </div>
+
+      <!-- ── Kaydetme paneli ──────────────────────────────────────────── -->
+      <aside class="grading-grid__side">
+        <app-card title="Değerlendirme">
+          <dl class="totals">
+            <div>
+              <dt>Toplam puan</dt>
+              <dd class="tabular" [class.is-changed]="isDirty()">
+                {{ draftTotal() }} / {{ view.attempt.maxScore }}
+              </dd>
+            </div>
+            <div>
+              <dt>Elle puanlanacak</dt>
+              <dd class="tabular">{{ view.pendingManualCount }} / {{ manualCount() }}</dd>
+            </div>
+          </dl>
+
+          @if (canGrade() && view.isGradable) {
+            <div class="reason">
+              <label class="text-sm" for="grade-reason">
+                Gerekçe
+                @if (changesExistingScore()) {
+                  <span class="reason__required">*</span>
+                }
+              </label>
+              <textarea
+                id="grade-reason"
+                class="reason__input"
+                rows="3"
+                [value]="reason()"
+                [attr.maxlength]="reasonLimit"
+                [disabled]="facade.isSaving()"
+                [placeholder]="
+                  changesExistingScore()
+                    ? 'Mevcut puanı değiştirdiğiniz için gerekçe zorunlu (en az 10 karakter)'
+                    : 'İsteğe bağlı not'
+                "
+                (input)="setReason($any($event.target).value)"
+              ></textarea>
+              <span class="reason__counter text-xs tabular">
+                {{ reason().length }} / {{ reasonLimit }}
+              </span>
+            </div>
+
+            @if (issues().length > 0) {
+              <ul class="issues" role="alert">
+                @for (issue of issues(); track issue.field + issue.message) {
+                  <li class="text-xs">
+                    <app-icon name="circle-alert" [size]="13" />
+                    {{ issue.message }}
+                  </li>
+                }
+              </ul>
+            }
+
+            <app-button
+              variant="primary"
+              icon="check"
+              [fullWidth]="true"
+              [disabled]="!canSave()"
+              [loading]="facade.isSaving()"
+              (pressed)="save()"
+            >
+              Değerlendirmeyi kaydet
+            </app-button>
+          } @else if (!canGrade()) {
+            <p class="notice" role="note">
+              <app-icon name="lock" [size]="15" />
+              Puanlama yetkiniz yok; bu ekranı yalnızca görüntüleyebilirsiniz.
+            </p>
+          }
+        </app-card>
+      </aside>
+    </div>
+  </div>
+} @else {
+  <app-empty-state
+    icon="inbox"
+    title="Deneme bulunamadı"
+    description="Aradığınız deneme silinmiş veya kapsamınız dışında olabilir."
+  />
+}

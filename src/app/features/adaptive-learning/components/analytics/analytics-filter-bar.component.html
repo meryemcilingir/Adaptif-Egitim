@@ -1,0 +1,96 @@
+<section class="filters" aria-label="Rapor filtreleri">
+  <!-- ── Zaman aralığı ─────────────────────────────────────────────────── -->
+  <div class="filters__row">
+    <div class="presets" role="group" aria-label="Zaman aralığı">
+      @for (preset of presets; track preset) {
+        <button
+          type="button"
+          class="preset"
+          [class.is-active]="value().range.preset === preset"
+          [disabled]="busy()"
+          [attr.aria-pressed]="value().range.preset === preset"
+          (click)="setPreset(preset)"
+        >
+          {{ presetLabels[preset] }}
+        </button>
+      }
+    </div>
+
+    <span class="range-label text-sm">
+      <app-icon name="calendar" [size]="14" />
+      {{ rangeLabel() }}
+    </span>
+
+    <div class="filters__spacer"></div>
+
+    @if (activeCount() > 0 || value().range.preset !== 'last30') {
+      <app-button variant="ghost" size="sm" icon="x" (pressed)="clearAll()">
+        Filtreleri temizle
+        @if (activeCount() > 0) {
+          ({{ activeCount() }})
+        }
+      </app-button>
+    }
+  </div>
+
+  <!-- ── Özel tarih aralığı ────────────────────────────────────────────── -->
+  @if (isCustom()) {
+    <div class="filters__row filters__row--dates">
+      <label class="field">
+        <span class="text-xs text-subtle">Başlangıç</span>
+        <input
+          type="date"
+          class="field__input"
+          [value]="value().range.from ?? ''"
+          [disabled]="busy()"
+          [attr.aria-invalid]="issueFor('from') !== null"
+          (change)="setFrom($any($event.target).value)"
+        />
+      </label>
+
+      <label class="field">
+        <span class="text-xs text-subtle">Bitiş</span>
+        <input
+          type="date"
+          class="field__input"
+          [value]="value().range.to ?? ''"
+          [disabled]="busy()"
+          [attr.aria-invalid]="issueFor('to') !== null"
+          (change)="setTo($any($event.target).value)"
+        />
+      </label>
+    </div>
+
+    @if (hasIssues()) {
+      <p class="filters__error text-xs" role="alert">
+        <app-icon name="circle-alert" [size]="14" />
+        {{ issues()[0].message }}
+      </p>
+    }
+  }
+
+  <!-- ── Boyut filtreleri ──────────────────────────────────────────────── -->
+  @if (filters().length > 0) {
+    <div class="filters__row filters__row--selects">
+      @for (filter of filters(); track filter.key) {
+        <label class="field">
+          <span class="text-xs text-subtle">{{ filter.label }}</span>
+          <select
+            class="field__input"
+            [value]="selectionOf(filter.key)"
+            [disabled]="busy()"
+            [attr.aria-label]="filter.label"
+            (change)="setSelection(filter.key, $any($event.target).value)"
+          >
+            <option value="">{{ filter.placeholder }}</option>
+            @for (option of filter.options; track option.value) {
+              <option [value]="option.value" [selected]="selectionOf(filter.key) === option.value">
+                {{ option.label }}
+              </option>
+            }
+          </select>
+        </label>
+      }
+    </div>
+  }
+</section>

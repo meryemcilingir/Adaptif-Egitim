@@ -272,7 +272,14 @@ function buildQuestion(
   ]);
 
   const versionNumber = state === 'PUBLISHED' ? ctx.rng.int(1, 3) : 1;
-  const createdDaysAgo = ctx.rng.int(60, 170);
+  /*
+   * Soru yazım tarihleri SON GÜNLERE de yayılır.
+   *
+   * Alt sınır 60 gün olunca yönetim panosundaki "soru bankası büyümesi"
+   * grafiği son 30 günde düz çıkıyordu; soru bankası sürekli beslenen bir
+   * havuzdur, aralıklarla değil.
+   */
+  const createdDaysAgo = ctx.rng.int(3, 170);
   const [minTime, maxTime] = SOLVE_TIME_BY_TYPE[type];
 
   return {
@@ -556,7 +563,20 @@ interface ExamPlan {
   /** Sınav penceresinin uzunluğu (saat). */
   readonly windowHours: number;
   readonly maxAttempts: number;
+  /**
+   * Penceresi GERÇEK ZAMANA göre kurulan demo sınavı.
+   *
+   * Diğer tüm tarihler `REFERENCE_DATE`'e göre üretilir ve bu, demo tekrarlanabilir
+   * olsun diye böyledir. Ancak öğrencinin sınava girebilmesi için "şu anda açık"
+   * bir sınav gerekir; sabit tarih birkaç gün sonra geçmişte kalırdı. Bu yüzden
+   * yalnızca bu plan, tohumun üretildiği ana göre geniş bir pencere alır.
+   */
+  readonly liveWindow?: boolean;
 }
+
+/** Demo sınavının penceresi: bir saat önce açıldı, 30 gün açık kalacak. */
+const LIVE_WINDOW_BEFORE_MS = 60 * 60_000;
+const LIVE_WINDOW_AFTER_MS = 30 * 24 * 60 * 60_000;
 
 function buildExams(
   ctx: SeedContext,
@@ -578,6 +598,15 @@ function buildExams(
 
     // Yayınlanmamış dersler için sınavlar da yayına alınmamış olmalıdır.
     const isDraftCourse = course.state !== 'PUBLISHED';
+
+    const livePlan: ExamPlan = {
+      state: 'PUBLISHED',
+      titleSuffix: 'Alıştırma Sınavı (Açık)',
+      opensInDays: 0,
+      windowHours: 0,
+      maxAttempts: 2,
+      liveWindow: true,
+    };
 
     const plans: readonly ExamPlan[] = isDraftCourse
       ? [
@@ -649,7 +678,12 @@ function buildExams(
       }
     }
 
-    for (const plan of plans.slice(0, EXAMS_PER_COURSE)) {
+    /* Yayınlanmış her derse ayrıca "şu anda açık" bir alıştırma sınavı eklenir. */
+    const allPlans = isDraftCourse
+      ? plans.slice(0, EXAMS_PER_COURSE)
+      : [...plans.slice(0, EXAMS_PER_COURSE), livePlan];
+
+    for (const plan of allPlans) {
       /*
        * Sınav soruları rastgele değil, uygulamanın kendi seçim motoruyla
        * blueprint'e göre seçilir. Aksi hâlde tohumdan gelen YAYINDA sınavlar
@@ -681,7 +715,9 @@ function buildExams(
       }));
 
       const totalPoints = examQuestions.reduce((sum, ref) => sum + ref.points, 0);
-      const opensAt = ctx.date(plan.opensInDays, 10);
+      const opensAt = plan.liveWindow
+        ? new Date(Date.now() - LIVE_WINDOW_BEFORE_MS).toISOString()
+        : ctx.date(plan.opensInDays, 10);
       const durationMinutes = blueprint?.targetDurationMinutes ?? 60;
 
       exams.push({
@@ -695,7 +731,9 @@ function buildExams(
         cohortIds: course.cohortIds,
         durationMinutes,
         opensAt,
-        closesAt: ctx.minutesFrom(opensAt, plan.windowHours * 60),
+        closesAt: plan.liveWindow
+          ? new Date(Date.parse(opensAt) + LIVE_WINDOW_BEFORE_MS + LIVE_WINDOW_AFTER_MS).toISOString()
+          : ctx.minutesFrom(opensAt, plan.windowHours * 60),
         questions: examQuestions,
         rules: {
           shuffleQuestions: true,

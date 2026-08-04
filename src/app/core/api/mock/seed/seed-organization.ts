@@ -1,3 +1,4 @@
+import { Semester, termName } from '../../../../features/adaptive-learning/domain/academic-term.rules';
 import { Role } from '../../../auth/permission.model';
 import { Cohort, Term } from '../../../../features/adaptive-learning/models/common.model';
 import { Program } from '../../../../features/adaptive-learning/models/program.model';
@@ -110,20 +111,9 @@ export function seedOrganization(ctx: SeedContext): OrganizationSeed {
   });
 
   const terms: Term[] = [
-    {
-      id: 'trm_001',
-      name: '2025-2026 Güz',
-      startDate: ctx.date(-280),
-      endDate: ctx.date(-160),
-      active: false,
-    },
-    {
-      id: 'trm_002',
-      name: '2025-2026 Bahar',
-      startDate: ctx.date(-150),
-      endDate: ctx.date(30),
-      active: true,
-    },
+    term('trm_001', '2025-2026', 'FALL', ctx.date(-280), ctx.date(-160), ctx),
+    term('trm_002', '2025-2026', 'SPRING', ctx.date(-150), ctx.date(30), ctx),
+    term('trm_003', '2026-2027', 'FALL', ctx.date(75), ctx.date(200), ctx),
   ];
 
   const users: MockUser[] = [];
@@ -136,12 +126,16 @@ export function seedOrganization(ctx: SeedContext): OrganizationSeed {
     roles: readonly Role[];
     title: string;
     programId: string | null;
+    /** Yalnızca yaşam döngüsü örneklerinde verilir; diğer herkes aktiftir. */
+    lifecycle?: Pick<MockUser, 'state' | 'lastLoginAt' | 'failedLoginCount' | 'archivedAt'>;
   }): MockUser => {
     const id = ctx.id('usr');
     const user: MockUser = {
       id,
       fullName: input.fullName,
       email: input.email,
+      username: usernameOf(input.email),
+      department: departmentOf(input.title),
       password: DEMO_PASSWORD,
       avatarUrl: null,
       roles: input.roles,
@@ -150,9 +144,20 @@ export function seedOrganization(ctx: SeedContext): OrganizationSeed {
       programId: input.programId,
       courseIds: [],
       cohortIds: [],
-      state: 'ACTIVE',
-      lastLoginAt: ctx.pastDate(0, 6),
-      createdAt: ctx.date(-300),
+      ...(input.lifecycle ?? {
+        state: 'ACTIVE',
+        lastLoginAt: ctx.pastDate(0, 6),
+        failedLoginCount: 0,
+        archivedAt: null,
+      }),
+      /*
+       * Kayıt tarihleri YILA YAYILIR.
+       *
+       * Hepsi aynı güne yazılınca yönetim panosundaki "kullanıcı büyümesi"
+       * grafiği son 30 günde düz bir çizgi oluyordu: gerçek bir platformda
+       * hesaplar zamana yayılarak açılır.
+       */
+      createdAt: ctx.date(-ctx.rng.int(5, 330)),
       updatedAt: ctx.pastDate(0, 30),
       version: 1,
     };
@@ -224,6 +229,33 @@ export function seedOrganization(ctx: SeedContext): OrganizationSeed {
     studentIds.push(user.id);
   }
 
+  /*
+   * 4b) Yaşam döngüsü örnekleri.
+   *
+   * Bu hesaplar hiçbir cohort'a katılmaz ve etkinlik üretmez; yönetim
+   * ekranlarındaki durum filtresi, askıya alma ve kilit açma akışları
+   * denenebilsin diye vardır.
+   */
+  for (const sample of LIFECYCLE_SAMPLES) {
+    createUser({
+      fullName: sample.fullName,
+      email: `${slugify(sample.fullName)}.ornek@adaptif.dev`,
+      roles: sample.title.includes('Öğrenci')
+        ? ['STUDENT']
+        : sample.title.includes('Gözlemci')
+          ? ['OBSERVER']
+          : ['INSTRUCTOR'],
+      title: sample.title,
+      programId: programs[0]!.id,
+      lifecycle: {
+        state: sample.state,
+        lastLoginAt: sample.everLoggedIn ? ctx.pastDate(20, 120) : null,
+        failedLoginCount: sample.failedLoginCount,
+        archivedAt: sample.archived ? ctx.date(-25) : null,
+      },
+    });
+  }
+
   // 5) Cohort dağılımı — son grup gizlilik eşiğinin altında kalır.
   const cohorts: Cohort[] = [];
   for (let index = 0; index < REGULAR_COHORT_COUNT; index++) {
@@ -278,3 +310,113 @@ export function seedOrganization(ctx: SeedContext): OrganizationSeed {
     instructorIds,
   };
 }
+
+
+/**
+ * Giriş adı e-postanın yerel kısmından türetilir.
+ *
+ * Ayrı bir alan olarak SAKLANIR (türetilmiş bırakılmaz): e-posta adresi
+ * değiştiğinde kullanıcının giriş adı kendiliğinden değişmemelidir.
+ */
+function usernameOf(email: string): string {
+  return (email.split('@')[0] ?? email).toLocaleLowerCase('tr-TR');
+}
+
+/** Ünvandan birim çıkarımı — demo verisi için yeterli bir eşleme. */
+function departmentOf(title: string): string {
+  if (title.includes('Öğrenci')) return 'Öğrenci İşleri';
+  if (title.includes('Ölçme')) return 'Ölçme ve Değerlendirme';
+  if (title.includes('Koordinatör') || title.includes('Yönetici')) return 'Akademik Koordinasyon';
+  if (title.includes('Gözlemci') || title.includes('Kalite')) return 'Kalite Güvence';
+  if (title.includes('Sistem') || title.includes('Platform')) return 'Bilgi İşlem';
+
+  return 'Mühendislik Fakültesi';
+}
+
+/** Dönem kaydı — ad `termName()` ile üretilir, elle yazılmaz. */
+function term(
+  id: string,
+  academicYear: string,
+  semester: Semester,
+  startDate: string,
+  endDate: string,
+  ctx: SeedContext,
+): Term {
+  return {
+    id,
+    name: termName({ academicYear, semester }),
+    academicYear,
+    semester,
+    startDate,
+    endDate,
+    archivedAt: null,
+    createdAt: ctx.date(-320),
+    updatedAt: ctx.date(-320),
+    version: 1,
+  };
+}
+
+
+/**
+ * Yaşam döngüsü örnekleri.
+ *
+ * Askıya alınmış, arşivlenmiş, davet edilmiş ve kilitli hesaplar AYRI olarak
+ * üretilir ve hiçbir cohort'a katılmaz. Var olan öğrencilere rastgele durum
+ * atamak, "hiç giriş yapmamış" görünen bir hesabın 10 sınav denemesi olmasına
+ * yol açıyordu: veri kendi içinde çelişirdi.
+ */
+const LIFECYCLE_SAMPLES: readonly {
+  fullName: string;
+  title: string;
+  department: string;
+  state: MockUser['state'];
+  failedLoginCount: number;
+  everLoggedIn: boolean;
+  archived: boolean;
+}[] = [
+  {
+    fullName: 'Yusuf Ergin',
+    title: 'Öğretim Görevlisi',
+    department: 'Mühendislik Fakültesi',
+    state: 'INVITED',
+    failedLoginCount: 0,
+    everLoggedIn: false,
+    archived: false,
+  },
+  {
+    fullName: 'Nazlı Erdoğan',
+    title: 'Öğrenci · 1. Sınıf',
+    department: 'Öğrenci İşleri',
+    state: 'INVITED',
+    failedLoginCount: 0,
+    everLoggedIn: false,
+    archived: false,
+  },
+  {
+    fullName: 'Kerem Balcı',
+    title: 'Araştırma Görevlisi',
+    department: 'Mühendislik Fakültesi',
+    state: 'ACTIVE',
+    failedLoginCount: 5,
+    everLoggedIn: true,
+    archived: false,
+  },
+  {
+    fullName: 'Melis Yalçın',
+    title: 'Kalite Gözlemcisi',
+    department: 'Kalite Güvence',
+    state: 'SUSPENDED',
+    failedLoginCount: 0,
+    everLoggedIn: true,
+    archived: false,
+  },
+  {
+    fullName: 'Onur Şahin',
+    title: 'Öğretim Görevlisi',
+    department: 'Mühendislik Fakültesi',
+    state: 'ARCHIVED',
+    failedLoginCount: 0,
+    everLoggedIn: true,
+    archived: true,
+  },
+];

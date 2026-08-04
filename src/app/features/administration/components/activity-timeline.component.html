@@ -1,0 +1,56 @@
+@if (isEmpty()) {
+  <p class="timeline__empty text-sm text-muted">
+    Bu filtrede gösterilecek işlem kaydı yok.
+  </p>
+} @else {
+  <div class="timeline">
+    @for (group of groups(); track group.date) {
+      <section class="day">
+        <h3 class="day__label text-xs">{{ group.date | date: 'dd MMMM yyyy, EEEE' }}</h3>
+
+        <ol class="entries">
+          @for (entry of group.entries; track entry.id) {
+            <li class="entry" [class.is-failed]="!entry.success">
+              <span class="entry__time tabular text-xs">{{ entry.time | date: 'HH:mm' }}</span>
+
+              <span class="entry__marker" aria-hidden="true">
+                <app-icon [name]="entry.icon" [size]="13" />
+              </span>
+
+              @if (selectable()) {
+                <button type="button" class="entry__body" (click)="onSelect(entry.id)">
+                  <ng-container [ngTemplateOutlet]="body" [ngTemplateOutletContext]="{ $implicit: entry }" />
+                </button>
+              } @else {
+                <div class="entry__body entry__body--static">
+                  <ng-container [ngTemplateOutlet]="body" [ngTemplateOutletContext]="{ $implicit: entry }" />
+                </div>
+              }
+            </li>
+          }
+        </ol>
+      </section>
+    }
+  </div>
+}
+
+<ng-template #body let-entry>
+  <span class="entry__title text-sm">
+    <strong>{{ entry.actor }}</strong> · {{ entry.title }}
+  </span>
+
+  <span class="entry__meta text-xs">
+    {{ entry.target }}
+    <span class="entry__dot" aria-hidden="true">·</span>
+    {{ entry.module }}
+    <span class="entry__dot" aria-hidden="true">·</span>
+    {{ entry.ipAddress }}
+    @if (!entry.success) {
+      <span class="entry__failed">başarısız</span>
+    }
+  </span>
+
+  @if (entry.reason) {
+    <span class="entry__reason text-xs">“{{ entry.reason }}”</span>
+  }
+</ng-template>

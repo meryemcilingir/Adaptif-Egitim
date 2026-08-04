@@ -1,0 +1,173 @@
+@if (facade.isLoading()) {
+  <div class="session-shell">
+    <app-loading-state variant="skeleton-card" [rows]="5" message="Sınav yükleniyor…" />
+  </div>
+} @else if (facade.hasError()) {
+  <div class="session-shell">
+    <app-error-state
+      [error]="facade.error()"
+      title="Sınav açılamadı"
+      (retry)="facade.load(token())"
+    />
+  </div>
+} @else if (facade.view(); as view) {
+  <div class="player">
+    <!-- ── Başlık şeridi ─────────────────────────────────────────────── -->
+    <header class="player__header">
+      <div class="player__identity">
+        <span class="text-sm text-body-strong truncate">{{ view.examTitle }}</span>
+        <span class="text-xs text-subtle">{{ view.courseCode }}</span>
+      </div>
+
+      <div class="player__status">
+        <app-save-indicator
+          [state]="facade.saveStatus()"
+          [connection]="facade.connection()"
+          [lastSavedAt]="facade.lastSavedAt()"
+          [pending]="facade.pendingCount()"
+        />
+        <app-exam-timer [reading]="facade.clock()" />
+      </div>
+
+      <div class="player__tools">
+        <app-button
+          variant="ghost"
+          size="sm"
+          icon="eye"
+          (pressed)="toggleFullscreen()"
+        >
+          Tam ekran
+        </app-button>
+        <app-button variant="ghost" size="sm" (pressed)="exit()">Çık</app-button>
+      </div>
+    </header>
+
+    <div class="player__body">
+      <!-- ── Soru alanı ──────────────────────────────────────────────── -->
+      <main class="player__main">
+        @if (facade.currentQuestion(); as question) {
+          <app-card>
+            <header class="question__head">
+              <div class="question__meta">
+                <span class="question__number tabular">
+                  Soru {{ facade.currentIndex() + 1 }} / {{ facade.questions().length }}
+                </span>
+                <span class="text-xs text-subtle">
+                  {{ question.typeLabel }} · {{ question.points }} puan
+                </span>
+              </div>
+
+              <app-button
+                [variant]="currentFlagged() ? 'secondary' : 'ghost'"
+                size="sm"
+                icon="flag"
+                (pressed)="toggleFlag()"
+              >
+                {{ currentFlagged() ? 'İşareti kaldır' : 'İşaretle' }}
+              </app-button>
+            </header>
+
+            <!-- Soru gövdesi sunucuda temizlenmiş güvenli HTML'dir (BR-37). -->
+            <div class="question__stem" [innerHTML]="question.stem"></div>
+
+            @if (question.attachments.length > 0) {
+              <ul class="attachments">
+                @for (attachment of question.attachments; track attachment.id) {
+                  <li>
+                    @if (attachment.kind === 'image') {
+                      <img [src]="attachment.url" [alt]="attachment.name" loading="lazy" />
+                    } @else {
+                      <a [href]="attachment.url" target="_blank" rel="noopener noreferrer">
+                        <app-icon name="external-link" [size]="14" />
+                        {{ attachment.name }}
+                      </a>
+                    }
+                  </li>
+                }
+              </ul>
+            }
+
+            <app-answer-input
+              [question]="question"
+              [value]="facade.answerFor(question.questionId)"
+              [disabled]="facade.isSubmitting()"
+              (valueChange)="onAnswer($event)"
+            />
+          </app-card>
+
+          <footer class="player__nav">
+            <app-button
+              variant="secondary"
+              icon="chevron-left"
+              [disabled]="isFirst()"
+              (pressed)="facade.previous()"
+            >
+              Önceki
+            </app-button>
+
+            @if (isLast()) {
+              <app-button variant="primary" icon="send" (pressed)="openSummary()">
+                Sınavı bitir
+              </app-button>
+            } @else {
+              <app-button
+                variant="primary"
+                trailingIcon="chevron-right"
+                (pressed)="facade.next()"
+              >
+                Sonraki
+              </app-button>
+            }
+          </footer>
+        }
+      </main>
+
+      <!-- ── Navigatör ───────────────────────────────────────────────── -->
+      <aside class="player__side">
+        <app-card title="Sorular">
+          <app-question-navigator
+            [entries]="facade.navigator()"
+            [answeredCount]="facade.summary().answered"
+            [flaggedCount]="facade.summary().flagged"
+            [disabled]="facade.isSubmitting()"
+            (select)="facade.goTo($event)"
+          />
+
+          <app-button
+            class="player__submit"
+            variant="primary"
+            icon="send"
+            [fullWidth]="true"
+            (pressed)="openSummary()"
+          >
+            Sınavı bitir
+          </app-button>
+        </app-card>
+      </aside>
+    </div>
+  </div>
+
+  <!-- ── Teslim özeti ──────────────────────────────────────────────── -->
+  @if (showSummary()) {
+    <div
+      class="overlay"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="submit-title"
+      (click)="closeSummary()"
+    >
+      <div class="overlay__panel" (click)="$event.stopPropagation()">
+        <h2 id="submit-title" class="text-h3">Sınavı teslim et</h2>
+
+        <app-submit-summary
+          [summary]="facade.summary()"
+          [busy]="facade.isSubmitting()"
+          (confirm)="confirmSubmit()"
+          (cancel)="closeSummary()"
+          (goToUnanswered)="jumpToUnanswered()"
+          (goToFlagged)="jumpToFlagged()"
+        />
+      </div>
+    </div>
+  }
+}

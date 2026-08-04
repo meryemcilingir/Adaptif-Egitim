@@ -1,0 +1,165 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Analitik</h1>
+      <p class="text-sm text-muted">
+        Öğrenme, ölçme ve öneri süreçlerinin bütünsel görünümü. Kartlara tıklayarak
+        ayrıntıya inebilirsiniz.
+      </p>
+    </div>
+  </header>
+
+  <app-analytics-filter-bar
+    [value]="facade.filters()"
+    [filters]="filterDefinitions()"
+    [busy]="isRefreshing()"
+    (valueChange)="onFilterChange($event)"
+    (apply)="onApply()"
+    (reset)="onReset()"
+  />
+
+  @if (isLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="4" message="Rapor hazırlanıyor…" />
+  } @else if (hasError()) {
+    <app-error-state [error]="error()" title="Rapor yüklenemedi" (retry)="load()" />
+  } @else if (report(); as data) {
+    <app-report-header [meta]="data.meta" [exportTable]="exportTable()" />
+
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="chart-column"
+        title="Seçili dönemde veri yok"
+        description="Bu filtrelerle rapor üretilemedi. Tarih aralığını genişletmeyi veya filtreleri temizlemeyi deneyin."
+        actionLabel="Filtreleri temizle"
+        actionIcon="x"
+        (action)="onReset()"
+      />
+    } @else {
+      <!-- ── KPI ızgarası ────────────────────────────────────────────── -->
+      <section class="kpis" aria-label="Temel göstergeler">
+        @for (metric of data.metrics; track metric.key) {
+          <button
+            type="button"
+            class="kpi"
+            [class.is-clickable]="metric.link !== null"
+            [disabled]="metric.link === null"
+            (click)="openMetric(metric.link)"
+          >
+            <span class="kpi__head">
+              <app-icon [name]="iconOf(metric.icon)" [size]="16" />
+              <span class="kpi__label text-xs">{{ metric.label }}</span>
+            </span>
+
+            <span class="kpi__value tabular">
+              {{ metric.value }}<span class="kpi__unit">{{ metric.unit }}</span>
+            </span>
+
+            <span class="kpi__foot">
+              @if (metric.delta) {
+                <!-- `changePercent` mutlak değerdir; yön `direction` alanından okunur. -->
+                <span class="delta" [class]="'is-' + metric.delta.direction">
+                  <app-icon [name]="deltaIcon(metric.delta.direction)" [size]="12" />
+                  {{ deltaPrefix(metric.delta.direction) }}%{{ metric.delta.changePercent }}
+                </span>
+              }
+              <span class="kpi__caption text-xs">{{ metric.caption }}</span>
+              @if (metric.peerAverage !== null) {
+                <span class="kpi__peer text-xs">Grup ortalaması %{{ metric.peerAverage }}</span>
+              }
+            </span>
+          </button>
+        }
+      </section>
+
+      <!-- ── Kural tabanlı bulgular ──────────────────────────────────── -->
+      <app-card
+        title="Öne çıkan bulgular"
+        description="Ölçülen verilerden kural tabanlı olarak üretilir; yapay zekâ kullanılmaz"
+      >
+        <app-insight-list [insights]="data.insights" (select)="openInsight($event)" />
+      </app-card>
+
+      <!--
+        Trendler ve performans panoları yalnızca cohort analitiğine yetkili
+        rollerde gösterilir (§20 gizlilik kuralı) — öğrenci kendi kapsamında
+        zaten tek kayıt görür, bu panolar ona anlamlı bir şey söylemez.
+      -->
+      @if (canSeeCohortDetail()) {
+        <!-- ── Trendler ────────────────────────────────────────────────── -->
+        <div class="charts">
+          <app-chart-card
+            title="Sınav puanı eğilimi"
+            description="Seçili dönemdeki günlük ortalama"
+            type="area"
+            [series]="scoreSeries()"
+            [categories]="scoreCategories()"
+          />
+
+          <app-chart-card
+            title="Ustalık eğilimi"
+            description="O güne kadar hesaplanmış skorların ortalaması"
+            type="line"
+            [series]="masterySeries()"
+            [categories]="masteryCategories()"
+          />
+        </div>
+
+        <!-- ── Performans panoları ─────────────────────────────────────── -->
+        <div class="boards">
+          <app-card title="En başarılı öğrenciler" description="Ustalık, sınav ve tamamlama birlikte">
+            @if (data.topPerformers.length === 0) {
+              <app-empty-state
+                icon="users"
+                title="Henüz sıralama yok"
+                description="Bu dönemde yeterli veri bulunmuyor."
+              />
+            } @else {
+              <ul class="people">
+                @for (row of data.topPerformers; track row.studentId) {
+                  <li class="person" (click)="openStudent(row)">
+                    <div class="person__body">
+                      <span class="text-sm text-body-strong">{{ row.studentName }}</span>
+                      <span class="text-xs text-subtle">{{ row.cohortName }}</span>
+                    </div>
+                    <div class="person__stats">
+                      <span class="tabular">%{{ row.masteryPercent }}</span>
+                      <span class="text-xs text-subtle">ustalık</span>
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+          </app-card>
+
+          <app-card
+            title="Risk altındaki öğrenciler"
+            description="En az iki uyarı sinyali taşıyanlar"
+          >
+            @if (data.atRisk.length === 0) {
+              <app-empty-state
+                icon="circle-check-big"
+                title="Risk sinyali yok"
+                description="Bu dönemde eşiklerin altına düşen öğrenci bulunmuyor."
+              />
+            } @else {
+              <ul class="people">
+                @for (row of data.atRisk; track row.studentId) {
+                  <li class="person is-risk" (click)="openStudent(row)">
+                    <div class="person__body">
+                      <span class="text-sm text-body-strong">{{ row.studentName }}</span>
+                      <span class="text-xs">{{ row.riskReasons.join(' · ') }}</span>
+                    </div>
+                    <div class="person__stats">
+                      <span class="tabular">%{{ row.masteryPercent }}</span>
+                      <span class="text-xs text-subtle">ustalık</span>
+                    </div>
+                  </li>
+                }
+              </ul>
+            }
+          </app-card>
+        </div>
+      }
+    }
+  }
+</div>

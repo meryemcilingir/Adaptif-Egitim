@@ -1,0 +1,119 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Yönetim panosu</h1>
+      <p class="text-sm text-muted">
+        Platformun anlık durumu. Tüm sayımlar istek anında gerçek kayıtlardan
+        yapılır; hiçbir sayaç ayrıca saklanmaz.
+      </p>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="4" message="Pano hazırlanıyor…" />
+  } @else if (hasError()) {
+    <app-error-state
+      [error]="error()"
+      title="Pano yüklenemedi"
+      (retry)="facade.loadOverview()"
+    />
+  } @else if (overview(); as data) {
+    <section class="metrics" aria-label="Platform göstergeleri">
+      @for (metric of data.metrics; track metric.key) {
+        @if (metric.link) {
+          <button type="button" class="metric metric--link" (click)="open(metric.link)">
+            <span class="metric__icon" [class]="'is-' + metric.tone">
+              <app-icon [name]="metric.icon" [size]="16" />
+            </span>
+            <span class="metric__label text-xs">{{ metric.label }}</span>
+            <span class="metric__value tabular">{{ metric.display ?? metric.value }}</span>
+            <span class="metric__caption text-xs">{{ metric.caption }}</span>
+            <app-icon class="metric__chevron" name="chevron-right" [size]="14" />
+          </button>
+        } @else {
+          <div class="metric">
+            <span class="metric__icon" [class]="'is-' + metric.tone">
+              <app-icon [name]="metric.icon" [size]="16" />
+            </span>
+            <span class="metric__label text-xs">{{ metric.label }}</span>
+            <span class="metric__value tabular">{{ metric.display ?? metric.value }}</span>
+            <span class="metric__caption text-xs">{{ metric.caption }}</span>
+          </div>
+        }
+      }
+    </section>
+
+    <div class="split">
+      <app-card title="Hızlı işlemler" description="Sık yapılan yönetim adımları">
+        <ul class="actions">
+          @for (action of quickActions; track action.link) {
+            <li>
+              <button type="button" class="action" (click)="open(action.link)">
+                <span class="action__icon">
+                  <app-icon [name]="action.icon" [size]="16" />
+                </span>
+                <span class="action__body">
+                  <span class="text-sm text-body-strong">{{ action.label }}</span>
+                  <span class="text-xs text-subtle">{{ action.description }}</span>
+                </span>
+                <app-icon name="chevron-right" [size]="15" />
+              </button>
+            </li>
+          }
+        </ul>
+      </app-card>
+
+      <app-system-health-card [health]="data.health" />
+    </div>
+
+    <div class="charts">
+      <app-chart-card
+        title="Kullanıcı büyümesi"
+        description="Toplam kayıtlı kullanıcı — son 30 gün"
+        type="area"
+        [series]="userGrowthSeries()"
+        [categories]="categories()"
+      />
+
+      <app-chart-card
+        title="Giriş etkinliği"
+        description="Günlük başarılı giriş sayısı"
+        type="bar"
+        [series]="loginSeries()"
+        [categories]="categories()"
+      />
+
+      <app-chart-card
+        title="Sınav etkinliği"
+        description="Günlük teslim edilen sınav"
+        type="area"
+        [series]="examSeries()"
+        [categories]="categories()"
+      />
+
+      <app-chart-card
+        title="Ders etkinliği"
+        description="Günlük içerik erişimi"
+        type="area"
+        [series]="courseSeries()"
+        [categories]="categories()"
+      />
+
+      <app-chart-card
+        title="Soru bankası büyümesi"
+        description="Toplam soru sayısı"
+        type="line"
+        [series]="questionSeries()"
+        [categories]="categories()"
+      />
+    </div>
+
+    <p class="footnote text-xs">
+      <app-icon name="clock" [size]="13" />
+      Pano {{ data.generatedAt | date: 'HH:mm' }} itibarıyla üretildi.
+      <app-button variant="ghost" size="sm" icon="refresh-cw" (pressed)="facade.loadOverview()">
+        Yenile
+      </app-button>
+    </p>
+  }
+</div>

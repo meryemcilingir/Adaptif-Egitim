@@ -4,9 +4,9 @@ import {
   DataScope,
   Permission,
   ROLE_DATA_SCOPE,
-  ROLE_PERMISSIONS,
   Role,
 } from '../../auth/permission.model';
+import { permissionsFromDefinitions } from '../../auth/role-definition';
 import { FakeDb } from './db/fake-db';
 import { MockCaller, MockContext } from './mock-router';
 import { forbidden, unauthorized } from './mock-errors';
@@ -15,8 +15,12 @@ import { forbidden, unauthorized } from './mock-errors';
  * Mock backend'in kimlik ve yetki katmanı.
  *
  * Kritik nokta: izinler istemciden GELMEZ; token'dan çözülen kullanıcı için
- * sunucudaki `ROLE_PERMISSIONS` matrisinden okunur. Böylece "istemci kendi
- * iznini uydurabilir mi?" sorusu demo edilebilir biçimde kapatılmış olur.
+ * sunucudaki rol tanımlarından okunur. Böylece "istemci kendi iznini
+ * uydurabilir mi?" sorusu demo edilebilir biçimde kapatılmış olur.
+ *
+ * Rol tanımları Sprint 9'dan itibaren veritabanındadır (ADR-066): yönetici bir
+ * rolün izinlerini değiştirdiğinde etki BURADAN yayılır. Tanım bulunamazsa
+ * derleme zamanı varsayılanına düşülür — kullanıcı izinsiz kalmaz.
  */
 
 export const MOCK_TOKEN_PREFIX = 'mock';
@@ -36,7 +40,7 @@ export function resolveCaller(request: HttpRequest<unknown>, db: FakeDb): MockCa
   const requestedRole = request.headers.get('X-Active-Role') as Role | null;
   const role: Role =
     requestedRole && account.roles.includes(requestedRole) ? requestedRole : account.roles[0]!;
-  const permissions = ROLE_PERMISSIONS[role];
+  const permissions = permissionsFromDefinitions([role], db.collection('roleDefinitions').all());
 
   return {
     userId: account.id,

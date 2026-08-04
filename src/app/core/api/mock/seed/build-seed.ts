@@ -14,8 +14,10 @@ import { SeedContext } from './seed-context';
 import { seedActivity } from './seed-activity';
 import { seedAssessment } from './seed-assessment';
 import { seedCatalog } from './seed-catalog';
+import { seedSavedReports } from './seed-reports';
 import { seedNotifications } from './seed-notifications';
 import { seedOrganization } from './seed-organization';
+import { seedAdministration } from './seed-administration';
 
 /** Öğrenci başına saklanan en fazla öneri — liste ekranları için fazlası gereksiz. */
 const MAX_RECOMMENDATIONS_PER_STUDENT = 6;
@@ -86,6 +88,8 @@ export function buildSeed(): DbSchema {
     };
   });
 
+  const administration = seedAdministration(ctx, catalog.users);
+
   return {
     users: catalog.users,
     programs,
@@ -106,6 +110,11 @@ export function buildSeed(): DbSchema {
     masteryScores: activity.masteryScores,
     recommendations,
     itemAnalyses: activity.itemAnalyses,
+    savedReports: seedSavedReports(ctx, catalog.users),
+    roleDefinitions: administration.roleDefinitions,
+    notificationCampaigns: administration.notificationCampaigns,
+    loginEvents: administration.loginEvents,
+    systemSettings: administration.systemSettings,
     auditEvents: activity.auditEvents,
     notifications: seedNotifications(
       ctx,
@@ -201,8 +210,22 @@ function buildRecommendations(ctx: SeedContext, input: RecommendationSeedInput):
     );
   }
 
-  return recommendations;
+  /*
+   * Öneri motoru her kaydı "şimdi" damgasıyla üretir; bu doğrudur, çünkü motor
+   * anlık çalışan bir fonksiyondur. Ancak DEMO VERİSİ için hepsinin aynı ana
+   * düşmesi gerçekçi değil: öneri kabul oranı, önerinin ardından içeriğin
+   * açılıp açılmadığından hesaplanır (bkz. `recommendation.report.ts`) ve tüm
+   * öneriler öğrenci etkinliğinden SONRA damgalanırsa oran her zaman sıfır çıkar.
+   * Bu yüzden kayıtlar son iki aya deterministik biçimde yayılır.
+   */
+  return recommendations.map((recommendation) => ({
+    ...recommendation,
+    generatedAt: ctx.date(-ctx.rng.int(0, RECOMMENDATION_SPREAD_DAYS), ctx.rng.int(8, 20)),
+  }));
 }
+
+/** Demo önerilerinin geriye doğru yayıldığı gün sayısı. */
+const RECOMMENDATION_SPREAD_DAYS = 60;
 
 /** Tekrar eden `reduce` kalıbını önleyen küçük yardımcı. */
 function groupBy<T, K>(items: readonly T[], keyOf: (item: T) => K): Map<K, T[]> {

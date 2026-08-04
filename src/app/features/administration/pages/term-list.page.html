@@ -1,0 +1,174 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Akademik dönemler</h1>
+      <p class="text-sm text-muted">
+        Dönem durumu takvimden hesaplanır: bugünü kapsayan dönem aktiftir.
+        Tarihler çakışamaz, bu yüzden aynı anda yalnızca bir dönem aktif olabilir.
+      </p>
+    </div>
+
+    <div class="page-header__actions">
+      @if (exportTable(); as table) {
+        <app-export-menu [table]="table" />
+      }
+
+      <app-button variant="primary" icon="plus" (pressed)="openCreate()">Yeni dönem</app-button>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="3" message="Dönemler yükleniyor…" />
+  } @else if (hasError()) {
+    <app-error-state [error]="error()" title="Dönemler yüklenemedi" (retry)="facade.loadTerms()" />
+  } @else if (isEmpty()) {
+    <app-empty-state
+      icon="calendar"
+      title="Tanımlı dönem yok"
+      description="Ders ve sınav takvimleri döneme bağlıdır. İlk akademik dönemi oluşturun."
+      actionLabel="Yeni dönem"
+      actionIcon="plus"
+      (action)="openCreate()"
+    />
+  } @else {
+    @if (activeTerm(); as active) {
+      <p class="active-note text-sm">
+        <app-icon name="circle-check" [size]="15" />
+        Aktif dönem: <strong>{{ active.name }}</strong>
+        ({{ active.startDate.slice(0, 10) }} – {{ active.endDate.slice(0, 10) }})
+      </p>
+    } @else {
+      <p class="active-note active-note--warn text-sm">
+        <app-icon name="triangle-alert" [size]="15" />
+        Şu anda aktif bir dönem yok. Bugünü kapsayan bir dönem tanımlanmamış.
+      </p>
+    }
+
+    <ul class="terms">
+      @for (term of terms(); track term.id) {
+        <li>
+          <app-card>
+            <div class="term">
+              <div class="term__main">
+                <div class="term__title">
+                  <h2 class="text-h3">{{ term.name }}</h2>
+                  <app-status-badge [label]="statusLabels[statusOf(term)]" [tone]="toneOf(term)" />
+                </div>
+
+                <p class="term__dates text-sm text-muted">
+                  {{ term.startDate.slice(0, 10) }} – {{ term.endDate.slice(0, 10) }}
+                </p>
+
+                @if (!canEdit(term)) {
+                  <p class="term__lock text-xs">
+                    <app-icon name="lock" [size]="12" />
+                    {{
+                      term.archivedAt
+                        ? 'Arşivlenmiş dönem düzenlenemez.'
+                        : 'Tamamlanmış dönem düzenlenemez; geçmiş takvim değiştirilmez.'
+                    }}
+                  </p>
+                }
+              </div>
+
+              <div class="term__actions">
+                <app-button
+                  variant="secondary"
+                  size="sm"
+                  icon="pencil-line"
+                  [disabled]="!canEdit(term)"
+                  (pressed)="openEdit(term)"
+                >
+                  Düzenle
+                </app-button>
+
+                <app-button
+                  variant="ghost"
+                  size="sm"
+                  [icon]="term.archivedAt ? 'rotate-ccw' : 'archive'"
+                  (pressed)="toggleArchive(term)"
+                >
+                  {{ term.archivedAt ? 'Arşivden çıkar' : 'Arşivle' }}
+                </app-button>
+              </div>
+            </div>
+          </app-card>
+        </li>
+      }
+    </ul>
+  }
+</div>
+
+@if (isDialogOpen()) {
+  <app-dialog
+    [open]="true"
+    [title]="dialogTitle()"
+    description="Tarihler diğer dönemlerle çakışamaz ve dönem en az bir hafta sürmelidir."
+    (closed)="close()"
+  >
+    <form class="form" [formGroup]="form" (ngSubmit)="submit()">
+      <div class="grid">
+        <app-form-field
+          fieldId="term-year"
+          label="Akademik yıl"
+          [required]="true"
+          [control]="form.controls.academicYear"
+          hint="`2025-2026` biçiminde, ardışık iki yıl."
+        >
+          <app-input inputId="term-year" formControlName="academicYear" placeholder="2026-2027" />
+        </app-form-field>
+
+        <app-form-field fieldId="term-semester" label="Yarıyıl" [required]="true">
+          <app-select
+            selectId="term-semester"
+            [options]="semesterOptions"
+            [placeholder]="null"
+            formControlName="semester"
+          />
+        </app-form-field>
+
+        <app-form-field
+          fieldId="term-start"
+          label="Başlangıç"
+          [required]="true"
+          [control]="form.controls.startDate"
+        >
+          <app-input inputId="term-start" type="date" formControlName="startDate" />
+        </app-form-field>
+
+        <app-form-field
+          fieldId="term-end"
+          label="Bitiş"
+          [required]="true"
+          [control]="form.controls.endDate"
+        >
+          <app-input inputId="term-end" type="date" formControlName="endDate" />
+        </app-form-field>
+      </div>
+
+      @if (violations().length > 0) {
+        <ul class="violations" role="alert">
+          @for (violation of violations(); track violation.message) {
+            <li class="violation text-sm">
+              <app-icon name="circle-alert" [size]="14" />
+              {{ violation.message }}
+            </li>
+          }
+        </ul>
+      }
+    </form>
+
+    <div dialog-footer class="dialog-footer">
+      <app-button variant="ghost" (pressed)="close()">Vazgeç</app-button>
+      <app-button
+        variant="primary"
+        icon="save"
+        [loading]="saving()"
+        [disabled]="!canSave()"
+        (pressed)="submit()"
+      >
+        Kaydet
+      </app-button>
+    </div>
+  </app-dialog>
+}

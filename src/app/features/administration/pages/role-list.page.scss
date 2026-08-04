@@ -1,0 +1,141 @@
+@use '../../../../styles/breakpoints' as t;
+
+.page-header__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+/* Roller solda sabit genişlikte, matris sağda esner. */
+.layout {
+  display: grid;
+  grid-template-columns: 300px minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+
+  @media (max-width: t.$bp-lg) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.roles {
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-4));
+
+  @media (max-width: t.$bp-lg) {
+    position: static;
+  }
+}
+
+.roles__list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.role {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--space-1);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+
+  &.is-active {
+    border-color: var(--color-primary);
+    background: var(--color-surface-hover);
+  }
+}
+
+.role__main {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: none;
+  color: inherit;
+  font: inherit;
+  text-align: start;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: -2px;
+  }
+}
+
+.role__title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.role__meta {
+  color: var(--color-text-subtle);
+}
+
+.detail {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.meta {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+
+  @media (max-width: 720px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.hint,
+.create__note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  color: var(--color-text-subtle);
+
+  code {
+    font-family: var(--font-mono, monospace);
+  }
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.actions__note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-inline-end: auto;
+  color: var(--color-warning-text);
+}
+
+.create {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}

@@ -1,0 +1,142 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Karşılaştırmalı analiz</h1>
+      <p class="text-sm text-muted">
+        İki ile dört kaydı yan yana koyar. Farklar her zaman ilk seçilen kayda
+        göre hesaplanır; ilk kayıt referanstır.
+      </p>
+    </div>
+  </header>
+
+  <app-analytics-filter-bar
+    [value]="facade.filters()"
+    [filters]="filterDefinitions()"
+    [busy]="isLoading()"
+    (valueChange)="onFilterChange($event)"
+    (apply)="onApply()"
+    (reset)="onReset()"
+  />
+
+  <app-card title="Karşılaştırılacak kayıtlar">
+    <div class="selector">
+      <app-form-field fieldId="compare-kind" label="Karşılaştırma türü">
+        <app-select
+          selectId="compare-kind"
+          [options]="kindOptions"
+          [placeholder]="null"
+          [formControl]="kindControl"
+        />
+      </app-form-field>
+
+      <app-form-field
+        fieldId="compare-subjects"
+        label="Kayıtlar"
+        [hint]="selectionHint()"
+      >
+        <app-multi-select
+          inputId="compare-subjects"
+          [options]="subjectOptions()"
+          [maxSelected]="maxSubjects"
+          placeholder="Karşılaştırılacak kayıtları seçin"
+          searchPlaceholder="Listede ara…"
+          [emptyMessage]="
+            studentsMissing()
+              ? 'Kapsamda listelenebilir öğrenci bulunamadı.'
+              : 'Seçenek bulunamadı.'
+          "
+          [formControl]="subjectsControl"
+        />
+      </app-form-field>
+
+      <app-button
+        variant="primary"
+        icon="git-compare"
+        [disabled]="!canCompare()"
+        [loading]="isLoading()"
+        (pressed)="compare()"
+      >
+        Karşılaştır
+      </app-button>
+    </div>
+  </app-card>
+
+  @if (isIdle()) {
+    <app-empty-state
+      icon="git-compare"
+      title="Henüz karşılaştırma yapılmadı"
+      description="Yukarıdan bir tür ve en az iki kayıt seçip Karşılaştır düğmesine basın."
+    />
+  } @else if (isLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="3" message="Karşılaştırma hazırlanıyor…" />
+  } @else if (hasError()) {
+    <app-error-state
+      [error]="error()"
+      title="Karşılaştırma yapılamadı"
+      (retry)="compare()"
+    />
+  } @else if (result(); as data) {
+    <app-report-header [meta]="data.meta" [exportTable]="exportTable()" />
+
+    <app-card title="Ölçüm karşılaştırması" description="Farklar ilk kayda göredir">
+      <div class="table-scroll">
+        <table class="compare">
+          <thead>
+            <tr>
+              <th scope="col" class="compare__metric">Ölçüm</th>
+              @for (subject of data.subjects; track subject.id; let index = $index) {
+                <th scope="col">
+                  <span class="head">
+                    <span class="text-sm text-body-strong truncate">{{ subject.label }}</span>
+                    <span class="text-xs text-subtle truncate">{{ subject.sublabel }}</span>
+                    @if (index === 0) {
+                      <span class="text-xs baseline">referans</span>
+                    }
+                  </span>
+                </th>
+              }
+            </tr>
+          </thead>
+
+          <tbody>
+            @for (row of metricRows(); track row.key) {
+              <tr>
+                <th scope="row" class="compare__metric">
+                  <span class="text-sm">{{ row.label }}</span>
+                </th>
+
+                @for (cell of row.cells; track cell.subjectId; let index = $index) {
+                  <td>
+                    @if (cell.measured) {
+                      <span class="value tabular">{{ cell.value }}{{ row.unit }}</span>
+                      <span
+                        class="diff text-xs tabular"
+                        [class.is-up]="differenceTone(cell.difference, index) === 'up'"
+                        [class.is-down]="differenceTone(cell.difference, index) === 'down'"
+                      >
+                        {{ differenceLabel(cell.difference, index) }}
+                      </span>
+                    } @else {
+                      <span class="value tabular is-empty">—</span>
+                      <span class="diff text-xs">bu dönemde ölçüm yok</span>
+                    }
+                  </td>
+                }
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </app-card>
+
+    <app-chart-card
+      title="Dönem içi seyir"
+      description="Seçilen kayıtların aynı dönemdeki eğilimi"
+      type="line"
+      [series]="trendSeries()"
+      [categories]="trendCategories()"
+      [height]="320"
+      emptyMessage="Seçilen kayıtlar için bu dönemde ölçüm yok."
+    />
+  }
+</div>

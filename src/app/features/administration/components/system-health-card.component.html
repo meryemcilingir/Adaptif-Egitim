@@ -1,0 +1,44 @@
+<app-card title="Sistem durumu">
+  <div class="health">
+    <header class="health__head">
+      <app-status-badge [label]="labels[health().overall]" [tone]="overallTone()" />
+      <span class="text-xs text-subtle">
+        {{ health().checkedAt | date: 'dd MMM HH:mm' }} itibarıyla
+      </span>
+    </header>
+
+    <p class="health__note text-xs">
+      <app-icon name="info" [size]="13" />
+      {{ health().sampleNote }}
+    </p>
+
+    <ul class="components">
+      @for (component of health().components; track component.key) {
+        <li class="component">
+          <span class="component__icon" [class]="'is-' + component.state">
+            <app-icon [name]="component.icon" [size]="15" />
+          </span>
+
+          <span class="component__body">
+            <span class="text-sm text-body-strong">{{ component.label }}</span>
+            <span class="text-xs text-subtle">{{ component.detail }}</span>
+
+            @if (component.usagePercent !== null) {
+              <app-progress-bar
+                [value]="component.usagePercent"
+                [max]="100"
+                [tone]="usageTone(component.usagePercent)"
+                [label]="component.label + ' kullanımı'"
+              />
+            }
+          </span>
+
+          <app-status-badge
+            [label]="labels[component.state]"
+            [tone]="toneOf(component.state)"
+          />
+        </li>
+      }
+    </ul>
+  </div>
+</app-card>

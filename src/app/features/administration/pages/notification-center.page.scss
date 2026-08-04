@@ -1,0 +1,120 @@
+@use '../../../../styles/breakpoints' as t;
+
+/* Oluşturucu solda dar, geçmiş sağda esner: yazma odaklı bir ekran. */
+.layout {
+  display: grid;
+  grid-template-columns: minmax(0, 420px) minmax(0, 1fr);
+  gap: var(--space-4);
+  align-items: start;
+
+  @media (max-width: t.$bp-lg) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.composer {
+  position: sticky;
+  top: calc(var(--header-height) + var(--space-4));
+
+  @media (max-width: t.$bp-lg) {
+    position: static;
+  }
+}
+
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-3);
+
+  @media (max-width: 520px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.preview {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+
+  /* Alıcısı olmayan hedef bir hatadır: gönderim reddedilir. */
+  &.is-empty {
+    border-color: var(--color-warning-border, var(--color-border));
+    background: var(--color-warning-surface, var(--color-surface-subtle));
+    color: var(--color-warning-text);
+  }
+}
+
+.form__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.campaigns {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.campaign {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.campaign__head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+.campaign__body {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  margin: 0;
+  color: var(--color-text-secondary);
+}
+
+.campaign__meta,
+.campaign__delivery {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  flex-wrap: wrap;
+  margin: 0;
+  color: var(--color-text-subtle);
+}
+
+.dot {
+  margin-inline: 2px;
+}
+
+.campaign__actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin-top: var(--space-2);
+  flex-wrap: wrap;
+}

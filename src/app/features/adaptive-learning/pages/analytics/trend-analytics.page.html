@@ -1,0 +1,81 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Trend analizleri</h1>
+      <p class="text-sm text-muted">
+        Çalışma, başarı, tamamlama, öneri ve ustalık eğilimlerinin zaman içindeki seyri.
+      </p>
+    </div>
+  </header>
+
+  <app-analytics-filter-bar
+    [value]="facade.filters()"
+    [filters]="filterDefinitions()"
+    [busy]="isRefreshing()"
+    (valueChange)="onFilterChange($event)"
+    (apply)="onApply()"
+    (reset)="onReset()"
+  />
+
+  @if (isLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="4" message="Trendler hazırlanıyor…" />
+  } @else if (hasError()) {
+    <app-error-state [error]="error()" title="Trendler yüklenemedi" (retry)="load()" />
+  } @else if (report(); as data) {
+    <app-report-header [meta]="data.meta" [exportTable]="exportTable()" />
+
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="chart-line"
+        title="Seçili dönemde veri yok"
+        description="Bu tarih aralığında çizilecek eğilim bulunmuyor."
+        actionLabel="Filtreleri temizle"
+        actionIcon="x"
+        (action)="onReset()"
+      />
+    } @else {
+      <div class="charts">
+        <app-chart-card
+          title="Çalışma süresi"
+          description="Günlük toplam dakika"
+          type="area"
+          [series]="studySeries()"
+          [categories]="categories()"
+        />
+
+        <app-chart-card
+          title="Sınav puanı"
+          description="Günlük ortalama yüzde"
+          type="line"
+          [series]="scoreSeries()"
+          [categories]="categories()"
+        />
+
+        <app-chart-card
+          title="İçerik tamamlama"
+          description="Günlük tamamlanan içerik sayısı"
+          type="bar"
+          [series]="completionSeries()"
+          [categories]="categories()"
+        />
+
+        <app-chart-card
+          title="Öneri üretimi"
+          description="Günlük üretilen öneri sayısı"
+          type="bar"
+          [series]="recommendationSeries()"
+          [categories]="categories()"
+        />
+      </div>
+
+      <app-chart-card
+        title="Ustalık eğilimi"
+        description="O güne kadar hesaplanmış skorların ortalaması — ustalık anlık hesaplandığı için geriye dönük saklanmaz"
+        type="line"
+        [series]="masterySeries()"
+        [categories]="categories()"
+        [height]="320"
+      />
+    }
+  }
+</div>

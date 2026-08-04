@@ -9,7 +9,7 @@
 </header>
 
 <ul class="reason__list">
-  @for (reason of item.reasons; track reason.rule) {
+  @for (reason of visibleReasons(); track reason.rule) {
     <li class="reason__item">
       <app-icon class="reason__icon" name="lightbulb" [size]="14" />
 
@@ -19,14 +19,22 @@
           {{ reason.explanation }}
         </p>
 
-        <div class="reason__evidence">
-          @for (entry of evidenceEntries(reason.evidence); track entry.key) {
-            <span class="reason__chip">
-              {{ entry.key }}: <strong class="tabular">{{ entry.value }}</strong>
-            </span>
-          }
-        </div>
+        @if (!compact()) {
+          <div class="reason__evidence">
+            @for (entry of evidenceEntries(reason.evidence); track entry.key) {
+              <span class="reason__chip">
+                {{ entry.key }}: <strong class="tabular">{{ entry.value }}</strong>
+              </span>
+            }
+          </div>
+        }
       </div>
+    </li>
+  }
+
+  @if (hiddenReasonCount() > 0) {
+    <li class="reason__more text-xs">
+      +{{ hiddenReasonCount() }} gerekçe daha
     </li>
   }
 </ul>

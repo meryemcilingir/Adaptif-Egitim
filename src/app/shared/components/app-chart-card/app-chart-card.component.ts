@@ -1,4 +1,13 @@
-import { ChangeDetectionStrategy, Component, computed, input, output } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  Component,
+  DestroyRef,
+  ElementRef,
+  computed,
+  inject,
+  input,
+  output,
+} from '@angular/core';
 import { ApexNonAxisChartSeries, ChartComponent } from 'ng-apexcharts';
 
 import { ApiError } from '../../../core/api/api-error';
@@ -86,11 +95,41 @@ export class AppChartCardComponent {
   readonly plotOptions = computed(() => basePlotOptions(this.type(), this.horizontal()));
   readonly xaxis = computed(() => baseXAxis(this.categories(), this.type() === 'scatter'));
   readonly markers = computed(() => baseMarkers(this.type()));
-  readonly yaxis = computed(() => baseYAxis(this.valueSuffix()));
+  readonly yaxis = computed(() => baseYAxis(this.valueSuffix(), this.type() === 'heatmap'));
   readonly fill = computed(() => (this.type() === 'area' ? areaFill() : {}));
   readonly chartLabels = computed(() => [...this.labels()]);
   readonly chartColors = computed(() => [...this.colors()]);
 
   readonly dataLabels = BASE_DATA_LABELS;
   readonly tooltip = BASE_TOOLTIP;
+
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly destroyRef = inject(DestroyRef);
+
+  constructor() {
+    /*
+     * Kart genişliği değişince grafik yeniden ölçülür.
+     *
+     * Kenar çubuğu açılıp kapandığında ya da pencere bölündüğünde ApexCharts
+     * kendi ölçüsünü tazelemiyor, grafik eski genişlikte kalıyordu. Kütüphane
+     * genel `resize` olayını dinlediği için örneğe erişmeye gerek yok; sürüm
+     * değişse de bu yol çalışır.
+     */
+    let lastWidth = 0;
+
+    const observer = new ResizeObserver((entries) => {
+      const width = Math.round(entries[0]?.contentRect.width ?? 0);
+
+      // Yalnızca gerçek genişlik değişiminde tetikle; yükseklik oynamaları sayılmaz.
+      if (width === 0 || width === lastWidth) return;
+
+      const isFirstMeasurement = lastWidth === 0;
+      lastWidth = width;
+
+      if (!isFirstMeasurement) window.dispatchEvent(new Event('resize'));
+    });
+
+    observer.observe(this.host.nativeElement);
+    this.destroyRef.onDestroy(() => observer.disconnect());
+  }
 }

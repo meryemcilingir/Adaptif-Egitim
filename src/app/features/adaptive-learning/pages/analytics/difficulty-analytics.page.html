@@ -1,0 +1,93 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Zorluk analizi</h1>
+      <p class="text-sm text-muted">
+        Soruların beyan edilen ve ölçülen zorlukları. Aradaki fark, soru yazarına geri
+        bildirimdir.
+      </p>
+    </div>
+  </header>
+
+  <app-analytics-filter-bar
+    [value]="facade.filters()"
+    [filters]="filterDefinitions()"
+    [busy]="isRefreshing()"
+    (valueChange)="onFilterChange($event)"
+    (apply)="onApply()"
+    (reset)="onReset()"
+  />
+
+  @if (isLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="3" message="Zorluk analizi hazırlanıyor…" />
+  } @else if (hasError()) {
+    <app-error-state [error]="error()" title="Analiz yüklenemedi" (retry)="load()" />
+  } @else if (report(); as data) {
+    <app-report-header [meta]="data.meta" [exportTable]="exportTable()" />
+
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="chart-pie"
+        title="Soru verisi yok"
+        description="Bu kapsamda analiz edilecek soru bulunmuyor."
+        actionLabel="Filtreleri temizle"
+        actionIcon="x"
+        (action)="onReset()"
+      />
+    } @else {
+      <div class="charts">
+        <app-chart-card
+          title="Beyan edilen zorluk dağılımı"
+          description="Soru yazarlarının işaretlediği zorluk"
+          type="donut"
+          [series]="distributionSeries()"
+          [labels]="distributionLabels()"
+        />
+
+        <app-chart-card
+          title="Ölçülen zorluk eğilimi"
+          description="Doğru cevaplama oranının zaman içindeki seyri"
+          type="line"
+          [series]="trendSeries()"
+          [categories]="trendCategories()"
+        />
+      </div>
+
+      <app-chart-card
+        title="Ders bazında zorluk dağılımı"
+        description="Her dersin soru havuzundaki kolay / orta / zor dengesi"
+        type="bar"
+        [series]="courseSeries()"
+        [categories]="courseCategories()"
+        [height]="320"
+      />
+
+      <app-chart-card
+        title="Kazanım bazında ölçülen zorluk"
+        description="En düşük doğru cevap oranından başlayarak"
+        type="bar"
+        [series]="outcomeSeries()"
+        [categories]="outcomeCategories()"
+        [height]="320"
+      />
+
+      <div class="quality-map">
+        <app-chart-card
+          title="Madde kalitesi haritası"
+          description="Yatay: ölçülen zorluk (%) · Dikey: ayırt edicilik (%) — sol alt köşe gözden geçirilmeli"
+          type="scatter"
+          [series]="scatterSeries()"
+          [height]="360"
+        />
+
+        <!--
+          Grafiğin kendisi tıklanabilir yapılmadı: canvas üzerindeki tıklama
+          klavyeyle erişilemez. Açık bir eylem hem net hem erişilebilir.
+        -->
+        <app-button variant="secondary" icon="external-link" (pressed)="openItems()">
+          Madde listesine git
+        </app-button>
+      </div>
+    }
+  }
+</div>

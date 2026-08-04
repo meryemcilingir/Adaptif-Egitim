@@ -1,0 +1,178 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Grup analitiği</h1>
+      <p class="text-sm text-muted">
+        Puan dağılımı, başarı bantları ve grup içi seviye farkı. Öğrenci satırına tıklayarak
+        bireysel analize inebilirsiniz.
+      </p>
+    </div>
+  </header>
+
+  <app-analytics-filter-bar
+    [value]="facade.filters()"
+    [filters]="filterDefinitions()"
+    [busy]="isRefreshing()"
+    (valueChange)="onFilterChange($event)"
+    (apply)="onApply()"
+    (reset)="onReset()"
+  />
+
+  @if (!hasSelection()) {
+    <app-empty-state
+      icon="users"
+      title="Bir grup seçin"
+      description="Grup analizini görüntülemek için yukarıdaki filtreden bir grup seçmeniz gerekiyor."
+    />
+  } @else if (isLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="4" message="Grup analizi hazırlanıyor…" />
+  } @else if (hasError()) {
+    <app-error-state [error]="error()" title="Analiz yüklenemedi" (retry)="load()" />
+  } @else if (report(); as data) {
+    <app-report-header [meta]="data.meta" [exportTable]="exportTable()" />
+
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="chart-column"
+        title="Seçili dönemde deneme yok"
+        description="Bu grup için seçilen tarih aralığında sınav denemesi bulunmuyor."
+        actionLabel="Filtreleri temizle"
+        actionIcon="x"
+        (action)="onReset()"
+      />
+    } @else {
+      <!-- ── Özet ────────────────────────────────────────────────────── -->
+      <section class="summary" aria-label="Grup özeti">
+        <div class="metric">
+          <span class="metric__label text-xs">Ortalama puan</span>
+          <span class="metric__value tabular">%{{ data.averageScore }}</span>
+        </div>
+        <div class="metric">
+          <span class="metric__label text-xs">Medyan</span>
+          <span class="metric__value tabular">%{{ data.medianScore }}</span>
+        </div>
+        <div class="metric">
+          <span class="metric__label text-xs">En yüksek</span>
+          <span class="metric__value tabular is-good">%{{ data.highestScore }}</span>
+        </div>
+        <div class="metric">
+          <span class="metric__label text-xs">En düşük</span>
+          <span class="metric__value tabular is-bad">%{{ data.lowestScore }}</span>
+        </div>
+        <div class="metric">
+          <span class="metric__label text-xs">Standart sapma</span>
+          <span class="metric__value tabular">{{ data.standardDeviation }}</span>
+        </div>
+        <div class="metric">
+          <span class="metric__label text-xs">Öğrenci</span>
+          <span class="metric__value tabular">{{ data.studentCount }}</span>
+        </div>
+        <div class="metric">
+          <span class="metric__label text-xs">Geçme oranı</span>
+          <span class="metric__value tabular is-good">%{{ data.passRate }}</span>
+        </div>
+        <div class="metric">
+          <span class="metric__label text-xs">Kalma oranı</span>
+          <span class="metric__value tabular is-bad">%{{ data.failRate }}</span>
+        </div>
+        <div class="metric">
+          <span class="metric__label text-xs">Tamamlama</span>
+          <span class="metric__value tabular">%{{ data.completionRate }}</span>
+        </div>
+        <div class="metric">
+          <span class="metric__label text-xs">
+            Katılım
+            <span class="badge-mock">örnek</span>
+          </span>
+          <span class="metric__value tabular">%{{ data.attendancePercent }}</span>
+        </div>
+      </section>
+
+      <p class="spread text-sm">
+        <app-icon name="info" [size]="15" />
+        {{ spreadNote(data.standardDeviation) }}
+      </p>
+
+      <!-- ── Dağılımlar ──────────────────────────────────────────────── -->
+      <div class="charts">
+        <app-chart-card
+          title="Puan dağılımı"
+          description="Öğrencilerin puan bantlarına göre dağılımı"
+          type="bar"
+          [series]="scoreDistSeries()"
+          [categories]="scoreDistCategories()"
+        />
+
+        <app-chart-card
+          title="Harf notu dağılımı"
+          description="Yaygın 4'lük sisteme yakın bantlama"
+          type="bar"
+          [series]="gradeDistSeries()"
+          [categories]="gradeDistCategories()"
+        />
+
+        <app-chart-card
+          title="Ustalık dağılımı"
+          description="Kazanım bazlı ustalık skorları"
+          type="bar"
+          [series]="masteryDistSeries()"
+          [categories]="masteryDistCategories()"
+        />
+
+        <app-chart-card
+          title="Haftalık eğilim"
+          description="Haftalık ortalama sınav puanı"
+          type="line"
+          [series]="trendSeries()"
+          [categories]="trendCategories()"
+        />
+      </div>
+
+      <!-- ── Öğrenciler ──────────────────────────────────────────────── -->
+      <app-card
+        title="Öğrenciler"
+        description="En başarılı ve risk altındaki öğrenciler bir arada"
+      >
+        @if (data.students.length === 0) {
+          <app-empty-state
+            icon="users"
+            title="Öğrenci kaydı yok"
+            description="Bu grupta gösterilecek öğrenci bulunmuyor."
+          />
+        } @else {
+          <ul class="students">
+            @for (row of data.students; track row.studentId) {
+              <li
+                class="student"
+                [class.is-risk]="row.riskReasons.length > 0"
+                (click)="openStudent(row)"
+              >
+                <div class="student__body">
+                  <span class="text-sm text-body-strong">{{ row.studentName }}</span>
+                  @if (row.riskReasons.length > 0) {
+                    <span class="text-xs">{{ row.riskReasons.join(' · ') }}</span>
+                  } @else {
+                    <span class="text-xs text-subtle">{{ row.cohortName }}</span>
+                  }
+                </div>
+
+                <div class="student__metrics">
+                  <span class="tabular">%{{ row.masteryPercent }}</span>
+                  <span class="text-xs text-subtle">ustalık</span>
+                </div>
+                <div class="student__metrics">
+                  <span class="tabular">%{{ row.examAveragePercent }}</span>
+                  <span class="text-xs text-subtle">sınav</span>
+                </div>
+                <div class="student__metrics">
+                  <span class="tabular">%{{ row.completionRate }}</span>
+                  <span class="text-xs text-subtle">tamamlama</span>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </app-card>
+    }
+  }
+</div>

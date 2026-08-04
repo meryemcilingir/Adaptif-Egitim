@@ -1,0 +1,70 @@
+@if (receipt(); as view) {
+  <div class="submitted">
+    <app-card>
+      <div class="submitted__hero">
+        <span class="submitted__mark" aria-hidden="true">
+          <app-icon name="circle-check-big" [size]="36" />
+        </span>
+
+        <h1 class="text-h2">Sınavınız başarıyla teslim edildi</h1>
+        <p class="text-sm text-muted">{{ view.examTitle }} · {{ view.courseCode }}</p>
+      </div>
+
+      @if (view.autoSubmitted) {
+        <p class="notice" role="status">
+          <app-icon name="clock" [size]="16" />
+          Süre dolduğu için sınavınız sistem tarafından otomatik olarak teslim edildi.
+          O ana kadar verdiğiniz tüm cevaplar kaydedilmiştir.
+        </p>
+      }
+
+      <dl class="receipt">
+        <div>
+          <dt>Teslim zamanı</dt>
+          <dd>{{ submittedAt() }}</dd>
+        </div>
+        <div>
+          <dt>Sınavda geçen süre</dt>
+          <dd class="tabular">{{ duration() }}</dd>
+        </div>
+        <div>
+          <dt>Cevaplanan soru</dt>
+          <dd class="tabular">{{ view.answered }} / {{ view.totalQuestions }}</dd>
+        </div>
+      </dl>
+
+      <!-- Puan BİLİNÇLİ olarak gösterilmez (BR-49). -->
+      <section class="next-steps">
+        <h2 class="text-h4">Bundan sonra ne olacak?</h2>
+        <p class="text-sm">
+          Sonucunuz, değerlendirme süreci tamamlandıktan sonra açıklanacaktır. Açık uçlu
+          sorular ölçme uzmanları tarafından elle değerlendirilir; bu nedenle puanınız
+          hemen görüntülenmez.
+        </p>
+        <p class="text-sm">
+          Sonuç açıklandığında bildirim alacaksınız ve sınav geçmişinizden
+          görüntüleyebileceksiniz.
+        </p>
+      </section>
+
+      <p class="thanks text-sm">Katılımınız için teşekkür ederiz.</p>
+
+      <footer class="submitted__actions">
+        <app-button variant="secondary" (pressed)="goToDashboard()">Panele dön</app-button>
+        <app-button variant="primary" icon="history" (pressed)="goToHistory()">
+          Sınav geçmişim
+        </app-button>
+      </footer>
+    </app-card>
+  </div>
+} @else {
+  <div class="submitted">
+    <app-empty-state
+      icon="inbox"
+      title="Teslim bilgisi bulunamadı"
+      description="Bu sayfa yalnızca sınav teslim edildikten hemen sonra görüntülenebilir. Teslim ettiğiniz sınavları geçmişinizden görebilirsiniz."
+      actionLabel="Sınav geçmişim"
+      (action)="goToHistory()"
+    />
+  </div>
+}

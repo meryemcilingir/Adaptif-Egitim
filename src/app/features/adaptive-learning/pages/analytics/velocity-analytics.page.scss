@@ -1,0 +1,105 @@
+@use '../../../../../styles/breakpoints' as t;
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(190px, 1fr));
+  gap: var(--space-3);
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+}
+
+.metric__label {
+  color: var(--color-text-subtle);
+}
+
+.metric__hint {
+  color: var(--color-text-subtle);
+}
+
+.metric__value {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--color-text-primary);
+
+  &.is-good {
+    color: var(--color-success-text);
+  }
+
+  &.is-warn {
+    color: var(--color-warning-text);
+  }
+}
+
+.charts,
+.lists {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+
+  @media (max-width: t.$bp-lg) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.rows {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Satırın tamamı tıklanabilir: küçük bir bağlantı yerine geniş hedef. */
+.row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto 16px;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid transparent;
+  border-radius: var(--radius-md);
+  background: none;
+  color: inherit;
+  text-align: start;
+  cursor: pointer;
+  transition: background-color var(--motion-fast), border-color var(--motion-fast);
+
+  &:hover {
+    background: var(--color-surface-hover);
+    border-color: var(--color-border);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-focus-ring);
+    outline-offset: 1px;
+  }
+
+  app-icon {
+    color: var(--color-text-subtle);
+  }
+}
+
+.row__stat {
+  white-space: nowrap;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 640px) {
+  .row {
+    grid-template-columns: minmax(0, 1fr) auto 16px;
+  }
+
+  .row__stat:last-of-type {
+    display: none;
+  }
+}

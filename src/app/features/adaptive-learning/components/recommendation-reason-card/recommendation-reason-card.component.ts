@@ -21,9 +21,28 @@ import { RECOMMENDATION_RULE_LABELS, Recommendation } from '../../models/recomme
 })
 export class RecommendationReasonCardComponent {
   readonly recommendation = input.required<Recommendation>();
+  /**
+   * Kompakt kip: yalnızca BİRİNCİ gerekçe, kanıt satırları olmadan.
+   *
+   * Bir öneri birden çok kurala uyabilir; hepsini kanıtlarıyla listelemek kartı
+   * ~600 px'e çıkarıyor ve üç öneri panoyu 1800 px uzatıyordu. Tam gerekçe
+   * dökümü öğrenme yolu ekranındadır — kart orada olduğu gibi açılır.
+   */
+  readonly compact = input(false);
   readonly start = output<Recommendation>();
 
   readonly ruleLabels = RECOMMENDATION_RULE_LABELS;
+
+  /** Kompakt kipte gösterilen gerekçeler. */
+  readonly visibleReasons = computed(() => {
+    const reasons = this.recommendation().reasons;
+    return this.compact() ? reasons.slice(0, 1) : reasons;
+  });
+
+  /** Kompakt kipte gizlenen gerekçe sayısı. */
+  readonly hiddenReasonCount = computed(() =>
+    Math.max(0, this.recommendation().reasons.length - this.visibleReasons().length),
+  );
 
   readonly priorityTone = computed(() => {
     const priority = this.recommendation().priority;

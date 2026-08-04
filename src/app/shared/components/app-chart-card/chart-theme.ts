@@ -55,7 +55,15 @@ export function baseChart(type: AppChartType, height: number, sparkline = false)
     fontFamily: FONT_FAMILY,
     toolbar: { show: false },
     zoom: { enabled: false },
-    animations: { enabled: true, speed: 320 },
+    /*
+     * Isı haritasında animasyon KAPALI.
+     *
+     * Hücreler genişliği 0'dan başlayarak animasyonla açılıyor; Angular'ın seri
+     * girdisini yeniden yazması animasyonu iptal edince hücreler 0×0 donuyor ve
+     * grafik bomboş görünüyordu. Matris görünümünde animasyonun anlatısal bir
+     * katkısı da yok — değerler aynı anda okunur.
+     */
+    animations: { enabled: type !== 'heatmap', speed: 320 },
     sparkline: { enabled: sparkline },
     parentHeightOffset: 0,
   };
@@ -114,10 +122,22 @@ export function baseXAxis(categories: readonly string[], numeric = false): ApexX
   };
 }
 
-export function baseYAxis(suffix = ''): ApexYAxis {
+/**
+ * Y ekseni.
+ *
+ * Isı haritasında y ekseni KATEGORİKTİR: etiketler seri adlarıdır (kazanım
+ * kodu). Sayısal biçimlendirici uygulanınca `Math.round("INS210.K3")` → `NaN`
+ * oluyor ve eksende bir de sahte `0` çizgisi beliriyordu. Bu yüzden kategorik
+ * eksende biçimlendirici hiç kurulmaz.
+ */
+export function baseYAxis(suffix = '', categorical = false): ApexYAxis {
+  const style = { colors: LABEL_COLOR, fontSize: '12px', fontFamily: FONT_FAMILY };
+
+  if (categorical) return { labels: { style } };
+
   return {
     labels: {
-      style: { colors: LABEL_COLOR, fontSize: '12px', fontFamily: FONT_FAMILY },
+      style,
       formatter: (value: number) => `${Math.round(value)}${suffix}`,
     },
   };

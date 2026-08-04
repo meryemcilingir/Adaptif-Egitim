@@ -1,0 +1,155 @@
+.heatmap {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Geniş matris KENDİ kabında kayar; sayfa gövdesi yatay kaymaz. */
+.heatmap__scroll {
+  overflow-x: auto;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.matrix {
+  border-collapse: separate;
+  border-spacing: 0;
+  inline-size: 100%;
+}
+
+.matrix__corner,
+.matrix__column {
+  position: sticky;
+  inset-block-start: 0;
+  z-index: 1;
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-subtle);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  text-align: center;
+  white-space: nowrap;
+}
+
+/* Kazanım sütunu yatay kaydırmada sabit kalır: hangi satıra baktığınız kaybolmasın. */
+.matrix__corner,
+.matrix__row {
+  position: sticky;
+  inset-inline-start: 0;
+  z-index: 2;
+  background: var(--color-surface);
+  text-align: start;
+}
+
+.matrix__corner {
+  z-index: 3;
+  background: var(--color-surface-subtle);
+}
+
+.matrix__row {
+  display: table-cell;
+  min-inline-size: 200px;
+  max-inline-size: 260px;
+  padding: var(--space-2) var(--space-3);
+  border-block-start: var(--border-width) solid var(--color-border);
+  font-weight: 500;
+}
+
+.matrix__code {
+  display: block;
+  font-size: var(--fs-sm);
+  color: var(--color-text-primary);
+}
+
+.matrix__title {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.matrix__cell {
+  padding: 2px;
+  border-block-start: var(--border-width) solid var(--color-border);
+  text-align: center;
+}
+
+.cell {
+  display: grid;
+  place-items: center;
+  inline-size: 100%;
+  min-inline-size: 46px;
+  block-size: 38px;
+  border: none;
+  border-radius: var(--radius-sm);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  font-family: inherit;
+  cursor: pointer;
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+
+  &:disabled {
+    cursor: default;
+  }
+}
+
+/* ── Bantlar ─────────────────────────────────────────────────────────────── */
+
+.cell,
+.swatch {
+  &.is-critical {
+    background: var(--color-danger-subtle);
+    color: var(--color-danger-text);
+  }
+
+  &.is-weak {
+    background: color-mix(in srgb, var(--color-danger-subtle) 55%, var(--color-warning-subtle));
+    color: var(--color-danger-text);
+  }
+
+  &.is-fair {
+    background: var(--color-warning-subtle);
+    color: var(--color-warning-text);
+  }
+
+  &.is-good {
+    background: color-mix(in srgb, var(--color-success-subtle) 60%, var(--color-warning-subtle));
+    color: var(--color-success-text);
+  }
+
+  &.is-excellent {
+    background: var(--color-success-subtle);
+    color: var(--color-success-text);
+  }
+
+  &.is-empty {
+    background: var(--color-surface-subtle);
+    color: var(--color-text-subtle);
+  }
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-4);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-2);
+    color: var(--color-text-secondary);
+  }
+}
+
+.swatch {
+  inline-size: 14px;
+  block-size: 14px;
+  border-radius: var(--radius-sm);
+}

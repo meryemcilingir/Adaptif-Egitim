@@ -1,0 +1,43 @@
+<nav class="navigator" aria-label="Soru navigatörü">
+  <div class="navigator__grid" role="list">
+    @for (entry of entries(); track entry.questionId; let index = $index) {
+      <button
+        type="button"
+        role="listitem"
+        class="nav-cell"
+        [class]="'is-' + entry.state"
+        [disabled]="disabled()"
+        [attr.aria-current]="entry.state === 'current' ? 'true' : null"
+        [attr.aria-label]="entry.number + '. soru — ' + labels[entry.state]"
+        (click)="onSelect(index)"
+      >
+        <span class="tabular">{{ entry.number }}</span>
+
+        <!-- İşaret yalnızca renkle anlatılmaz; ayrıca bir simge taşır. -->
+        @if (entry.state === 'flagged') {
+          <app-icon class="nav-cell__flag" name="flag" [size]="10" />
+        }
+      </button>
+    }
+  </div>
+
+  <dl class="navigator__counts">
+    <div>
+      <dt>Cevaplanan</dt>
+      <dd class="tabular">{{ answeredCount() }} / {{ total() }}</dd>
+    </div>
+    <div>
+      <dt>İşaretli</dt>
+      <dd class="tabular">{{ flaggedCount() }}</dd>
+    </div>
+  </dl>
+
+  <ul class="navigator__legend">
+    @for (state of legend; track state) {
+      <li>
+        <span class="legend-swatch" [class]="'is-' + state" aria-hidden="true"></span>
+        <span class="text-xs text-subtle">{{ labels[state] }}</span>
+      </li>
+    }
+  </ul>
+</nav>

@@ -1,0 +1,49 @@
+<div class="matrix">
+  <p class="matrix__summary text-xs">
+    <app-icon name="shield-check" [size]="13" />
+    {{ totalSelected() }} izin seçili
+  </p>
+
+  @for (group of groups(); track group.key) {
+    <section class="group">
+      <header class="group__head">
+        <label class="group__toggle">
+          <input
+            type="checkbox"
+            [checked]="group.allSelected"
+            [disabled]="disabled()"
+            (change)="onToggleGroup(group)"
+          />
+          <span class="text-sm text-body-strong">{{ group.label }}</span>
+        </label>
+
+        <span class="group__count text-xs tabular">
+          {{ group.selectedCount }} / {{ group.total }}
+        </span>
+      </header>
+
+      <ul class="cells">
+        @for (cell of group.cells; track cell.permission) {
+          <li>
+            <label class="cell" [class.is-locked]="cell.locked">
+              <input
+                type="checkbox"
+                [checked]="cell.checked"
+                [disabled]="cell.locked || disabled()"
+                (change)="onToggle(cell)"
+              />
+              <span class="cell__label text-sm">{{ cell.label }}</span>
+              <code class="cell__key text-xs">{{ cell.permission }}</code>
+
+              @if (cell.locked) {
+                <span class="cell__lock" title="Bu izin bu rolden kaldırılamaz">
+                  <app-icon name="lock" [size]="12" />
+                </span>
+              }
+            </label>
+          </li>
+        }
+      </ul>
+    </section>
+  }
+</div>

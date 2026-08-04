@@ -1,0 +1,184 @@
+@use '../../../../../styles/breakpoints' as t;
+
+/* ── Özet göstergeler ────────────────────────────────────────────────────── */
+
+.stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+  gap: var(--space-3);
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.stat__label {
+  color: var(--color-text-subtle);
+}
+
+.stat__value {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+
+  @media (max-width: t.$bp-lg) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── Ders ilerlemesi ─────────────────────────────────────────────────────── */
+
+.courses {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.course {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.course__head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.course__title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.course__bars {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
+
+/* Etiket · bar · değer: bar esner, iki uç sabit kalır. */
+.bar {
+  display: grid;
+  grid-template-columns: 80px minmax(0, 1fr) 48px;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+
+  .tabular {
+    text-align: end;
+  }
+}
+
+/* ── Sıralı listeler ─────────────────────────────────────────────────────── */
+
+.ranked,
+.outcomes,
+.history,
+.achievements {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.rank,
+.outcome,
+.history__item,
+.achievement {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+}
+
+.rank,
+.outcome {
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-surface-subtle);
+  }
+}
+
+.rank__body,
+.outcome__body,
+.history__body,
+.achievement__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.rank__value {
+  font-size: var(--fs-body-strong);
+  font-weight: 600;
+
+  &.is-weak {
+    color: var(--color-danger-text);
+  }
+
+  &.is-strong {
+    color: var(--color-success-text);
+  }
+}
+
+.outcome {
+  .tabular {
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+}
+
+.achievement__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 32px;
+  block-size: 32px;
+  border-radius: var(--radius-full);
+  background: var(--color-primary-subtle);
+  color: var(--color-primary-text);
+}
+
+@media (max-width: 560px) {
+  .outcome,
+  .history__item,
+  .achievement {
+    flex-wrap: wrap;
+  }
+
+  .bar {
+    grid-template-columns: 70px minmax(0, 1fr) 44px;
+  }
+}

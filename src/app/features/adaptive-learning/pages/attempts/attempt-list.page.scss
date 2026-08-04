@@ -1,0 +1,17 @@
+.cell-stack {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+
+  &--end {
+    align-items: flex-end;
+  }
+}
+
+.is-pass {
+  color: var(--color-success-text);
+}
+
+.is-fail {
+  color: var(--color-danger-text);
+}

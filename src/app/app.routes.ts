@@ -21,24 +21,26 @@ export const routes: Routes = [
 
   {
     // Süreli sınav ekranı: sidebar/header yok, dikkat dağıtan öğe yok.
-    path: 'exam-session/:token',
+    path: 'session/:token',
     canMatch: [authGuard],
     title: 'Sınav Oturumu · Adaptif Eğitim',
     loadComponent: () =>
-      import('./features/system/pages/module-placeholder/module-placeholder.page').then(
-        (module) => module.ModulePlaceholderPage,
+      import('./features/adaptive-learning/pages/session/exam-session.page').then(
+        (module) => module.ExamSessionPage,
       ),
-    data: {
-      title: 'Sınav oturumu',
-      summary: 'Süreli oturum, autosave ve bağlantı kaybı yönetimi.',
-      phase: 5,
-      scope: [
-        'Sunucu zamanlı sayaç (BR-07)',
-        'Autosave + çakışma (BR-09)',
-        'Offline kuyruk (BR-10)',
-        'Tek aktif oturum (BR-06)',
-      ],
-    },
+  },
+  {
+    /*
+     * Teslim makbuzu da kabuk dışındadır: öğrenci sınavdan yeni çıkmıştır ve
+     * ekranın tek işi teslimin gerçekleştiğini göstermektir.
+     */
+    path: 'session/:token/submitted',
+    canMatch: [authGuard],
+    title: 'Sınav Teslim Edildi · Adaptif Eğitim',
+    loadComponent: () =>
+      import('./features/adaptive-learning/pages/session/exam-submitted.page').then(
+        (module) => module.ExamSubmittedPage,
+      ),
   },
 
   {
@@ -58,19 +60,15 @@ export const routes: Routes = [
       },
 
       {
-        path: 'users',
-        title: 'Kullanıcılar · Adaptif Eğitim',
-        loadComponent: () =>
-          import('./features/system/pages/module-placeholder/module-placeholder.page').then(
-            (module) => module.ModulePlaceholderPage,
+        path: '',
+        loadChildren: () =>
+          import('./features/administration/administration.routes').then(
+            (module) => module.ADMINISTRATION_ROUTES,
           ),
-        data: {
-          title: 'Kullanıcı yönetimi',
-          summary: 'Rol, izin ve hesap durumu yönetimi.',
-          phase: 10,
-          scope: ['Kullanıcı listesi', 'Rol atama', 'Hesap durumu', 'Denetim izi'],
-        },
       },
+
+      /* Eski `/users` yolu, yönetim modülündeki gerçek ekrana yönlendirilir. */
+      { path: 'users', pathMatch: 'full', redirectTo: 'admin/users' },
 
       {
         path: 'dev-tools',

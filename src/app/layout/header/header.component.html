@@ -14,17 +14,32 @@
   <app-breadcrumb [items]="breadcrumb()" />
 </div>
 
-<form class="header__search" role="search" (submit)="onSearchSubmit($event)">
-  <app-icon name="search" [size]="15" />
-  <input
-    type="search"
-    class="header__search-input"
-    placeholder="Soru, kazanım veya sınav ara…"
-    aria-label="Genel arama"
-    [value]="search()"
-    (input)="onSearchInput($event)"
-  />
-</form>
+<div class="header__search-wrap">
+  <form class="header__search" role="search" (submit)="onSearchSubmit($event)">
+    <app-icon name="search" [size]="15" />
+    <input
+      type="search"
+      class="header__search-input"
+      placeholder="Kullanıcı, ders, sınav veya soru ara…"
+      aria-label="Genel arama"
+      [attr.aria-expanded]="isSearchOpen()"
+      [value]="search()"
+      (input)="onSearchInput($event)"
+      (focus)="onSearchFocus()"
+    />
+  </form>
+
+  @if (isSearchOpen()) {
+    <div class="header__search-panel">
+      <app-global-search-panel
+        [result]="searchResult()"
+        [loading]="isSearching()"
+        [term]="search()"
+        (navigate)="onSearchNavigate()"
+      />
+    </div>
+  }
+</div>
 
 <div class="header__end">
   @if (isOffline()) {

@@ -1,0 +1,149 @@
+.filters {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+}
+
+.filters__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.filters__spacer {
+  flex: 1;
+}
+
+/* ── Hazır pencereler ────────────────────────────────────────────────────── */
+
+.presets {
+  display: inline-flex;
+  padding: 2px;
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle);
+}
+
+.preset {
+  padding: var(--space-1) var(--space-3);
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  font-size: var(--fs-sm);
+  font-family: inherit;
+  color: var(--color-text-secondary);
+  cursor: pointer;
+  white-space: nowrap;
+
+  &:hover:not(:disabled) {
+    color: var(--color-text-primary);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+
+  &:disabled {
+    cursor: not-allowed;
+    opacity: 0.6;
+  }
+
+  /* Seçili pencere yükseltilmiş bir yüzeyle işaretlenir; yalnızca renkle değil. */
+  &.is-active {
+    background: var(--color-surface);
+    box-shadow: var(--shadow-sm);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+}
+
+.range-label {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+/* ── Alanlar ─────────────────────────────────────────────────────────────── */
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.field__input {
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-size: var(--fs-sm);
+  font-family: inherit;
+  color: var(--color-text-primary);
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-border-focus);
+    box-shadow: var(--shadow-focus);
+  }
+
+  &:disabled {
+    background: var(--color-surface-subtle);
+    cursor: not-allowed;
+  }
+
+  &[aria-invalid='true'] {
+    border-color: var(--color-danger-border);
+  }
+}
+
+/* Açılır listeler dar ekranda alt alta değil, sarmalanarak dizilir. */
+.filters__row--selects .field {
+  flex: 1 1 180px;
+  max-inline-size: 260px;
+}
+
+.filters__row--dates .field {
+  flex: 0 1 190px;
+}
+
+.filters__error {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-danger-subtle);
+  color: var(--color-danger-text);
+}
+
+@media (max-width: 560px) {
+  /* Dört ön ayar 375 px'e sığmaz; kutu taşmak yerine yatay kayar. */
+  .presets {
+    inline-size: 100%;
+    justify-content: flex-start;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .presets::-webkit-scrollbar {
+    display: none;
+  }
+
+  .preset {
+    flex: 0 0 auto;
+  }
+
+  .filters__row--selects .field {
+    max-inline-size: none;
+  }
+}

@@ -1,0 +1,185 @@
+@use '../../../../../styles/breakpoints' as t;
+
+.detail-title {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: var(--space-2);
+  min-width: 0;
+
+  h1,
+  p {
+    margin: 0;
+  }
+}
+
+.notice {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-warning-border);
+  border-radius: var(--radius-md);
+  background: var(--color-warning-subtle);
+  font-size: var(--fs-sm);
+  color: var(--color-warning-text);
+}
+
+.grading-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 320px;
+  gap: var(--space-4);
+  align-items: start;
+
+  @media (max-width: t.$bp-xl) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.grading-grid__main {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+  min-width: 0;
+}
+
+/* Kaydetme paneli kaydırma boyunca görünür kalır; dar ekranda üste çıkar. */
+.grading-grid__side {
+  position: sticky;
+  inset-block-start: var(--space-4);
+
+  @media (max-width: t.$bp-xl) {
+    position: static;
+    order: -1;
+  }
+}
+
+.conflicts,
+.answers {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* ── Puan geçmişi ────────────────────────────────────────────────────────── */
+
+.history {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.history__item {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding-block: var(--space-3);
+
+  & + .history__item {
+    border-block-start: var(--border-width) solid var(--color-border);
+  }
+}
+
+.history__delta {
+  flex: none;
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-sm);
+  background: var(--color-surface-subtle);
+  font-size: var(--fs-sm);
+  font-weight: 600;
+  color: var(--color-text-primary);
+}
+
+.history__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+/* ── Kaydetme paneli ─────────────────────────────────────────────────────── */
+
+.totals {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0 0 var(--space-4);
+
+  > div {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: var(--space-2);
+  }
+
+  dt {
+    font-size: var(--fs-sm);
+    color: var(--color-text-secondary);
+  }
+
+  dd {
+    margin: 0;
+    font-size: var(--fs-h4);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+
+  /* Kaydedilmemiş değişiklik varken toplam vurgulanır. */
+  .is-changed {
+    color: var(--color-primary-text);
+  }
+}
+
+.reason {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin-block-end: var(--space-3);
+}
+
+.reason__required {
+  color: var(--color-danger-text);
+}
+
+.reason__input {
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+  font-size: var(--fs-sm);
+  font-family: inherit;
+  color: var(--color-text-primary);
+  resize: vertical;
+
+  &:focus-visible {
+    outline: none;
+    border-color: var(--color-border-focus);
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.reason__counter {
+  align-self: flex-end;
+  color: var(--color-text-subtle);
+}
+
+.issues {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0 0 var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--color-danger-subtle);
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: flex-start;
+    gap: var(--space-2);
+    color: var(--color-danger-text);
+  }
+}

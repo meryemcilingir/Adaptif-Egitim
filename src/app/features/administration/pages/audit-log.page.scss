@@ -1,0 +1,61 @@
+.action {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.timeline-actions {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: var(--space-3);
+}
+
+.changes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Etiket · eski · ok · yeni. Ok yönü değişimin yönünü okutur. */
+.change {
+  display: grid;
+  grid-template-columns: 180px minmax(0, 1fr) 16px minmax(0, 1fr);
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+
+  app-icon {
+    color: var(--color-text-subtle);
+  }
+}
+
+.change__label {
+  color: var(--color-text-secondary);
+}
+
+.change__old {
+  color: var(--color-text-subtle);
+  text-decoration: line-through;
+}
+
+.change__new {
+  color: var(--color-text-primary);
+  font-weight: 500;
+}
+
+@media (max-width: 720px) {
+  .change {
+    grid-template-columns: minmax(0, 1fr);
+    gap: var(--space-1);
+
+    app-icon {
+      display: none;
+    }
+  }
+}

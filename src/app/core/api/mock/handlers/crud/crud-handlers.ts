@@ -11,6 +11,7 @@ import {
 import { Collection, Identified } from '../../db/collection';
 import { CollectionName } from '../../db/db-schema';
 import { QueryConfig } from '../../db/query-engine';
+import { mockIpAddress } from '../audit-writer';
 import { requirePermission } from '../../mock-auth';
 import { businessRule, conflict, forbidden, notFound, validation } from '../../mock-errors';
 import { MockCaller, MockContext, MockHandler, created, noContent, ok } from '../../mock-router';
@@ -297,6 +298,8 @@ function writeAudit<T extends StatefulEntity>(
     actorId: caller.userId,
     actorName: actor?.fullName ?? 'Bilinmiyor',
     actorRole: caller.role,
+    ipAddress: mockIpAddress(caller.userId),
+    success: true,
     targetType: config.auditType,
     targetId: item.id,
     targetLabel: config.labelOf(item),

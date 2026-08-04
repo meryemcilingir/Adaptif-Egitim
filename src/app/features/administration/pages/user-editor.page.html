@@ -1,0 +1,170 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">{{ title() }}</h1>
+      <p class="text-sm text-muted">
+        Roller ve atamalar kullanıcının neyi görüp yapabileceğini belirler.
+        Yeni hesaplar “Davet edildi” durumunda başlar.
+      </p>
+    </div>
+  </header>
+
+  @if (loading()) {
+    <app-loading-state variant="skeleton-card" [rows]="3" message="Kullanıcı yükleniyor…" />
+  } @else if (error()) {
+    <app-error-state [error]="error()" title="Kullanıcı yüklenemedi" (retry)="retry()" />
+  } @else {
+    <form class="editor" [formGroup]="form" (ngSubmit)="submit()">
+      <app-card title="Kimlik bilgileri">
+        <div class="grid">
+          <app-form-field
+            fieldId="user-fullname"
+            label="Ad soyad"
+            [required]="true"
+            [control]="form.controls.fullName"
+            [maxLength]="limits.fullName.max"
+          >
+            <app-input inputId="user-fullname" formControlName="fullName" placeholder="Örn. Elif Yılmaz" />
+          </app-form-field>
+
+          <app-form-field
+            fieldId="user-email"
+            label="E-posta"
+            [required]="true"
+            [control]="form.controls.email"
+            [maxLength]="limits.email.max"
+            hint="Giriş ve bildirimlerde kullanılır."
+          >
+            <app-input
+              inputId="user-email"
+              type="email"
+              formControlName="email"
+              placeholder="ornek@adaptif.dev"
+              (blur)="onEmailBlur()"
+            />
+          </app-form-field>
+
+          <app-form-field
+            fieldId="user-username"
+            label="Kullanıcı adı"
+            [required]="true"
+            [control]="form.controls.username"
+            [maxLength]="limits.username.max"
+            hint="E-posta değişse bile giriş adı sabit kalır."
+          >
+            <app-input inputId="user-username" formControlName="username" />
+          </app-form-field>
+
+          <app-form-field
+            fieldId="user-department"
+            label="Birim"
+            [control]="form.controls.department"
+            [maxLength]="limits.department.max"
+          >
+            <app-input inputId="user-department" formControlName="department" placeholder="Örn. Mühendislik Fakültesi" />
+          </app-form-field>
+
+          <app-form-field
+            fieldId="user-title"
+            label="Ünvan"
+            [control]="form.controls.title"
+            [maxLength]="limits.title.max"
+          >
+            <app-input inputId="user-title" formControlName="title" placeholder="Örn. Öğretim Görevlisi" />
+          </app-form-field>
+        </div>
+      </app-card>
+
+      <app-card
+        title="Roller ve yetki"
+        description="Bir kullanıcı birden fazla rol taşıyabilir; birincil rol giriş sonrası açılan roldür."
+      >
+        <div class="grid">
+          <app-form-field
+            fieldId="user-roles"
+            label="Roller"
+            [required]="true"
+            [control]="form.controls.roles"
+          >
+            <app-multi-select
+              inputId="user-roles"
+              [options]="roleOptions"
+              placeholder="Rol seçin"
+              searchPlaceholder="Rolde ara…"
+              formControlName="roles"
+            />
+          </app-form-field>
+
+          <app-form-field
+            fieldId="user-primary-role"
+            label="Birincil rol"
+            [required]="true"
+            [control]="form.controls.primaryRole"
+            hint="Yalnızca seçili roller arasından seçilebilir."
+          >
+            <app-select
+              selectId="user-primary-role"
+              [options]="primaryRoleOptions()"
+              placeholder="Önce rol seçin"
+              formControlName="primaryRole"
+            />
+          </app-form-field>
+        </div>
+
+        <p class="note text-xs">
+          <app-icon name="info" [size]="13" />
+          Rol izinleri “Roller ve izinler” ekranından yönetilir. Değişiklikler
+          kullanıcının bir sonraki oturumunda geçerli olur.
+        </p>
+      </app-card>
+
+      <app-card title="Atamalar" description="Kullanıcının kapsamını belirler">
+        <div class="grid">
+          <app-form-field fieldId="user-program" label="Program">
+            <app-select
+              selectId="user-program"
+              [options]="programOptions()"
+              placeholder="Program seçilmedi"
+              formControlName="programId"
+            />
+          </app-form-field>
+
+          <app-form-field fieldId="user-courses" label="Dersler">
+            <app-multi-select
+              inputId="user-courses"
+              [options]="courseOptions()"
+              placeholder="Ders seçin"
+              searchPlaceholder="Ders kodunda ara…"
+              emptyMessage="Ders bulunamadı."
+              formControlName="courseIds"
+            />
+          </app-form-field>
+
+          <app-form-field fieldId="user-cohorts" label="Gruplar">
+            <app-multi-select
+              inputId="user-cohorts"
+              [options]="cohortOptions()"
+              placeholder="Grup seçin"
+              searchPlaceholder="Grupta ara…"
+              emptyMessage="Grup bulunamadı."
+              formControlName="cohortIds"
+            />
+          </app-form-field>
+        </div>
+      </app-card>
+
+      <div class="actions">
+        <app-button variant="ghost" (pressed)="cancel()">Vazgeç</app-button>
+        <app-button
+          variant="primary"
+          icon="save"
+          type="submit"
+          [loading]="saving()"
+          [disabled]="form.invalid"
+        >
+          {{ isEditing() ? 'Değişiklikleri kaydet' : 'Kullanıcıyı oluştur' }}
+        </app-button>
+      </div>
+    </form>
+  }
+</div>

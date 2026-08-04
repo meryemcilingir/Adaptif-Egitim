@@ -1,0 +1,266 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Sistem ayarları</h1>
+      <p class="text-sm text-muted">
+        Ayarlar birbirine bağlıdır ve tek seferde kaydedilir. Her bölümde hangi
+        ayarın gerçekten etkili olduğu yazılıdır.
+      </p>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="4" message="Ayarlar yükleniyor…" />
+  } @else if (hasError()) {
+    <app-error-state [error]="error()" title="Ayarlar yüklenemedi" (retry)="facade.loadSettings()" />
+  } @else if (settings(); as current) {
+    <form class="settings" [formGroup]="form" (ngSubmit)="save()">
+      <app-card title="Genel" description="Platformun kimliği ve yerelleştirmesi">
+        <div class="grid">
+          <app-form-field
+            fieldId="set-name"
+            label="Platform adı"
+            [required]="true"
+            [maxLength]="limits.platformName.max"
+            [hint]="violationFor('platformName')"
+          >
+            <app-input
+              inputId="set-name"
+              formControlName="platformName"
+              [invalid]="violationFor('platformName') !== null"
+            />
+          </app-form-field>
+
+          <app-form-field
+            fieldId="set-logo"
+            label="Logo baş harfleri"
+            hint="En fazla üç harf; kabuktaki logoda görünür."
+          >
+            <app-input inputId="set-logo" formControlName="logoInitials" />
+          </app-form-field>
+
+          <app-form-field fieldId="set-tz" label="Saat dilimi">
+            <app-select
+              selectId="set-tz"
+              [options]="timeZoneOptions"
+              [placeholder]="null"
+              formControlName="timeZone"
+            />
+          </app-form-field>
+
+          <app-form-field
+            fieldId="set-lang"
+            label="Dil"
+            hint="Arayüz dili bu sürümde Türkçedir; seçim örnek olarak saklanır."
+          >
+            <app-select
+              selectId="set-lang"
+              [options]="languageOptions"
+              [placeholder]="null"
+              formControlName="language"
+            />
+          </app-form-field>
+        </div>
+      </app-card>
+
+      <app-card title="Sınav" description="Sınav oturumlarının varsayılan davranışı">
+        <div class="grid">
+          <app-form-field
+            fieldId="set-duration"
+            label="Varsayılan süre"
+            [hint]="violationFor('examDurationMinutes') ?? 'Yeni sınavlarda önerilen süre.'"
+          >
+            <app-number-input
+              inputId="set-duration"
+              formControlName="examDurationMinutes"
+              [min]="limits.examDurationMinutes.min"
+              [max]="limits.examDurationMinutes.max"
+              suffix="dk"
+              [invalid]="violationFor('examDurationMinutes') !== null"
+            />
+          </app-form-field>
+
+          <app-form-field
+            fieldId="set-autosave"
+            label="Otomatik kayıt aralığı"
+            [hint]="violationFor('autosaveSeconds') ?? 'Sınav sırasında cevaplar bu aralıkla kaydedilir.'"
+          >
+            <app-number-input
+              inputId="set-autosave"
+              formControlName="autosaveSeconds"
+              [min]="limits.autosaveSeconds.min"
+              [max]="limits.autosaveSeconds.max"
+              suffix="sn"
+              [invalid]="violationFor('autosaveSeconds') !== null"
+            />
+          </app-form-field>
+        </div>
+
+        <label class="switch">
+          <input type="checkbox" formControlName="regradeEnabled" />
+          <span class="switch__body">
+            <span class="text-sm">Yeniden değerlendirmeye izin ver</span>
+            <span class="text-xs text-subtle">
+              Kapalıyken açıklanmış sonuçlar için itiraz incelemesi başlatılamaz.
+            </span>
+          </span>
+        </label>
+      </app-card>
+
+      <app-card title="Bildirimler" description="Bildirim kanalları">
+        <label class="switch">
+          <input type="checkbox" formControlName="systemNotificationsEnabled" />
+          <span class="switch__body">
+            <span class="text-sm">Uygulama içi sistem bildirimleri</span>
+            <span class="text-xs text-subtle">Gerçekten çalışır: zil menüsünde görünür.</span>
+          </span>
+        </label>
+
+        <label class="switch">
+          <input type="checkbox" formControlName="emailEnabled" />
+          <span class="switch__body">
+            <span class="text-sm">E-posta gönderimi</span>
+            <span class="text-xs text-subtle">
+              Örnektir: bu projede posta sunucusu yoktur, ayar yalnızca saklanır.
+            </span>
+          </span>
+        </label>
+      </app-card>
+
+      <app-card title="Güvenlik" description="Oturum ve parola politikası">
+        <div class="grid">
+          <app-form-field
+            fieldId="set-timeout"
+            label="Oturum zaman aşımı"
+            [hint]="violationFor('sessionTimeoutMinutes') ?? 'Hareketsizlik sonrası oturum düşer.'"
+          >
+            <app-number-input
+              inputId="set-timeout"
+              formControlName="sessionTimeoutMinutes"
+              [min]="limits.sessionTimeoutMinutes.min"
+              [max]="limits.sessionTimeoutMinutes.max"
+              suffix="dk"
+              [invalid]="violationFor('sessionTimeoutMinutes') !== null"
+            />
+          </app-form-field>
+
+          <app-form-field
+            fieldId="set-attempts"
+            label="Giriş denemesi sınırı"
+            [hint]="violationFor('loginAttempts') ?? 'Bu sayıya ulaşan hesap kilitlenir.'"
+          >
+            <app-number-input
+              inputId="set-attempts"
+              formControlName="loginAttempts"
+              [min]="limits.loginAttempts.min"
+              [max]="limits.loginAttempts.max"
+              [invalid]="violationFor('loginAttempts') !== null"
+            />
+          </app-form-field>
+
+          <app-form-field
+            fieldId="set-pwlen"
+            label="En az parola uzunluğu"
+            [hint]="violationFor('passwordMinLength')"
+          >
+            <app-number-input
+              inputId="set-pwlen"
+              formControlName="passwordMinLength"
+              [min]="limits.passwordMinLength.min"
+              [max]="limits.passwordMinLength.max"
+              suffix="karakter"
+              [invalid]="violationFor('passwordMinLength') !== null"
+            />
+          </app-form-field>
+        </div>
+
+        <div class="switches">
+          <label class="switch">
+            <input type="checkbox" formControlName="passwordRequireUppercase" />
+            <span class="text-sm">Büyük harf zorunlu</span>
+          </label>
+
+          <label class="switch">
+            <input type="checkbox" formControlName="passwordRequireNumber" />
+            <span class="text-sm">Rakam zorunlu</span>
+          </label>
+
+          <label class="switch">
+            <input type="checkbox" formControlName="passwordRequireSymbol" />
+            <span class="text-sm">Sembol zorunlu</span>
+          </label>
+        </div>
+
+        <p class="policy text-sm">
+          <app-icon name="shield-check" [size]="15" />
+          {{ policyText() }}
+        </p>
+      </app-card>
+
+      <app-card title="Analitik" description="Veri saklama ve dışa aktarım sınırları">
+        <div class="grid">
+          <app-form-field
+            fieldId="set-retention"
+            label="Veri saklama süresi"
+            [hint]="violationFor('dataRetentionMonths') ?? 'Analitik kayıtlarının saklanma süresi (örnek).'"
+          >
+            <app-number-input
+              inputId="set-retention"
+              formControlName="dataRetentionMonths"
+              [min]="limits.dataRetentionMonths.min"
+              [max]="limits.dataRetentionMonths.max"
+              suffix="ay"
+              [invalid]="violationFor('dataRetentionMonths') !== null"
+            />
+          </app-form-field>
+
+          <app-form-field
+            fieldId="set-export"
+            label="Dışa aktarım satır sınırı"
+            [hint]="violationFor('exportRowLimit') ?? 'Tek seferde dışa aktarılabilecek en fazla satır.'"
+          >
+            <app-number-input
+              inputId="set-export"
+              formControlName="exportRowLimit"
+              [min]="limits.exportRowLimit.min"
+              [max]="limits.exportRowLimit.max"
+              suffix="satır"
+              [invalid]="violationFor('exportRowLimit') !== null"
+            />
+          </app-form-field>
+        </div>
+      </app-card>
+
+      @if (violations().length > 0) {
+        <ul class="violations" role="alert">
+          @for (violation of violations(); track violation.field + violation.message) {
+            <li class="violation text-sm">
+              <app-icon name="circle-alert" [size]="14" />
+              {{ violation.message }}
+            </li>
+          }
+        </ul>
+      }
+
+      <div class="actions">
+        <span class="actions__meta text-xs">
+          Son güncelleme {{ current.updatedAt.slice(0, 10) }} · sürüm {{ current.version }}
+        </span>
+
+        <app-button variant="ghost" [disabled]="!isDirty()" (pressed)="reset()">
+          Geri al
+        </app-button>
+
+        <app-button
+          variant="primary"
+          icon="save"
+          type="submit"
+          [loading]="saving()"
+          [disabled]="!canSave() || !isDirty()"
+        >
+          Ayarları kaydet
+        </app-button>
+      </div>
+    </form>
+  }
+</div>

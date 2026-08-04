@@ -23,15 +23,10 @@ import {
   WeeklyProgress,
 } from '../../../../../features/adaptive-learning/models/dashboard.model';
 import { LearningPath } from '../../../../../features/adaptive-learning/models/learning-path.model';
-import {
-  MASTERY_BAND_LABELS,
-  MasteryBand,
-} from '../../../../../features/adaptive-learning/models/mastery.model';
 import { LEARNING_THRESHOLDS } from '../../../../../features/adaptive-learning/domain/learning-rules';
 import {
   buildAchievements,
   buildWeeklyStudy,
-  calculateExperience,
   calculateStreak,
 } from '../../../../../features/adaptive-learning/domain/engagement';
 import { AppIconName } from '../../../../../shared/icons/app-icons';
@@ -91,11 +86,6 @@ export function buildStudentDashboard(scope: DashboardScope): StudentDashboard {
       .filter((value): value is string => value !== null),
     scope.now,
   );
-  const experience = calculateExperience(
-    completedContent.length,
-    totalMinutes,
-    streak.currentStreak,
-  );
   const weeklyProgress = buildWeeklyProgress(learning, contentById, scope.now);
 
   // Öğrencinin "aktif" dersi: devam edilebilir adımı olan ilk yol.
@@ -125,7 +115,6 @@ export function buildStudentDashboard(scope: DashboardScope): StudentDashboard {
     continueLearning,
     dailyGoal: buildDailyGoal(currentPath, learning, scope.now),
     streak,
-    experience,
     weeklyProgress,
     achievements: buildAchievementCards(learning, completedContent, paths),
 
@@ -181,7 +170,6 @@ export function buildStudentDashboard(scope: DashboardScope): StudentDashboard {
 
     progress: buildProgress(scope, learning, completedContent.length),
     masteryTrend: buildScoreTrend(scope.attempts),
-    outcomeDistribution: buildBandDistribution(scope),
     masteryHeatmap: buildMasteryHeatmap(scope),
     recommendations,
     currentPath,
@@ -521,11 +509,20 @@ function buildQuickActions(
 
   if (activeSessionToken) {
     actions.push({
+      /*
+       * Sınav listesine götürür, oturuma DOĞRUDAN değil.
+       *
+       * Önceki bağlantı `/exam-session/:token` idi; böyle bir rota yok
+       * (gerçek yol `/session/:token`) ve düğme 404'e düşüyordu. Doğru yola
+       * çevirmek de yeterli olmazdı: oturum bekleme odasından açılır — süre,
+       * kural özeti ve devam jetonu orada doğrulanır. Sınav listesi her satırı
+       * bekleme odasına bağlar, akış bütün kalır.
+       */
       id: 'resume-exam',
       label: 'Sınava devam et',
       description: 'Devam eden oturumun var',
       icon: 'timer',
-      link: `/exam-session/${activeSessionToken}`,
+      link: '/my-exams',
       badge: null,
       tone: 'danger',
     });
@@ -605,13 +602,6 @@ function buildProgress(
       tone: weeklyMinutes >= WEEKLY_STUDY_GOAL_MINUTES * 0.6 ? 'success' : 'warning',
     },
   ];
-}
-
-function buildBandDistribution(scope: DashboardScope) {
-  return (Object.keys(MASTERY_BAND_LABELS) as MasteryBand[]).map((band) => ({
-    label: MASTERY_BAND_LABELS[band],
-    value: scope.mastery.filter((score) => score.band === band).length,
-  }));
 }
 
 /**

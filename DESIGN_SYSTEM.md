@@ -354,6 +354,38 @@ Hedefi tutturan satır nötr, tutturmayan uyarı tonundadır — kırmızı yaln
 olan ihlaller için ayrılmıştır. Panel hem sihirbazda hem sınav detayında AYNI bileşendir;
 ikisi de `validateExam()` çıktısını okur, ayrı bir gösterim mantığı yoktur.
 
+### 8.6.5 Sınav oturumu bileşenleri (`components/session/`)
+
+| Bileşen | Girdi | Açıklama |
+|---------|-------|----------|
+| **ExamTimer** | `ClockReading` | Geri sayım. Bileşen SAYMAZ, okumayı hazır alır; sayaç facade'de tek zamanlayıcıyla yürür. Son 5 dk uyarı, son 1 dk kritik tonda ve nabız efektli (`prefers-reduced-motion` ile durur) |
+| **QuestionNavigator** | `entries`, sayaçlar | Beş durumlu soru ızgarası. Sayaçlar dışarıdan gelir; hücre durumlarından hesaplansaydı üzerinde durduğunuz cevaplanmış soru sayıma girmezdi |
+| **AnswerInput** | `SessionQuestionView`, `AnswerValue` | Altı cevap biçimini tek bileşende toplar; hangisinin çizileceği `answerKind` alanından gelir, soru türüne göre dallanma yoktur |
+| **SaveIndicator** | kayıt durumu + bağlantı | Kayıt ve bağlantı TEK göstergedir: öğrenci için asıl soru "cevabım güvende mi?" Bekleyen kayıt varsa sayısı yazılır |
+| **SubmitSummary** | `SubmitSummary` | Teslim onayı. Boş ve işaretli soruların NUMARALARINI verir ve oraya götürür; yalnızca sayı vermek öğrenciye nereye döneceğini söylemez |
+| **IntegrityPanel** | `IntegritySignals` | Tam ekran, sekme değişimi, bağlantı ve uyarı sayaçları. Gerçek gözetim değildir ve bunu açıkça yazar |
+
+**Sınav ekranının dili.** Oynatıcı uygulama kabuğunun dışındadır: menü yok, gezinme
+bağlantısı yok. Başlık şeridinde yalnızca üç şey vardır — sınav adı, kayıt durumu ve
+sayaç. Renk skalası sakindir; birincil renk yalnızca "şu anki soru" ve seçili cevap
+için ayrılmıştır, böylece dikkat cevaba yönelir.
+
+**Navigatör renkleri.** Cevaplandı → success, işaretli → warning, şu anki → primary,
+görüldü → yüzey tonu, görülmedi → nötr. Renk TEK işaret değildir: işaretli sorular
+ayrıca bir bayrak taşır ve her hücre durumunu `aria-label`'ında yazar.
+
+### 8.6.6 Değerlendirme bileşenleri (`components/grading/`)
+
+| Bileşen | Girdi | Açıklama |
+|---------|-------|----------|
+| **RubricGrader** | `Rubric`, seçili seviyeler | Kriter × seviye ızgarası. Puan elle girilemez, seçimlerden hesaplanır (BR-13). Eksik kriterler kenarlıkla işaretlenir |
+| **AnswerGrader** | `GradingAnswerView` | Bir cevabın değerlendirme kartı: öğrenci cevabı, beklenen cevap, puan ve geri bildirim. Rubrikli soruda puan kutusu açılmaz |
+| **ConflictPanel** | `GradingConflict` | İki değerlendiricinin puanı yan yana; nihai karar için hızlı seçim ve ZORUNLU gerekçe. Otomatik ortalama ALINMAZ — fark çoğu zaman rubriğin farklı yorumlanmasındandır |
+
+**Puan gösterimi.** Puanlar her yerde `verilen / en yüksek` biçiminde ve tabular
+rakamla yazılır. Değerlendirilmemiş cevapta "0" yerine "Bekliyor" rozeti kullanılır;
+sıfır, verilmiş bir puandır ve verilmemiş olanla karıştırılmamalıdır.
+
 ### 8.7 Domain bileşenleri (`features/.../components/`)
 
 | Bileşen | Durum | Açıklama |
@@ -488,6 +520,83 @@ Kurallar:
 - Grafik motoru `@defer (on immediate)` ile ilk boyamadan sonra yüklenir; ApexCharts
   kendi lazy chunk'ında kalır (ADR-019).
 - Renkler `--chart-*` token'larından; grafikte doğrudan hex yazılmaz.
+
+### 11.1 Analitik Ekran Standardı (Sprint 8)
+
+Her analitik ekran AYNI iskelete oturur; kullanıcı bir rapordan diğerine geçtiğinde
+düzeni yeniden öğrenmek zorunda kalmaz:
+
+```
+başlık + ne ölçüldüğünün bir cümlelik açıklaması
+AnalyticsFilterBar   (aralık ön ayarları + boyut seçicileri)
+ReportHeader         (dönem · örneklem · kapsam notu · dışa aktarım)
+göstergeler → grafikler → listeler/tablolar
+```
+
+Kurallar:
+- **Künye zorunlu.** `ReportHeader` hangi dönem, kaç kayıt ve hangi kapsam olduğunu
+  yazar. Bir sayıya bakan kişi "bu neyin ortalaması?" diye sormak zorunda kalmamalı.
+- **Örneklem sıfırsa uyarı gösterilir.** Boş bir grafiğe bakıp veri olmadığını kendi
+  çıkarmaya çalışmak, kullanıcıyı sistemin bozuk olduğu sanısına düşürür.
+- **Ölçüm yokluğu `0` ile gösterilmez**; `—` ve "bu dönemde ölçüm yok" kullanılır (BR-55).
+- **Değişim yönü ikonla verilir** (`trending-up` / `trending-down`); yüzde mutlak
+  değerdir, yönü işaretten değil ikondan okunur.
+- **Drill-down**: her KPI ve her ısı haritası hücresi gerçek bir bağlantı/butondur;
+  tıklanabilir görünen ama iş yapmayan öğe bırakılmaz.
+- **Filtre durumu ekranlar arasında korunur** (ADR-061).
+- Isı haritası Apex heatmap değil, elle kurulan yapışkan başlıklı tablodur (ADR-063).
+
+### 11.2 Yönetim Ekranı Standardı (Sprint 9)
+
+Yönetim ekranları aynı iskeleti paylaşır; kurumsal bir panelde en çok aranan şey
+öngörülebilirliktir:
+
+```
+başlık + bir cümlelik "bu ekran neyi yönetir" açıklaması
+[dışa aktar] [birincil eylem]
+filtre çubuğu (liste ekranlarında)
+içerik: tablo · kart listesi · form
+```
+
+Kurallar:
+- **Yıkıcı işlemler onay ister, geri alınabilirler istemez.** Askıya alma ve
+  arşivleme diyalog açar; etkinleştirme ve kilit açma açmaz. Her tıklamada onay
+  sormak, kullanıcıyı diyaloğu okumadan onaylamaya alıştırır.
+- **Kısıtlar gizlenmez, gösterilir.** Düzenlenemeyen dönem, kilitli izin ve
+  sistem rolü; devre dışı alan + kilit ikonu + tek cümlelik gerekçeyle sunulur.
+  Gizlenen bir kural öğretilmez, yalnızca şaşırtır.
+- **Örnek veri etiketlenir.** Sistem sağlığı, IP adresi, e-posta gönderimi ve
+  zamanlama; göstergenin YANINDA "örnektir" notu taşır (BR-71).
+- **İzin yoksa buton yoktur.** Gizleme `PermissionService` üzerinden yapılır;
+  sunucu da aynı izni arar (üç seviyeli koruma — ARCHITECTURE.md §5.1).
+- **Form içindeki gönder düğmesi yalnızca `type="submit"` taşır** (ADR-071).
+- **Durum → ton eşlemesi tek yerde tanımlanır**: `ACTIVE/SENT/healthy` → success,
+  `INVITED/DRAFT` → neutral, `SUSPENDED/SCHEDULED/degraded` → warning,
+  `ARCHIVED/down` → danger.
+
+### 11.3 Katman Sırası (z-index)
+
+```
+1000  sticky   → uygulama kabuğu, yapışkan tablo başlığı
+1010  dropdown → filtre menüsü, aksiyon menüsü, çoklu seçim paneli
+1020  drawer
+1030  overlay
+1040  dialog
+1050  toast
+1060  tooltip
+```
+
+**Açılır menüler yapışkan öğelerin ÜSTÜNDEDİR.** Ters sırada yapışkan tablo
+başlığı filtre menüsünün ortasını örtüyordu; menü açıktı ama seçenekleri
+görünmüyordu.
+
+**Her açılır panel `position: fixed` ile yerleştirilir** (ADR-074): kaydırma
+kaplarına takılmaz, ekranın altına sığmadığında yukarı açılır, sığmıyorsa
+yüksekliği kısılıp kendi içinde kaydırılır. Konum `placePanel()` ile hesaplanır.
+
+**Her açılır panel dışarı tıklamayla ve ESC ile kapanır.** `(document:click)`
+host dinleyicisi + `host.contains(event.target)` kontrolü; bu davranış
+`AppDropdown`, `AppMultiSelect` ve `AppFilterBar` bileşenlerinde aynıdır.
 
 ---
 

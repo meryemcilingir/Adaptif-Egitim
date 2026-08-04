@@ -37,6 +37,18 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         exact: true,
       },
       {
+        /*
+         * "Sınavlarım" ÖĞRENCİYE özgüdür: kişinin kendi gireceği sınavları
+         * listeler. `exam:read` ile kapılanınca gözlemci ve eğitmen de menüde
+         * görüyor ama her zaman boş bir liste buluyordu. Sınava girebilme izni
+         * olan tek rol öğrencidir; kapı da o izinle kurulur.
+         */
+        label: 'Sınavlarım',
+        link: '/my-exams',
+        icon: 'file-check',
+        permissions: ['session:start'],
+      },
+      {
         label: 'Programlar',
         link: '/programs',
         icon: 'graduation-cap',
@@ -54,7 +66,8 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         // Yalnızca öğrencide bulunan izin — kişisel çalışma planı ekranı.
         label: 'Öğrenme yolum',
         link: '/learning/path',
-        icon: 'sparkles',
+        /* `workflow` kazanım haritasının ikonu; kişisel plan sıralı bir görev listesidir. */
+        icon: 'list-checks',
         permissions: ['session:start'],
       },
       {
@@ -94,16 +107,47 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         icon: 'clipboard-list',
         permissions: ['attempt:grade'],
       },
+      {
+        label: 'Denemeler',
+        link: '/attempts',
+        icon: 'history',
+        permissions: ['attempt:read'],
+      },
     ],
   },
   {
     title: 'Analitik',
     items: [
       {
+        label: 'Genel bakış',
+        link: '/analytics',
+        icon: 'chart-column',
+        permissions: ['analytics:student'],
+        exact: true,
+      },
+      {
         label: 'Gelişimim',
         link: '/student/:me/analytics',
         icon: 'chart-line',
         permissions: ['session:start'],
+      },
+      {
+        label: 'Trendler',
+        link: '/analytics/trends',
+        icon: 'trending-up',
+        permissions: ['analytics:cohort'],
+      },
+      {
+        label: 'Kazanım analitiği',
+        link: '/analytics/outcomes',
+        icon: 'target',
+        permissions: ['analytics:cohort'],
+      },
+      {
+        label: 'Ustalık haritası',
+        link: '/analytics/mastery',
+        icon: 'grid-2x2',
+        permissions: ['analytics:cohort'],
       },
       {
         label: 'Cohort analitiği',
@@ -112,20 +156,87 @@ export const NAV_GROUPS: readonly NavGroup[] = [
         permissions: ['analytics:cohort'],
       },
       {
+        label: 'Başarı panosu',
+        link: '/analytics/performers',
+        icon: 'trophy',
+        permissions: ['analytics:cohort'],
+      },
+      {
+        label: 'Öğrenme hızı',
+        link: '/analytics/velocity',
+        icon: 'gauge',
+        permissions: ['analytics:cohort'],
+      },
+      {
+        label: 'Öneri motoru',
+        link: '/analytics/recommendations',
+        icon: 'sparkles',
+        permissions: ['analytics:cohort'],
+      },
+      {
+        label: 'Karşılaştırma',
+        link: '/analytics/compare',
+        icon: 'git-compare',
+        permissions: ['analytics:cohort'],
+      },
+      {
+        label: 'Soru zorluk analizi',
+        link: '/analytics/difficulty',
+        icon: 'flask-conical',
+        permissions: ['analytics:item'],
+      },
+      {
         label: 'Madde analizi',
         link: '/item-analysis',
         icon: 'microscope',
         permissions: ['analytics:item'],
       },
+      {
+        label: 'Kayıtlı raporlar',
+        link: '/analytics/reports',
+        icon: 'file-text',
+        permissions: ['analytics:student'],
+      },
     ],
   },
   {
-    title: 'Sistem',
+    title: 'Yönetim',
     items: [
       {
+        label: 'Yönetim panosu',
+        link: '/admin',
+        icon: 'layout-dashboard',
+        permissions: ['admin:manage'],
+        exact: true,
+      },
+      {
         label: 'Kullanıcılar',
-        link: '/users',
+        link: '/admin/users',
         icon: 'user-round',
+        permissions: ['admin:manage'],
+      },
+      {
+        label: 'Roller ve izinler',
+        link: '/admin/roles',
+        icon: 'shield-check',
+        permissions: ['admin:manage'],
+      },
+      {
+        label: 'Akademik dönemler',
+        link: '/admin/terms',
+        icon: 'calendar',
+        permissions: ['admin:manage'],
+      },
+      {
+        label: 'Bildirim merkezi',
+        link: '/admin/notifications',
+        icon: 'bell',
+        permissions: ['admin:manage'],
+      },
+      {
+        label: 'Sistem ayarları',
+        link: '/admin/settings',
+        icon: 'settings',
         permissions: ['admin:manage'],
       },
       {

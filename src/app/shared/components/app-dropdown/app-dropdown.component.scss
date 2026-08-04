@@ -3,25 +3,28 @@
   display: inline-flex;
 }
 
+/*
+ * Panel `fixed`: tablo satırındaki aksiyon menüsü, tablonun kaydırma kabı
+ * (`overflow: auto`) tarafından kırpılmasın diye. Konum bileşende hesaplanır
+ * (ADR-074).
+ */
 .dropdown__menu {
-  position: absolute;
-  top: calc(100% + 4px);
+  position: fixed;
   z-index: var(--z-dropdown);
   min-width: 200px;
+  overflow-y: auto;
   padding: var(--space-1);
   background: var(--color-surface);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-md);
   box-shadow: var(--shadow-lg);
   animation: app-scale-in var(--duration-fast) var(--ease-out);
-}
+  transform-origin: top center;
 
-.dropdown__menu--start {
-  inset-inline-start: 0;
-}
-
-.dropdown__menu--end {
-  inset-inline-end: 0;
+  /* Yukarı açılan panel aşağıdan büyür. */
+  &.is-flipped {
+    transform-origin: bottom center;
+  }
 }
 
 .dropdown__item {

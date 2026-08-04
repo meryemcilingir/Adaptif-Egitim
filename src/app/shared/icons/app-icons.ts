@@ -30,6 +30,8 @@ import {
   LucideCirclePlay,
   LucideClipboardList,
   LucideClock,
+  LucideCloud,
+  LucideCloudUpload,
   LucideCode,
   LucideColumns3,
   LucideCopy,
@@ -45,6 +47,7 @@ import {
   LucideFlag,
   LucideFlame,
   LucideFlaskConical,
+  LucideGauge,
   LucideGitCompare,
   LucideGraduationCap,
   LucideGrid2x2,
@@ -81,6 +84,7 @@ import {
   LucidePresentation,
   LucideRefreshCw,
   LucideRotateCcw,
+  LucideSave,
   LucideScrollText,
   LucideSearch,
   LucideSettings,
@@ -100,6 +104,8 @@ import {
   LucideUpload,
   LucideUserRound,
   LucideUsers,
+  LucideSend,
+  LucideWifi,
   LucideWifiOff,
   LucideWorkflow,
   LucideX,
@@ -146,6 +152,8 @@ export const APP_ICONS = [
   LucideCirclePlay,
   LucideClipboardList,
   LucideClock,
+  LucideCloud,
+  LucideCloudUpload,
   LucideCode,
   LucideColumns3,
   LucideCopy,
@@ -161,6 +169,7 @@ export const APP_ICONS = [
   LucideFlag,
   LucideFlame,
   LucideFlaskConical,
+  LucideGauge,
   LucideGitCompare,
   LucideGraduationCap,
   LucideGrid2x2,
@@ -197,6 +206,7 @@ export const APP_ICONS = [
   LucidePresentation,
   LucideRefreshCw,
   LucideRotateCcw,
+  LucideSave,
   LucideScrollText,
   LucideSearch,
   LucideSettings,
@@ -216,6 +226,8 @@ export const APP_ICONS = [
   LucideUpload,
   LucideUserRound,
   LucideUsers,
+  LucideSend,
+  LucideWifi,
   LucideWifiOff,
   LucideWorkflow,
   LucideX,
@@ -255,6 +267,8 @@ export type AppIconName =
   | 'circle-play'
   | 'clipboard-list'
   | 'clock'
+  | 'cloud'
+  | 'cloud-upload'
   | 'code'
   | 'columns-3'
   | 'copy'
@@ -270,6 +284,7 @@ export type AppIconName =
   | 'flag'
   | 'flame'
   | 'flask-conical'
+  | 'gauge'
   | 'git-compare'
   | 'graduation-cap'
   | 'grid-2x2'
@@ -306,6 +321,7 @@ export type AppIconName =
   | 'presentation'
   | 'refresh-cw'
   | 'rotate-ccw'
+  | 'save'
   | 'scroll-text'
   | 'search'
   | 'settings'
@@ -325,6 +341,8 @@ export type AppIconName =
   | 'upload'
   | 'user-round'
   | 'users'
+  | 'send'
+  | 'wifi'
   | 'wifi-off'
   | 'workflow'
   | 'x'

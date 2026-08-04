@@ -1,3 +1,5 @@
+import { Semester } from '../domain/academic-term.rules';
+
 /**
  * Tüm ana modellerin ortak temeli.
  * Şartname gereği ana modellerde id, createdAt, updatedAt, version ve durum alanı bulunur.
@@ -55,12 +57,28 @@ export const PUBLISH_STATE_LABELS: Readonly<Record<PublishState, string>> = {
 
 /* `Program` kendi dosyasındadır: `program.model.ts` */
 
+/* Dönem kuralları `domain/academic-term.rules.ts` içindedir. */
+
+/**
+ * Akademik dönem.
+ *
+ * `active` alanı YOKTUR: durum takvimden türetilir (`termStatus()`), saklanmaz.
+ * Bayrak tutulsaydı bitiş tarihi geçen bir dönem hâlâ "aktif" görünür ve iki
+ * kayıt birden aktif işaretlenebilirdi (ADR-065). Arşiv ise gerçek bir karardır,
+ * bu yüzden alandan okunur.
+ */
 export interface Term {
   readonly id: string;
+  /** `2025-2026 Bahar` — `termName()` ile üretilir, elle yazılmaz. */
   readonly name: string;
+  readonly academicYear: string;
+  readonly semester: Semester;
   readonly startDate: string;
   readonly endDate: string;
-  readonly active: boolean;
+  readonly archivedAt: string | null;
+  readonly createdAt: string;
+  readonly updatedAt: string;
+  readonly version: number;
 }
 
 export interface Cohort {

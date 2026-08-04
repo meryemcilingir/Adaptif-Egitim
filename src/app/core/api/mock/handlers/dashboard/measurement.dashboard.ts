@@ -69,13 +69,63 @@ export function buildMeasurementDashboard(scope: DashboardScope): MeasurementDas
 
   const courseByCode = new Map(scope.courses.map((course) => [course.id, course.code]));
 
+  /*
+   * Ölçme uzmanının günlük işi değerlendirmedir; madde analizi ikinci plandadır.
+   * Bu yüzden panel önce "ne yapmam gerekiyor" sorusunu yanıtlar.
+   */
+  const grading = summarizeGrading(scope, courseIds);
+
   return {
     role: 'ASSESSMENT_SPECIALIST',
     generatedAt: scope.nowIso,
-    headline: 'Soru bankası kalite görünümü',
-    subline: `${analyses.length} analiz edilmiş madde · ${questions.length} soru`,
+    headline: 'Değerlendirme ve soru kalitesi',
+    subline: `${grading.awaiting} deneme değerlendirme bekliyor · ${analyses.length} analiz edilmiş madde · ortalama zorluk %${Math.round(average(analyses.map((a) => a.difficultyIndex * 100)))}`,
 
     kpis: [
+      kpi({
+        key: 'active-exams',
+        label: 'Açık sınav',
+        value: grading.activeExams,
+        icon: 'file-check',
+        caption: 'Şu anda öğrencilere açık',
+        series: [grading.activeExams],
+      }),
+      kpi({
+        key: 'awaiting-evaluation',
+        label: 'Değerlendirme bekleyen',
+        value: grading.awaiting,
+        icon: 'clipboard-list',
+        caption: 'Elle puanlanacak deneme',
+        series: grading.waitingHours,
+        higherIsBetter: false,
+      }),
+      kpi({
+        key: 'pending-regrade',
+        label: 'İtiraz incelemesi',
+        value: grading.regrades,
+        icon: 'history',
+        caption: 'Yeniden değerlendirilecek',
+        series: [grading.regrades],
+        higherIsBetter: false,
+      }),
+      kpi({
+        key: 'completed-evaluations',
+        label: 'Tamamlanan değerlendirme',
+        value: grading.completed,
+        icon: 'circle-check-big',
+        caption: 'Puanlaması biten deneme',
+        series: [grading.completed],
+      }),
+      kpi({
+        key: 'avg-grading-time',
+        label: 'Ortalama değerlendirme süresi',
+        value: grading.averageHours,
+        unit: ' sa',
+        icon: 'clock',
+        caption: 'Gönderimden puanlamaya',
+        series: grading.gradingDurations,
+        higherIsBetter: false,
+      }),
       kpi({
         key: 'flagged-items',
         label: 'İnceleme bekleyen madde',
@@ -93,23 +143,6 @@ export function buildMeasurementDashboard(scope: DashboardScope): MeasurementDas
         icon: 'microscope',
         caption: `Hedef: %${DISCRIMINATION_TARGET * 100}`,
         series: analyses.map((analysis) => Math.round(analysis.discrimination * 100)),
-      }),
-      kpi({
-        key: 'avg-difficulty',
-        label: 'Ortalama zorluk indeksi',
-        value: Math.round(average(analyses.map((a) => a.difficultyIndex * 100))),
-        unit: '%',
-        icon: 'chart-column',
-        caption: 'Doğru cevaplama oranı',
-        series: analyses.map((analysis) => Math.round(analysis.difficultyIndex * 100)),
-      }),
-      kpi({
-        key: 'analyzed-items',
-        label: 'Analiz edilen soru',
-        value: analyses.length,
-        icon: 'database',
-        caption: 'Yeterli örnekleme sahip maddeler',
-        series: analyses.map((analysis) => analysis.sampleSize),
       }),
     ],
 
@@ -240,6 +273,58 @@ function buildOutcomeDistribution(
     }));
 }
 
+/* ── Değerlendirme özeti ─────────────────────────────────────────────────── */
+
+interface GradingSummary {
+  readonly activeExams: number;
+  readonly awaiting: number;
+  readonly regrades: number;
+  readonly completed: number;
+  readonly averageHours: number;
+  /** Bekleme süreleri — KPI kartındaki mini grafiği besler. */
+  readonly waitingHours: readonly number[];
+  readonly gradingDurations: readonly number[];
+}
+
+/**
+ * Panelin değerlendirme kartları.
+ *
+ * Sayılar denemelerin durumundan TÜRETİLİR; ayrı bir sayaç tutulmaz, böylece
+ * puanlama yapıldığı anda panel de doğru olur (ADR-017 ile aynı ilke).
+ */
+function summarizeGrading(scope: DashboardScope, courseIds: ReadonlySet<string>): GradingSummary {
+  const attempts = scope.attempts.filter((attempt) => courseIds.has(attempt.courseId));
+
+  const awaiting = attempts.filter((attempt) => attempt.state === 'PENDING_MANUAL');
+  const regrades = attempts.filter((attempt) => attempt.state === 'UNDER_REVIEW');
+  const completed = attempts.filter(
+    (attempt) => attempt.state === 'GRADED' || attempt.state === 'RELEASED',
+  );
+
+  // Gönderimden puanlamaya geçen süre; yalnızca puanlanmış denemeler için ölçülebilir.
+  const durations = completed
+    .filter((attempt) => attempt.gradedAt !== null)
+    .map((attempt) =>
+      Math.max(
+        0,
+        Math.round((Date.parse(attempt.gradedAt!) - Date.parse(attempt.submittedAt)) / 3_600_000),
+      ),
+    );
+
+  return {
+    activeExams: scope.exams.filter((exam) => examRuntimeStatus(exam, scope.now) === 'active')
+      .length,
+    awaiting: awaiting.length,
+    regrades: regrades.length,
+    completed: completed.length,
+    averageHours: durations.length === 0 ? 0 : Math.round(average(durations)),
+    waitingHours: awaiting.map((attempt) =>
+      Math.max(0, Math.round((scope.now - Date.parse(attempt.submittedAt)) / 3_600_000)),
+    ),
+    gradingDurations: durations,
+  };
+}
+
 function buildQuickActions(flaggedCount: number, questionCount: number): QuickAction[] {
   return [
     {
@@ -257,6 +342,15 @@ function buildQuickActions(flaggedCount: number, questionCount: number): QuickAc
       description: `${questionCount} soru`,
       icon: 'circle-help',
       link: '/question-bank',
+      badge: null,
+      tone: 'primary',
+    },
+    {
+      id: 'grading',
+      label: 'Değerlendirme kuyruğu',
+      description: 'Elle puanlanacak denemeler',
+      icon: 'clipboard-list',
+      link: '/grading',
       badge: null,
       tone: 'primary',
     },

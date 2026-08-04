@@ -1,0 +1,119 @@
+.insights {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.insight {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+
+  /* Önem, sol kenardaki şeritle de anlatılır; yalnızca renge güvenilmez. */
+  border-inline-start-width: 3px;
+
+  &.is-critical {
+    border-inline-start-color: var(--color-danger-border);
+    background: var(--color-danger-subtle);
+  }
+
+  &.is-warning {
+    border-inline-start-color: var(--color-warning-border);
+    background: var(--color-warning-subtle);
+  }
+
+  &.is-positive {
+    border-inline-start-color: var(--color-success-border);
+    background: var(--color-success-subtle);
+  }
+
+  &.is-neutral {
+    border-inline-start-color: var(--color-border-strong);
+  }
+}
+
+.insight__icon {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 28px;
+  block-size: 28px;
+  border-radius: var(--radius-full);
+  background: var(--color-surface);
+
+  .is-critical & {
+    color: var(--color-danger-text);
+  }
+  .is-warning & {
+    color: var(--color-warning-text);
+  }
+  .is-positive & {
+    color: var(--color-success-text);
+  }
+  .is-neutral & {
+    color: var(--color-text-secondary);
+  }
+}
+
+.insight__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  color: var(--color-text-primary);
+}
+
+.insight__evidence {
+  color: var(--color-text-secondary);
+
+  .is-critical & {
+    color: var(--color-danger-text);
+  }
+  .is-warning & {
+    color: var(--color-warning-text);
+  }
+  .is-positive & {
+    color: var(--color-success-text);
+  }
+}
+
+.insight__link {
+  display: grid;
+  place-items: center;
+  flex: none;
+  inline-size: 28px;
+  block-size: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-surface);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.insights__empty {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0;
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-secondary);
+}

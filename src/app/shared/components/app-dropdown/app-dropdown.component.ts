@@ -2,6 +2,8 @@ import {
   ChangeDetectionStrategy,
   Component,
   ElementRef,
+  Injector,
+  afterNextRender,
   computed,
   inject,
   input,
@@ -12,6 +14,7 @@ import {
 import { AppIconName } from '../../icons/app-icons';
 import { AppButtonComponent } from '../app-button/app-button.component';
 import { AppIconComponent } from '../app-icon/app-icon.component';
+import { PanelPlacement, placePanel } from '../../utils/panel-position';
 
 export interface DropdownItem {
   readonly id: string;
@@ -44,8 +47,11 @@ export interface DropdownItem {
     @if (isOpen()) {
       <div
         class="dropdown__menu"
-        [class]="'dropdown__menu--' + align()"
         role="menu"
+        [class.is-flipped]="placement()?.flipped"
+        [style.top.px]="placement()?.top"
+        [style.left.px]="placement()?.left"
+        [style.max-height.px]="placement()?.maxHeight"
         (keydown)="onKeydown($event)"
       >
         @for (item of items(); track item.id) {
@@ -72,10 +78,14 @@ export interface DropdownItem {
   styleUrl: './app-dropdown.component.scss',
   host: {
     '(document:click)': 'onDocumentClick($event)',
+    /* Panel `fixed` konumlandığı için sayfa kaydıkça yeniden hesaplanır. */
+    '(window:scroll)': 'reposition()',
+    '(window:resize)': 'reposition()',
   },
 })
 export class AppDropdownComponent {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
 
   readonly items = input.required<readonly DropdownItem[]>();
   readonly triggerIcon = input<AppIconName | null>('ellipsis-vertical');
@@ -88,14 +98,60 @@ export class AppDropdownComponent {
   readonly itemSelect = output<DropdownItem>();
 
   private readonly openState = signal(false);
+  private readonly placementState = signal<PanelPlacement | null>(null);
+
   readonly isOpen = computed(() => this.openState());
+  readonly placement = this.placementState.asReadonly();
 
   toggle(): void {
-    this.openState.update((open) => !open);
+    const opening = !this.openState();
+    this.openState.set(opening);
+
+    /*
+     * Konum, panel DOM'a girdikten SONRA hesaplanır.
+     *
+     * `effect` ve `queueMicrotask` denendi: ikisi de panel şablona işlenmeden
+     * çalışıp ölçümü boşa düşürüyordu. `afterNextRender` bir sonraki render
+     * geçişinin ardından koşar; panel o anda kesin olarak ölçülebilir.
+     */
+    if (opening) afterNextRender(() => this.reposition(), { injector: this.injector });
+    else this.placementState.set(null);
+  }
+
+  /**
+   * Paneli tetikleyiciye göre yerleştirir.
+   *
+   * `fixed` konumlandırma, menünün tablo gibi kaydırma kaplarının dışına
+   * taşabilmesi için gerekli (ADR-074); karşılığında konum burada hesaplanır.
+   * Menü sağa yaslanır: satır aksiyonları tablonun sağ ucundadır.
+   */
+  reposition(): void {
+    if (!this.openState()) return;
+
+    const panel = this.host.nativeElement.querySelector<HTMLElement>('.dropdown__menu');
+    const trigger = this.host.nativeElement.querySelector<HTMLElement>('button');
+    if (!panel || !trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const width = panel.offsetWidth;
+
+    // `end` hizasında panelin SAĞ kenarı tetikleyiciyle hizalanır.
+    const left = this.align() === 'end' ? rect.right - width : rect.left;
+
+    this.placementState.set(
+      placePanel({
+        trigger: { top: rect.top, bottom: rect.bottom, left, right: rect.right },
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+        panelWidth: width,
+        /* Ölçüm kısıtsız yapılır: kısılmış yükseklik yeni ölçümü etkilemesin. */
+        panelHeight: panel.scrollHeight,
+      }),
+    );
   }
 
   close(): void {
     this.openState.set(false);
+    this.placementState.set(null);
   }
 
   select(item: DropdownItem): void {

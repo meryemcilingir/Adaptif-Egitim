@@ -22,6 +22,10 @@ export const USER_STATE_LABELS: Readonly<Record<UserState, string>> = {
 export interface User extends BaseEntity {
   readonly fullName: string;
   readonly email: string;
+  /** Giriş adı — e-postadan türetilir ama ayrı tutulur; e-posta değişebilir. */
+  readonly username: string;
+  /** Bağlı olduğu birim (bölüm/fakülte). */
+  readonly department: string;
   readonly avatarUrl: string | null;
   readonly roles: readonly Role[];
   readonly primaryRole: Role;
@@ -31,6 +35,15 @@ export interface User extends BaseEntity {
   readonly cohortIds: readonly string[];
   readonly state: UserState;
   readonly lastLoginAt: string | null;
+  /**
+   * Ard arda başarısız giriş sayısı.
+   *
+   * Kilit AYRI bir bayrakla tutulmaz: sayaç eşiği aştığında hesap kilitlidir
+   * (`isLocked()`). İki alan tutulsaydı sayaç sıfırlanıp bayrak unutulabilir
+   * ve kullanıcı sebepsiz kilitli kalırdı.
+   */
+  readonly failedLoginCount: number;
+  readonly archivedAt: string | null;
 }
 
 /** Listelerde ve seçicilerde kullanılan hafif gösterim. */
@@ -40,6 +53,11 @@ export interface UserSummary {
   readonly email: string;
   readonly primaryRole: Role;
   readonly title: string;
+}
+
+/** Hesap kilidi, sayaçtan türetilir — ayrı bir bayrak tutulmaz. */
+export function isAccountLocked(user: Pick<User, 'failedLoginCount'>, maxAttempts: number): boolean {
+  return user.failedLoginCount >= maxAttempts;
 }
 
 export interface UserFilters {

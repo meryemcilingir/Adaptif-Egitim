@@ -30,6 +30,8 @@ import {
 } from '../../shared/components/app-dropdown/app-dropdown.component';
 import { AppIconComponent } from '../../shared/components/app-icon/app-icon.component';
 import { AppStatusBadgeComponent } from '../../shared/components/app-status-badge/app-status-badge.component';
+import { AdminFacade } from '../../features/administration/data-access/admin.facade';
+import { GlobalSearchPanelComponent } from '../../features/administration/components/global-search-panel.component';
 import { NAV_GROUPS } from '../nav.config';
 
 /**
@@ -49,6 +51,7 @@ import { NAV_GROUPS } from '../nav.config';
     AppDropdownComponent,
     AppIconComponent,
     AppStatusBadgeComponent,
+    GlobalSearchPanelComponent,
     NotificationListComponent,
   ],
   templateUrl: './header.component.html',
@@ -57,6 +60,7 @@ import { NAV_GROUPS } from '../nav.config';
 })
 export class HeaderComponent {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly adminSearch = inject(AdminFacade);
   private readonly mockConfig = inject(MockConfig);
   private readonly permissions = inject(PermissionService);
   private readonly router = inject(Router);
@@ -114,7 +118,13 @@ export class HeaderComponent {
   ]);
 
   private readonly searchState = signal('');
+  private readonly searchOpenState = signal(false);
+
   readonly search = this.searchState.asReadonly();
+  readonly isSearchOpen = this.searchOpenState.asReadonly();
+
+  readonly searchResult = this.adminSearch.searchResult;
+  readonly isSearching = this.adminSearch.searching;
 
   togglePanel(): void {
     const next = !this.panelOpen();
@@ -136,8 +146,11 @@ export class HeaderComponent {
   }
 
   onDocumentClick(event: MouseEvent): void {
-    if (!this.panelOpen()) return;
-    if (!this.host.nativeElement.contains(event.target as Node)) this.closePanel();
+    // Dışarı tıklamada hem bildirim paneli hem arama paneli kapanır.
+    if (this.host.nativeElement.contains(event.target as Node)) return;
+
+    if (this.panelOpen()) this.closePanel();
+    if (this.searchOpenState()) this.closeSearch();
   }
 
   onRoleSelect(item: DropdownItem): void {
@@ -149,14 +162,37 @@ export class HeaderComponent {
     if (item.id === 'dev-tools') void this.router.navigate(['/dev-tools']);
   }
 
+  /**
+   * Arama sonuçları YAZARKEN gelir (§13).
+   *
+   * Enter beklemek, kullanıcıyı bir sonuç sayfasına götürür ve geri dönmesini
+   * gerektirirdi; panel ise aradığı kaydı bulunca doğrudan tıklamasını sağlar.
+   * Yetki süzmesi sunucuda yapılır: panel gördüğü her sonucu göstermeye yetkilidir.
+   */
   onSearchInput(event: Event): void {
-    this.searchState.set((event.target as HTMLInputElement).value);
+    const term = (event.target as HTMLInputElement).value;
+    this.searchState.set(term);
+    this.searchOpenState.set(term.trim().length > 0);
+    this.adminSearch.search(term);
+  }
+
+  onSearchFocus(): void {
+    if (this.searchState().trim().length > 0) this.searchOpenState.set(true);
+  }
+
+  closeSearch(): void {
+    this.searchOpenState.set(false);
+  }
+
+  /** Sonuca gidilince panel kapanır ve kutu temizlenir; arama tamamlanmıştır. */
+  onSearchNavigate(): void {
+    this.searchOpenState.set(false);
+    this.searchState.set('');
+    this.adminSearch.clearSearch();
   }
 
   onSearchSubmit(event: Event): void {
     event.preventDefault();
-    const term = this.searchState().trim();
-    if (!term) return;
-    void this.router.navigate(['/question-bank'], { queryParams: { search: term } });
+    // Panel zaten sonuçları gösteriyor; gönderim yalnızca formun varsayılanını engeller.
   }
 }

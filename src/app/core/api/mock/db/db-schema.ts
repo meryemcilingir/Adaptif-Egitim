@@ -1,4 +1,10 @@
 import { AuditEvent } from '../../../observability/audit.model';
+import { RoleDefinition } from '../../../auth/role-definition';
+import {
+  LoginEvent,
+  NotificationCampaign,
+  SystemSettings,
+} from '../../../../features/administration/models/admin.model';
 import { Attempt } from '../../../../features/adaptive-learning/models/attempt.model';
 import { Cohort, Term } from '../../../../features/adaptive-learning/models/common.model';
 import { Program } from '../../../../features/adaptive-learning/models/program.model';
@@ -23,6 +29,7 @@ import {
 } from '../../../../features/adaptive-learning/models/question.model';
 import { Recommendation } from '../../../../features/adaptive-learning/models/recommendation.model';
 import { Rubric } from '../../../../features/adaptive-learning/models/rubric.model';
+import { SavedReport } from '../../../../features/adaptive-learning/models/analytics.model';
 import { User } from '../../../../features/adaptive-learning/models/user.model';
 
 /**
@@ -64,9 +71,21 @@ export interface DbSchema {
   masteryScores: MasteryScore[];
   recommendations: Recommendation[];
   itemAnalyses: ItemAnalysis[];
+  savedReports: SavedReport[];
   auditEvents: AuditEvent[];
   notifications: Notification[];
+  roleDefinitions: StoredRoleDefinition[];
+  notificationCampaigns: NotificationCampaign[];
+  loginEvents: LoginEvent[];
+  /** Tek kayıtlı koleksiyon: sistem ayarları (`id: 'settings'`). */
+  systemSettings: StoredSettings[];
 }
+
+/** Rol tanımı kimlik taşır; koleksiyon sözleşmesi bunu gerektirir. */
+export type StoredRoleDefinition = RoleDefinition;
+
+/** Ayarlar tek satırdır ama koleksiyon motoru kimlik bekler. */
+export type StoredSettings = SystemSettings & { readonly id: string };
 
 export type CollectionName = keyof DbSchema;
 
@@ -90,12 +109,17 @@ export const COLLECTION_NAMES: readonly CollectionName[] = [
   'masteryScores',
   'recommendations',
   'itemAnalyses',
+  'savedReports',
   'auditEvents',
   'notifications',
+  'roleDefinitions',
+  'notificationCampaigns',
+  'loginEvents',
+  'systemSettings',
 ];
 
 /**
  * Şema sürümü. Seed yapısı değişince artırılır; tarayıcıdaki eski veri
  * otomatik olarak atılıp yeniden üretilir.
  */
-export const DB_SCHEMA_VERSION = 7;
+export const DB_SCHEMA_VERSION = 17;

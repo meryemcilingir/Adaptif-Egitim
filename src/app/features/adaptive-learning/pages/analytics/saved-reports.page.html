@@ -1,0 +1,131 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Kayıtlı raporlar</h1>
+      <p class="text-sm text-muted">
+        Raporlar kişiseldir; yalnızca sizin kayıtlarınız listelenir. Zamanlama
+        ayarları örnektir — gerçek bir gönderim yapılmaz.
+      </p>
+    </div>
+
+    <app-button variant="primary" icon="plus" (pressed)="openBuilder(null)">
+      Yeni rapor
+    </app-button>
+  </header>
+
+  @if (isLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="3" message="Raporlar yükleniyor…" />
+  } @else if (hasError()) {
+    <app-error-state [error]="error()" title="Raporlar yüklenemedi" (retry)="load()" />
+  } @else if (isEmpty()) {
+    <app-empty-state
+      icon="file-text"
+      title="Kayıtlı raporunuz yok"
+      description="Sık kullandığınız filtre ve bileşenleri bir rapor olarak kaydedin; her seferinde yeniden kurmanız gerekmesin."
+      actionLabel="Yeni rapor oluştur"
+      actionIcon="plus"
+      (action)="openBuilder(null)"
+    />
+  } @else {
+    <p class="summary text-sm text-muted">
+      <app-icon name="info" [size]="15" />
+      {{ reports().length }} rapor · {{ scheduledCount() }} tanesi zamanlanmış
+    </p>
+
+    <ul class="reports">
+      @for (report of reports(); track report.id) {
+        <li>
+          <app-card>
+            <div class="report">
+              <div class="report__main">
+                <div class="report__title">
+                  <h2 class="text-h3">{{ report.name }}</h2>
+
+                  @if (report.schedule) {
+                    <app-status-badge [label]="scheduleLabel(report)" tone="info" />
+                  } @else {
+                    <app-status-badge label="Zamanlama yok" tone="neutral" />
+                  }
+                </div>
+
+                @if (report.description) {
+                  <p class="text-sm text-muted">{{ report.description }}</p>
+                }
+
+                <div class="chips">
+                  <span class="chip chip--filter text-xs">
+                    <app-icon name="calendar" [size]="12" />
+                    {{ rangeLabel(report) }}
+                  </span>
+                </div>
+
+                <div class="chips">
+                  @for (widget of report.widgets; track widget.id) {
+                    <span class="chip text-xs">
+                      <app-icon name="layout-dashboard" [size]="12" />
+                      {{ widget.title }} · {{ widgetLabels[widget.kind] }}
+                    </span>
+                  }
+
+                  @if (report.widgets.length === 0) {
+                    <span class="chip chip--muted text-xs">Bileşen eklenmemiş</span>
+                  }
+                </div>
+
+                @if (filterLabels(report).length > 0) {
+                  <div class="chips">
+                    @for (label of filterLabels(report); track label) {
+                      <span class="chip chip--filter text-xs">
+                        <app-icon name="filter" [size]="12" />
+                        {{ label }}
+                      </span>
+                    }
+                  </div>
+                }
+
+                @if (report.schedule; as schedule) {
+                  <p class="note text-xs">
+                    <app-icon name="clock" [size]="13" />
+                    Sonraki çalışma {{ schedule.nextRunAt | date: 'dd MMM yyyy HH:mm' }} ·
+                    {{ schedule.recipients.length }} alıcı · gönderim yapılmaz (örnek)
+                  </p>
+                }
+              </div>
+
+              <div class="report__actions">
+                <app-button variant="secondary" size="sm" icon="circle-play" (pressed)="run(report)">
+                  Çalıştır
+                </app-button>
+                <app-button
+                  variant="ghost"
+                  size="sm"
+                  icon="pencil-line"
+                  (pressed)="openBuilder(report)"
+                >
+                  Düzenle
+                </app-button>
+                <app-button
+                  variant="ghost"
+                  size="sm"
+                  icon="trash-2"
+                  ariaLabel="Raporu sil"
+                  (pressed)="remove(report)"
+                />
+              </div>
+            </div>
+          </app-card>
+        </li>
+      }
+    </ul>
+  }
+</div>
+
+@if (builder().open) {
+  <app-report-builder
+    [report]="builder().report"
+    [currentFilters]="builderFilters()"
+    [saving]="saving()"
+    (save)="onSave($event)"
+    (cancel)="closeBuilder()"
+  />
+}

@@ -1,4 +1,5 @@
 import { AuditAction } from '../../../../observability/audit.model';
+import { mockIpAddress } from '../audit-writer';
 import {
   COGNITIVE_LEVELS,
   DIFFICULTIES,
@@ -328,6 +329,8 @@ export const OUTCOME_HANDLERS: readonly MockHandler[] = [
           },
         ],
         correlationId: context.request.headers.get('X-Correlation-Id'),
+        ipAddress: mockIpAddress(caller.userId),
+        success: true,
         createdAt: new Date(context.now).toISOString(),
       });
 

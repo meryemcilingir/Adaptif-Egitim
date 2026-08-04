@@ -1,0 +1,52 @@
+<div class="integrity" [class.is-compact]="compact()">
+  <dl class="integrity__grid">
+    <div>
+      <dt>Bağlantı</dt>
+      <dd>
+        <app-status-badge
+          [label]="connectionLabel()"
+          [tone]="connectionTone()"
+          [dot]="true"
+        />
+      </dd>
+    </div>
+
+    <div>
+      <dt>Tam ekran</dt>
+      <dd>
+        <app-status-badge
+          [label]="signals().fullscreen ? 'Açık' : 'Kapalı'"
+          [tone]="signals().fullscreen ? 'success' : 'neutral'"
+        />
+      </dd>
+    </div>
+
+    <div>
+      <dt>Sekme değişimi</dt>
+      <dd>
+        <app-status-badge
+          [label]="signals().tabSwitchCount + ' kez'"
+          [tone]="tabTone()"
+        />
+      </dd>
+    </div>
+
+    <div>
+      <dt>Bağlantı kopması</dt>
+      <dd class="tabular text-body-strong">{{ signals().offlineCount }} kez</dd>
+    </div>
+
+    <div>
+      <dt>Uyarı</dt>
+      <dd class="tabular text-body-strong">{{ signals().warningCount }}</dd>
+    </div>
+  </dl>
+
+  @if (!compact()) {
+    <p class="integrity__note text-xs">
+      <app-icon name="info" [size]="14" />
+      Bu sayaçlar tarayıcı olaylarından toplanır ve yalnızca bilgi amaçlıdır.
+      Sınavı kesmez, puanı etkilemez ve tek başına bir kural ihlali kanıtı değildir.
+    </p>
+  }
+</div>

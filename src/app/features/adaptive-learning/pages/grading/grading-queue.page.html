@@ -1,0 +1,75 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Değerlendirme kuyruğu</h1>
+      <p class="text-sm text-muted">
+        Elle puanlanmayı bekleyen, değerlendiriciler arasında çakışma taşıyan veya itiraz
+        incelemesinde olan denemeler. En uzun bekleyen en üstte.
+      </p>
+    </div>
+  </header>
+
+  <app-filter-bar
+    [query]="facade.queueQuery()"
+    [filters]="filters()"
+    searchPlaceholder="Öğrenci, sınav veya ders kodunda ara…"
+    (searchChange)="facade.setQueueSearch($event)"
+    (filterChange)="facade.setQueueFilter($event.key, $event.value)"
+    (clearAll)="facade.clearQueueFilters()"
+  />
+
+  <app-table
+    [columns]="columns()"
+    [rows]="facade.queue()"
+    [query]="facade.queueQuery()"
+    [total]="facade.queueTotal()"
+    [status]="facade.queueStatus()"
+    [error]="facade.queueError()"
+    [filtered]="facade.queueFiltered()"
+    [rowClickable]="true"
+    emptyTitle="Kuyruk boş"
+    emptyDescription="Şu anda değerlendirme bekleyen deneme yok. Tamamlanan denemeleri deneme listesinden görebilirsiniz."
+    (sortChange)="facade.toggleQueueSort($event)"
+    (pageChange)="facade.goToQueuePage($event)"
+    (sizeChange)="facade.setQueuePageSize($event)"
+    (rowClick)="open($event)"
+    (retry)="facade.loadQueue()"
+    (clearFilters)="facade.clearQueueFilters()"
+  />
+</div>
+
+<ng-template #studentCell let-item>
+  <div class="cell-stack">
+    <span class="text-body-strong truncate">{{ item.studentName }}</span>
+    <span class="text-xs text-subtle truncate">{{ item.cohortName }}</span>
+  </div>
+</ng-template>
+
+<ng-template #workCell let-item>
+  <div class="row-wrap gap-1">
+    @if (item.pendingManualCount > 0) {
+      <app-status-badge
+        [label]="item.pendingManualCount + ' cevap'"
+        tone="warning"
+        icon="pen-line"
+      />
+    }
+    @if (item.conflictCount > 0) {
+      <app-status-badge
+        [label]="item.conflictCount + ' çakışma'"
+        tone="danger"
+        icon="triangle-alert"
+      />
+    }
+    @if (item.openRegradeCount > 0) {
+      <app-status-badge label="İtiraz" tone="info" icon="history" />
+    }
+  </div>
+</ng-template>
+
+<ng-template #waitingCell let-item>
+  <app-status-badge
+    [label]="formatWaiting(item.waitingHours)"
+    [tone]="waitingTone(item.waitingHours)"
+  />
+</ng-template>

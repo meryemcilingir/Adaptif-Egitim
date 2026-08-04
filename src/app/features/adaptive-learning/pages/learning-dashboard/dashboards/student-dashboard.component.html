@@ -67,15 +67,9 @@
     <app-daily-goal-card [goal]="dashboard.dailyGoal" (taskSelect)="openTask($event)" />
   </app-card>
 
-  <div class="stack gap-4">
-    <app-card title="Çalışma serisi" padding="compact">
-      <app-streak-card [streak]="dashboard.streak" />
-    </app-card>
-
-    <app-card title="Deneyim" padding="compact">
-      <app-xp-progress [experience]="dashboard.experience" />
-    </app-card>
-  </div>
+  <app-card title="Çalışma serisi" padding="compact">
+    <app-streak-card [streak]="dashboard.streak" />
+  </app-card>
 </section>
 
 <app-quick-actions [actions]="dashboard.quickActions" />
@@ -112,7 +106,20 @@
     title="Sana özel öneriler"
     description="Her öneri hangi kurala dayandığını açıklar"
     padding="compact"
+    [hasActions]="true"
   >
+    @if (hasMoreRecommendations()) {
+      <app-button
+        card-actions
+        variant="ghost"
+        size="sm"
+        trailingIcon="arrow-right"
+        (pressed)="openPath()"
+      >
+        Tümünü gör
+      </app-button>
+    }
+
     @if (dashboard.recommendations.length === 0) {
       <app-empty-state
         icon="sparkles"
@@ -121,13 +128,20 @@
       />
     } @else {
       <div class="recommendations">
-        @for (recommendation of dashboard.recommendations; track recommendation.id) {
+        @for (recommendation of visibleRecommendations(); track recommendation.id) {
           <app-recommendation-reason-card
             [recommendation]="recommendation"
+            [compact]="true"
             (start)="recommendationStart.emit($event)"
           />
         }
       </div>
+
+      @if (hasMoreRecommendations()) {
+        <p class="recommendations__more text-xs">
+          {{ hiddenRecommendationCount() }} öneri daha var.
+        </p>
+      }
     }
   </app-card>
 </section>
@@ -164,37 +178,13 @@
   </app-card>
 </section>
 
-<!-- 5. Ustalık grafikleri -->
-<section class="grid grid-2-1" aria-label="Ustalık trendi ve dağılımı">
-  <app-chart-card
-    title="Ustalık trendi"
-    description="Zaman içindeki ortalama sınav başarın"
-    type="area"
-    [series]="masterySeries()"
-    [categories]="masteryCategories()"
-    valueSuffix="%"
-    [height]="290"
-    [showLegend]="false"
-    emptyMessage="Trend için henüz yeterli sınav sonucun yok."
-  />
-
-  <app-chart-card
-    title="Kazanım dağılımı"
-    description="Ustalık bandına göre kazanım sayısı"
-    type="donut"
-    [series]="distributionSeries()"
-    [labels]="distributionLabels()"
-    [height]="290"
-  />
-</section>
-
 <section aria-label="Kazanım ısı haritası">
   <app-chart-card
     title="Kazanım ısı haritası"
     description="Kazanım × hafta kırılımında doğru cevap oranın"
     type="heatmap"
     [series]="heatmapSeries()"
-    [height]="360"
+    [height]="heatmapHeight()"
     [showGrid]="false"
     emptyMessage="Isı haritası için yeterli cevap verisi bulunmuyor."
   />
@@ -250,8 +240,8 @@
   </app-card>
 </section>
 
-<!-- 8. Başarımlar -->
-<app-card title="Başarımların" description="Ölçülebilir kilometre taşları" padding="compact">
+<!-- 8. Başarılar -->
+<app-card title="Başarıların" description="Ölçülebilir kilometre taşları" padding="compact">
   <app-achievement-grid [achievements]="dashboard.achievements" />
 </app-card>
 

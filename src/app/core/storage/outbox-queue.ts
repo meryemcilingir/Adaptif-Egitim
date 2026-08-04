@@ -18,6 +18,13 @@ export interface OutboxItem {
   readonly createdAt: number;
   readonly attempts: number;
   readonly lastError: string | null;
+  /**
+   * Aynı hedefin tekrarlanan yazımlarını birleştirir (ör. tek bir sorunun
+   * cevabı). Verildiğinde yeni kayıt eskisinin YERİNE geçer; sıradaki konumu
+   * korunur. Çevrimdışıyken bir soruyu on kez değiştiren öğrenci için on istek
+   * biriktirmenin anlamı yok — sunucuya gitmesi gereken sonuncusudur.
+   */
+  readonly dedupeKey: string | null;
 }
 
 export type OutboxSender = (item: OutboxItem) => Observable<unknown>;
@@ -51,9 +58,33 @@ export class OutboxQueue {
     return this.state().filter((item) => item.groupKey === groupKey);
   }
 
-  enqueue(input: Pick<OutboxItem, 'groupKey' | 'endpoint' | 'method' | 'body'>): OutboxItem {
+  enqueue(
+    input: Pick<OutboxItem, 'groupKey' | 'endpoint' | 'method' | 'body'> &
+      Partial<Pick<OutboxItem, 'dedupeKey'>>,
+  ): OutboxItem {
+    const dedupeKey = input.dedupeKey ?? null;
+    const existing = dedupeKey
+      ? this.state().find((item) => item.dedupeKey === dedupeKey)
+      : undefined;
+
+    if (existing) {
+      // Deneme sayacı sıfırlanır: bu artık farklı bir gövde, yeni bir gönderim.
+      const replacement: OutboxItem = {
+        ...existing,
+        body: input.body,
+        endpoint: input.endpoint,
+        method: input.method,
+        attempts: 0,
+        lastError: null,
+      };
+
+      this.write(this.state().map((item) => (item.id === existing.id ? replacement : item)));
+      return replacement;
+    }
+
     const item: OutboxItem = {
       ...input,
+      dedupeKey,
       id: this.idGenerator.next('outbox'),
       createdAt: this.clock.now(),
       attempts: 0,

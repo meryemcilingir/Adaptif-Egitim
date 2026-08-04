@@ -10,7 +10,7 @@ import { ProgressCard } from '../../models/dashboard.model';
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [AppCardComponent, AppProgressBarComponent],
   template: `
-    <div class="grid grid-3">
+    <div class="progress-grid">
       @for (item of cards(); track item.key) {
         <app-card padding="compact">
           <div class="progress-card">
@@ -35,10 +35,24 @@ import { ProgressCard } from '../../models/dashboard.model';
       display: block;
     }
 
+    /*
+     * Sabit üç sütun DEĞİL, sığdığı kadar sütun.
+     *
+     * Bileşen hem tam genişlikte (eğitmen/program yöneticisi panosu) hem de dar
+     * bir yan sütunda (öğrenci panosundaki haftalık özet) kullanılıyor.
+     * \`grid-3\` dar sütunda kartları 85 px'e sıkıştırıp içeriği taşırıyordu:
+     * "209 / 300" satıra sığmıyor, başlık üç satıra bölünüyordu.
+     */
+    .progress-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+      gap: var(--space-3);
+    }
+
     .progress-card {
       display: flex;
       flex-direction: column;
-      gap: var(--space-3);
+      gap: var(--space-2);
     }
   `,
 })

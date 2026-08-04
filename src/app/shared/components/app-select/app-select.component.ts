@@ -32,7 +32,15 @@ export interface SelectOption {
           <option value="" disabled>{{ text }}</option>
         }
         @for (option of options(); track option.value) {
-          <option [value]="option.value" [disabled]="option.disabled ?? false">
+          <!--
+            selected de baglanir: secenekler henuz olusmadan select'in value
+            ataması tarayıcı tarafından yok sayılır ve ilk seçenek görünürdü.
+          -->
+          <option
+            [value]="option.value"
+            [selected]="option.value === value()"
+            [disabled]="option.disabled ?? false"
+          >
             {{ option.label }}
           </option>
         }

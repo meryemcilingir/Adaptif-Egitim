@@ -1,0 +1,61 @@
+@if (hasData()) {
+  <div class="heatmap">
+    <div class="heatmap__scroll">
+      <table class="matrix">
+        <caption class="sr-only">
+          Kazanım ve ders bazında ortalama ustalık yüzdeleri
+        </caption>
+
+        <thead>
+          <tr>
+            <th scope="col" class="matrix__corner">Kazanım</th>
+            @for (column of matrix().columns; track column) {
+              <th scope="col" class="matrix__column">{{ column }}</th>
+            }
+          </tr>
+        </thead>
+
+        <tbody>
+          @for (row of matrix().rows; track row.id) {
+            <tr>
+              <th scope="row" class="matrix__row">
+                <span class="matrix__code">{{ row.label }}</span>
+                <span class="matrix__title text-xs text-subtle">{{ row.title }}</span>
+              </th>
+
+              @for (column of matrix().columns; track column) {
+                @let cell = cellAt(row.id, column);
+                <td class="matrix__cell">
+                  <button
+                    type="button"
+                    class="cell"
+                    [class]="'is-' + bandOf(cell?.value ?? null)"
+                    [disabled]="!cell || cell.value === null"
+                    [attr.aria-label]="labelOf(cell, row.label, column)"
+                    [attr.title]="labelOf(cell, row.label, column)"
+                    (click)="onSelect(cell)"
+                  >
+                    @if (cell && cell.value !== null) {
+                      <span class="tabular">{{ cell.value }}</span>
+                    } @else {
+                      <span aria-hidden="true">–</span>
+                    }
+                  </button>
+                </td>
+              }
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+
+    <ul class="legend">
+      <li><span class="swatch is-critical"></span><span class="text-xs">0–39 Kritik</span></li>
+      <li><span class="swatch is-weak"></span><span class="text-xs">40–54 Zayıf</span></li>
+      <li><span class="swatch is-fair"></span><span class="text-xs">55–69 Orta</span></li>
+      <li><span class="swatch is-good"></span><span class="text-xs">70–84 İyi</span></li>
+      <li><span class="swatch is-excellent"></span><span class="text-xs">85+ Çok iyi</span></li>
+      <li><span class="swatch is-empty"></span><span class="text-xs">Ölçüm yok</span></li>
+    </ul>
+  </div>
+}

@@ -87,3 +87,8 @@
   align-items: center;
   gap: var(--space-1);
 }
+
+/* Kompakt kipte gizlenen gerekçe sayısı — listenin devamı olduğunu söyler. */
+.reason__more {
+  color: var(--color-text-subtle);
+}

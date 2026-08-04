@@ -1,0 +1,106 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Denetim kaydı</h1>
+      <p class="text-sm text-muted">
+        Kim, ne zaman, ne yaptı. Kayıtlar salt okunurdur; düzenlenebilir bir
+        denetim izi denetim sayılmaz. IP adresleri bu projede örnektir.
+      </p>
+    </div>
+
+    @if (exportTable(); as table) {
+      <app-export-menu [table]="table" />
+    }
+  </header>
+
+  <app-tabs [tabs]="views" [activeId]="view()" (tabChange)="onView($event)" />
+
+  @if (view() === 'table') {
+    <app-filter-bar
+      [query]="query()"
+      [filters]="filters"
+      searchPlaceholder="İşlem, kullanıcı, hedef veya IP ara…"
+      (searchChange)="onSearch($event)"
+      (filterChange)="onFilter($event.key, $event.value)"
+      (clearAll)="onClearFilters()"
+    />
+
+    <app-table
+      [columns]="columns()"
+      [rows]="rows()"
+      [query]="query()"
+      [total]="total()"
+      [status]="status()"
+      [error]="error()"
+      [filtered]="isFiltered()"
+      [rowClickable]="true"
+      emptyTitle="Denetim kaydı bulunamadı"
+      emptyDescription="Bu filtrelerle eşleşen işlem yok."
+      (sortChange)="onSort($event)"
+      (pageChange)="onPage($event)"
+      (sizeChange)="onSize($event)"
+      (rowClick)="toggleRow($event)"
+      (retry)="facade.load()"
+      (clearFilters)="onClearFilters()"
+    />
+
+    @if (expandedId(); as id) {
+      <app-card title="Değişiklik ayrıntısı" description="Seçili kaydın eski ve yeni değerleri">
+        @if (changesOf(id).length === 0) {
+          <p class="text-sm text-muted">Bu işlem alan değişikliği içermiyor.</p>
+        } @else {
+          <ul class="changes">
+            @for (change of changesOf(id); track change.field) {
+              <li class="change">
+                <span class="change__label text-sm">{{ change.label }}</span>
+                <span class="change__old text-xs">{{ change.oldValue ?? '—' }}</span>
+                <app-icon name="arrow-right" [size]="13" />
+                <span class="change__new text-xs">{{ change.newValue ?? '—' }}</span>
+              </li>
+            }
+          </ul>
+        }
+      </app-card>
+    }
+  } @else {
+    <app-card
+      title="Etkinlik akışı"
+      description="Son işlemler gün gün, en yeniden eskiye"
+    >
+      <div class="timeline-actions">
+        <app-button
+          variant="ghost"
+          size="sm"
+          icon="refresh-cw"
+          [loading]="timelineStatus() === 'loading'"
+          (pressed)="refreshTimeline()"
+        >
+          Yenile
+        </app-button>
+      </div>
+
+      <app-activity-timeline [days]="timeline()" />
+    </app-card>
+  }
+</div>
+
+<ng-template #actionCell let-row>
+  <div class="action">
+    <span class="text-body-strong truncate">{{ row.actionLabel }}</span>
+    <span class="text-xs text-subtle">{{ row.module }}</span>
+  </div>
+</ng-template>
+
+<ng-template #actorCell let-row>
+  <div class="action">
+    <span class="text-sm truncate">{{ row.actorName }}</span>
+    <span class="text-xs text-subtle">{{ row.actorRole }}</span>
+  </div>
+</ng-template>
+
+<ng-template #resultCell let-row>
+  <app-status-badge
+    [label]="row.success ? 'Başarılı' : 'Başarısız'"
+    [tone]="row.success ? 'success' : 'danger'"
+  />
+</ng-template>

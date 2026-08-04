@@ -1,0 +1,174 @@
+@use '../../../../../styles/breakpoints' as t;
+
+/* ── KPI ızgarası ────────────────────────────────────────────────────────── */
+
+.kpis {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: var(--space-3);
+}
+
+.kpi {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-4);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-lg);
+  background: var(--color-surface);
+  text-align: start;
+  cursor: default;
+
+  &.is-clickable {
+    cursor: pointer;
+
+    &:hover {
+      border-color: var(--color-border-strong);
+      box-shadow: var(--shadow-sm);
+    }
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.kpi__head {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  color: var(--color-text-secondary);
+}
+
+.kpi__label {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kpi__value {
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  line-height: 1.1;
+  color: var(--color-text-primary);
+}
+
+.kpi__unit {
+  margin-inline-start: 2px;
+  font-size: var(--fs-body);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.kpi__foot {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.kpi__caption {
+  color: var(--color-text-subtle);
+}
+
+/* Öğrenci görünümünde kendi değerini grup ortalamasıyla karşılaştırma. */
+.kpi__peer {
+  width: 100%;
+  color: var(--color-text-subtle);
+}
+
+.delta {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--fs-xs);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+
+  &.is-up {
+    background: var(--color-success-subtle);
+    color: var(--color-success-text);
+  }
+
+  &.is-down {
+    background: var(--color-danger-subtle);
+    color: var(--color-danger-text);
+  }
+
+  &.is-flat {
+    background: var(--color-surface-subtle);
+    color: var(--color-text-secondary);
+  }
+}
+
+/* ── Grafik ve pano ızgaraları ───────────────────────────────────────────── */
+
+.charts,
+.boards {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+
+  @media (max-width: t.$bp-lg) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+/* ── Kişi listeleri ──────────────────────────────────────────────────────── */
+
+.people {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.person {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+  transition: background var(--motion-fast) ease;
+
+  &:hover {
+    background: var(--color-surface-subtle);
+  }
+
+  /* Riskli satır kenardan işaretlenir; gerekçe metni zaten altında yazar. */
+  &.is-risk {
+    border-inline-start: 3px solid var(--color-danger-border);
+
+    .text-xs {
+      color: var(--color-danger-text);
+    }
+  }
+}
+
+.person__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.person__stats {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex: none;
+
+  .tabular {
+    font-size: var(--fs-body-strong);
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+}

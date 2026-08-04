@@ -1,0 +1,102 @@
+@if (isLoading()) {
+  <app-loading-state variant="skeleton-card" [rows]="4" message="Sınav bilgileri yükleniyor…" />
+} @else if (hasError() && !view()) {
+  <app-error-state [error]="error()" title="Sınav yüklenemedi" (retry)="load()" />
+} @else if (view(); as exam) {
+  <div class="waiting">
+    <app-card>
+      <header class="waiting__head">
+        <app-status-badge
+          [label]="exam.phase === 'ready' || exam.phase === 'in_progress' ? 'Giriş açık' : 'Giriş kapalı'"
+          [tone]="exam.phase === 'ready' || exam.phase === 'in_progress' ? 'success' : 'neutral'"
+          [dot]="true"
+        />
+
+        <h1 class="text-h2">{{ exam.examTitle }}</h1>
+        <p class="text-sm text-muted">{{ exam.courseCode }} · {{ exam.courseName }}</p>
+      </header>
+
+      <!-- Geri sayım yalnızca başlamaya varken anlamlı. -->
+      @if (exam.phase === 'too_early') {
+        <div class="countdown" role="status">
+          <span class="text-xs text-subtle">Sınavın başlamasına</span>
+          <span class="countdown__value tabular">{{ countdown() }}</span>
+        </div>
+      }
+
+      <p class="phase" [class]="'is-' + exam.phase">
+        <app-icon
+          [name]="exam.phase === 'closed' || exam.phase === 'used' ? 'circle-alert' : 'info'"
+          [size]="16"
+        />
+        {{ phaseMessages[exam.phase] }}
+      </p>
+
+      <dl class="facts">
+        <div>
+          <dt>Süre</dt>
+          <dd class="tabular">{{ exam.durationMinutes }} dakika</dd>
+        </div>
+        <div>
+          <dt>Soru sayısı</dt>
+          <dd class="tabular">{{ exam.questionCount }}</dd>
+        </div>
+        <div>
+          <dt>Toplam puan</dt>
+          <dd class="tabular">{{ exam.totalPoints }}</dd>
+        </div>
+        <div>
+          <dt>Başlangıç</dt>
+          <dd>{{ openingTime() }}</dd>
+        </div>
+        <div>
+          <dt>Son giriş</dt>
+          <dd>{{ closingTime() }}</dd>
+        </div>
+        <div>
+          <dt>Deneme hakkı</dt>
+          <dd class="tabular">{{ exam.usedAttempts }} / {{ exam.maxAttempts }}</dd>
+        </div>
+      </dl>
+
+      @if (exam.instructions) {
+        <section class="instructions">
+          <span class="text-overline text-muted">Yönerge</span>
+          <p class="text-sm">{{ exam.instructions }}</p>
+        </section>
+      }
+
+      <section class="rules">
+        <span class="text-overline text-muted">Sınav kuralları</span>
+        <ul class="rules__list">
+          @for (rule of exam.rules; track rule) {
+            <li>
+              <app-icon name="check" [size]="14" />
+              <span class="text-sm">{{ rule }}</span>
+            </li>
+          }
+        </ul>
+      </section>
+
+      @if (hasError()) {
+        <p class="phase is-closed" role="alert">
+          <app-icon name="circle-alert" [size]="16" />
+          {{ error()?.message }}
+        </p>
+      }
+
+      <footer class="waiting__actions">
+        <app-button variant="ghost" (pressed)="back()">Sınavlarıma dön</app-button>
+        <app-button
+          variant="primary"
+          icon="circle-play"
+          [disabled]="!canStart()"
+          [loading]="isStarting()"
+          (pressed)="start()"
+        >
+          {{ startLabel() }}
+        </app-button>
+      </footer>
+    </app-card>
+  </div>
+}

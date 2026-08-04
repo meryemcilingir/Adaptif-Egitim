@@ -1,0 +1,97 @@
+@use '../../../../../styles/breakpoints' as t;
+
+.selector {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) auto;
+  align-items: end;
+  gap: var(--space-3);
+
+  @media (max-width: t.$bp-md) {
+    grid-template-columns: minmax(0, 1fr);
+    align-items: stretch;
+  }
+}
+
+/* Dört sütuna kadar büyüyebilen tablo dar ekranda yatay kayar. */
+.table-scroll {
+  overflow-x: auto;
+}
+
+.compare {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 520px;
+
+  th,
+  td {
+    padding: var(--space-3);
+    border-bottom: var(--border-width) solid var(--color-border);
+    text-align: start;
+    vertical-align: top;
+  }
+
+  thead th {
+    position: sticky;
+    top: 0;
+    background: var(--color-surface);
+    border-bottom-width: 2px;
+  }
+
+  tbody tr:last-child th,
+  tbody tr:last-child td {
+    border-bottom: none;
+  }
+}
+
+.compare__metric {
+  display: table-cell;
+  min-width: 180px;
+  color: var(--color-text-secondary);
+  font-weight: 500;
+
+  .text-xs {
+    display: block;
+  }
+}
+
+.head {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.baseline {
+  align-self: flex-start;
+  margin-top: 2px;
+  padding: 1px var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-subtle);
+  color: var(--color-text-subtle);
+}
+
+.value {
+  display: block;
+  font-size: var(--fs-body);
+  font-weight: 600;
+  color: var(--color-text-primary);
+
+  &.is-empty {
+    color: var(--color-text-subtle);
+    font-weight: 500;
+  }
+}
+
+.diff {
+  display: block;
+  margin-top: 2px;
+  color: var(--color-text-subtle);
+
+  &.is-up {
+    color: var(--color-success-text);
+  }
+
+  &.is-down {
+    color: var(--color-danger-text);
+  }
+}

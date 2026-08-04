@@ -63,16 +63,26 @@ export class DashboardCommonComponent {
 
   readonly notificationRead = output<Notification>();
 
+  /*
+   * Akış SON 5 kayıtla sınırlanır.
+   *
+   * Sınırsız liste kartı aşağı doğru uzatıp yanındaki bildirim/istatistik
+   * kartlarını da aynı yüksekliğe zorluyordu; üç kart eşit ve makul boyda kalsın.
+   */
+  private static readonly ACTIVITY_LIMIT = 5;
+
   /** `ActivityEntry` → `TimelineItem` uyarlaması; zaman çizelgesi domain bilmez. */
   readonly timelineItems = computed<TimelineItem[]>(() =>
-    this.activity().map((entry) => ({
-      id: entry.id,
-      title: entry.title,
-      description: entry.description,
-      at: entry.at,
-      icon: entry.icon,
-      tone: entry.tone,
-      actor: entry.actor,
-    })),
+    this.activity()
+      .slice(0, DashboardCommonComponent.ACTIVITY_LIMIT)
+      .map((entry) => ({
+        id: entry.id,
+        title: entry.title,
+        description: entry.description,
+        at: entry.at,
+        icon: entry.icon,
+        tone: entry.tone,
+        actor: entry.actor,
+      })),
   );
 }

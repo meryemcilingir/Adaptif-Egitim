@@ -1,0 +1,111 @@
+@use '../../../../../styles/breakpoints' as t;
+
+.metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: var(--space-3);
+}
+
+.metric {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  padding: var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+  background: var(--color-surface);
+
+  &--wide {
+    grid-column: span 2;
+  }
+}
+
+.metric__label {
+  display: flex;
+  flex-direction: column;
+  color: var(--color-text-subtle);
+}
+
+.hint {
+  font-size: 10px;
+  color: var(--color-text-subtle);
+}
+
+.metric__value {
+  font-size: var(--fs-h3);
+  font-weight: 600;
+  color: var(--color-text-primary);
+
+  &.is-good {
+    color: var(--color-success-text);
+  }
+
+  &.is-muted {
+    color: var(--color-text-secondary);
+  }
+}
+
+.charts {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: var(--space-4);
+
+  @media (max-width: t.$bp-lg) {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+.ranked {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+/* Metin · bar · sayı: bar esner, iki uç sabit kalır. */
+.rank {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 120px 48px;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: var(--border-width) solid var(--color-border);
+  border-radius: var(--radius-md);
+
+  .tabular {
+    text-align: end;
+    font-weight: 600;
+    color: var(--color-text-primary);
+  }
+}
+
+.rank__body {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.note {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: var(--space-3) 0 0;
+  color: var(--color-text-secondary);
+}
+
+@media (max-width: 640px) {
+  .metric--wide {
+    grid-column: span 1;
+  }
+
+  .rank {
+    grid-template-columns: minmax(0, 1fr) 48px;
+  }
+
+  .rank__bar {
+    display: none;
+  }
+}

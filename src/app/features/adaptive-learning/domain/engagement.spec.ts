@@ -2,10 +2,8 @@ import { describe, expect, it } from 'vitest';
 
 import { ContentProgress } from '../models/content-item.model';
 import {
-  XP_RULES,
   buildAchievements,
   buildWeeklyStudy,
-  calculateExperience,
   calculateStreak,
 } from './engagement';
 
@@ -67,11 +65,23 @@ describe('calculateStreak', () => {
 });
 
 describe('buildWeeklyStudy', () => {
-  it('her zaman 7 gün döner ve bugün en sonda olur', () => {
+  // NOW = 2026-03-10T09:00:00.000Z bir Salı; hafta Pazartesi (03-09) ile başlar.
+  const MONDAY = '2026-03-09';
+  const TUESDAY = '2026-03-10';
+
+  it('her zaman 7 gün döner ve Pazartesi ile başlar', () => {
     const days = buildWeeklyStudy([], NOW);
 
     expect(days).toHaveLength(7);
-    expect(days[6]!.date).toBe(new Date(NOW).toISOString().slice(0, 10));
+    expect(days[0]!.date).toBe(MONDAY);
+    expect(days[0]!.label).toBe('Pzt');
+  });
+
+  it('bugünün konumu haftanın gününe göre sabittir, en sağda değildir', () => {
+    const days = buildWeeklyStudy([], NOW);
+
+    expect(days[1]!.date).toBe(TUESDAY);
+    expect(days[1]!.label).toBe('Sal');
   });
 
   it('süreleri ve tamamlanan içerikleri güne göre toplar', () => {
@@ -84,9 +94,9 @@ describe('buildWeeklyStudy', () => {
       NOW,
     );
 
-    expect(days[6]!.minutes).toBe(30);
-    expect(days[6]!.completedCount).toBe(1);
-    expect(days[4]!.minutes).toBe(45);
+    // daysAgo(0) = bugün = Salı (index 1); daysAgo(2) = Pazar (index 6, önceki hafta değil bu haftanın Pazarı bir önceki haftada kalır)
+    expect(days[1]!.minutes).toBe(30);
+    expect(days[1]!.completedCount).toBe(1);
   });
 
   it('haftanın dışındaki kayıtları saymaz', () => {
@@ -96,24 +106,6 @@ describe('buildWeeklyStudy', () => {
     );
 
     expect(days.reduce((sum, day) => sum + day.minutes, 0)).toBe(0);
-  });
-});
-
-describe('calculateExperience', () => {
-  it('puanı kurallara göre toplar', () => {
-    const result = calculateExperience(2, 30, 4);
-
-    expect(result.totalXp).toBe(
-      2 * XP_RULES.perCompletedContent + 30 * XP_RULES.perStudyMinute + 4 * XP_RULES.perStreakDay,
-    );
-  });
-
-  it('seviye ve seviye içi ilerlemeyi hesaplar', () => {
-    const result = calculateExperience(0, XP_RULES.perLevel + 100, 0);
-
-    expect(result.level).toBe(2);
-    expect(result.xpIntoLevel).toBe(100);
-    expect(result.percentToNextLevel).toBe(Math.round((100 / XP_RULES.perLevel) * 100));
   });
 });
 

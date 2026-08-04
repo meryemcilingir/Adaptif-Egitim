@@ -91,20 +91,29 @@ export const API = {
   },
 
   sessions: {
-    start: `${API_PREFIX}/exam-sessions`,
-    byToken: (token: string) => `${API_PREFIX}/exam-sessions/${token}`,
-    heartbeat: (token: string) => `${API_PREFIX}/exam-sessions/${token}/heartbeat`,
-    answers: (token: string) => `${API_PREFIX}/exam-sessions/${token}/answers`,
-    submit: (token: string) => `${API_PREFIX}/exam-sessions/${token}/submit`,
-    terminate: (token: string) => `${API_PREFIX}/exam-sessions/${token}/terminate`,
+    waitingRoom: (examId: string) => `${API_PREFIX}/exams/${examId}/waiting-room`,
+    start: (examId: string) => `${API_PREFIX}/exams/${examId}/session`,
+    byToken: (token: string) => `${API_PREFIX}/sessions/${token}`,
+    heartbeat: (token: string) => `${API_PREFIX}/sessions/${token}/heartbeat`,
+    answers: (token: string) => `${API_PREFIX}/sessions/${token}/answers`,
+    flag: (token: string) => `${API_PREFIX}/sessions/${token}/flag`,
+    position: (token: string) => `${API_PREFIX}/sessions/${token}/position`,
+    submit: (token: string) => `${API_PREFIX}/sessions/${token}/submit`,
+    myHistory: `${API_PREFIX}/my/exam-history`,
   },
 
   attempts: {
     list: `${API_PREFIX}/attempts`,
     byId: (id: string) => `${API_PREFIX}/attempts/${id}`,
+    detail: (id: string) => `${API_PREFIX}/attempts/${id}/detail`,
     grade: (id: string) => `${API_PREFIX}/attempts/${id}/grade`,
+    regrade: (id: string) => `${API_PREFIX}/attempts/${id}/regrade`,
+    resolveConflict: (id: string) => `${API_PREFIX}/attempts/${id}/resolve-conflict`,
     release: (id: string) => `${API_PREFIX}/attempts/${id}/release`,
-    history: (id: string) => `${API_PREFIX}/attempts/${id}/history`,
+  },
+
+  grading: {
+    queue: `${API_PREFIX}/grading/queue`,
   },
 
   rubrics: {
@@ -114,7 +123,19 @@ export const API = {
 
   analytics: {
     dashboard: `${API_PREFIX}/analytics/dashboard`,
+    overview: `${API_PREFIX}/analytics/overview`,
     student: (id: string) => `${API_PREFIX}/analytics/students/${id}`,
+    cohortById: (id: string) => `${API_PREFIX}/analytics/cohorts/${id}`,
+    outcomes: `${API_PREFIX}/analytics/outcomes`,
+    masteryMatrix: `${API_PREFIX}/analytics/mastery-matrix`,
+    difficulty: `${API_PREFIX}/analytics/difficulty`,
+    trends: `${API_PREFIX}/analytics/trends`,
+    recommendationPerformance: `${API_PREFIX}/analytics/recommendation-performance`,
+    velocity: `${API_PREFIX}/analytics/velocity`,
+    performers: `${API_PREFIX}/analytics/performers`,
+    compare: `${API_PREFIX}/analytics/compare`,
+    savedReports: `${API_PREFIX}/analytics/saved-reports`,
+    savedReport: (id: string) => `${API_PREFIX}/analytics/saved-reports/${id}`,
     mastery: `${API_PREFIX}/analytics/mastery`,
     heatmap: `${API_PREFIX}/analytics/mastery/heatmap`,
     cohort: `${API_PREFIX}/analytics/cohort`,
@@ -124,6 +145,7 @@ export const API = {
 
   audit: {
     list: `${API_PREFIX}/audit-events`,
+    timeline: `${API_PREFIX}/audit-events/timeline`,
   },
 
   notifications: {
@@ -135,5 +157,25 @@ export const API = {
   users: {
     list: `${API_PREFIX}/users`,
     byId: (id: string) => `${API_PREFIX}/users/${id}`,
+    detail: (id: string) => `${API_PREFIX}/users/${id}/detail`,
+    lifecycle: (id: string, action: string) => `${API_PREFIX}/users/${id}/${action}`,
+  },
+
+  admin: {
+    overview: `${API_PREFIX}/admin/overview`,
+    health: `${API_PREFIX}/admin/health`,
+    search: `${API_PREFIX}/admin/search`,
+    settings: `${API_PREFIX}/admin/settings`,
+    roles: `${API_PREFIX}/admin/roles`,
+    role: (id: string) => `${API_PREFIX}/admin/roles/${id}`,
+    roleDuplicate: (id: string) => `${API_PREFIX}/admin/roles/${id}/duplicate`,
+    roleArchive: (id: string) => `${API_PREFIX}/admin/roles/${id}/archive`,
+    terms: `${API_PREFIX}/admin/terms`,
+    term: (id: string) => `${API_PREFIX}/admin/terms/${id}`,
+    termArchive: (id: string) => `${API_PREFIX}/admin/terms/${id}/archive`,
+    campaigns: `${API_PREFIX}/admin/notification-campaigns`,
+    campaign: (id: string) => `${API_PREFIX}/admin/notification-campaigns/${id}`,
+    campaignSend: (id: string) => `${API_PREFIX}/admin/notification-campaigns/${id}/send`,
+    audiencePreview: `${API_PREFIX}/admin/notification-campaigns/preview`,
   },
 } as const;

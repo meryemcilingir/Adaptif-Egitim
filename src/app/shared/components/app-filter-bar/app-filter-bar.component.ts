@@ -1,8 +1,12 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  ElementRef,
+  Injector,
+  afterNextRender,
   computed,
   effect,
+  inject,
   input,
   output,
   signal,
@@ -11,6 +15,7 @@ import {
 import { FilterValue, PageRequest, countActiveFilters } from '../../../core/api/page-request';
 import { AppButtonComponent } from '../app-button/app-button.component';
 import { AppIconComponent } from '../app-icon/app-icon.component';
+import { PanelPlacement, placePanel } from '../../utils/panel-position';
 import { FilterDefinition, FilterOption } from './filter-definition';
 
 /**
@@ -25,8 +30,18 @@ import { FilterDefinition, FilterOption } from './filter-definition';
   imports: [AppButtonComponent, AppIconComponent],
   templateUrl: './app-filter-bar.component.html',
   styleUrl: './app-filter-bar.component.scss',
+  host: {
+    '(document:click)': 'onDocumentClick($event)',
+    '(document:keydown.escape)': 'close()',
+    /* Panel `fixed` konumlandığı için sayfa kaydıkça yeniden hesaplanır. */
+    '(window:scroll)': 'reposition()',
+    '(window:resize)': 'reposition()',
+  },
 })
 export class AppFilterBarComponent {
+  private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
+
   readonly query = input.required<PageRequest>();
   readonly filters = input<readonly FilterDefinition[]>([]);
   readonly searchPlaceholder = input('Ara…');
@@ -37,6 +52,8 @@ export class AppFilterBarComponent {
   readonly clearAll = output<void>();
 
   private readonly openKey = signal<string | null>(null);
+  private readonly placementState = signal<PanelPlacement | null>(null);
+  private openTrigger: HTMLElement | null = null;
   private readonly searchDraft = signal('');
   private debounceHandle: ReturnType<typeof setTimeout> | null = null;
 
@@ -56,12 +73,65 @@ export class AppFilterBarComponent {
     return this.openKey() === key;
   }
 
-  toggle(key: string): void {
-    this.openKey.update((current) => (current === key ? null : key));
+  readonly placement = this.placementState.asReadonly();
+
+  toggle(key: string, event: Event): void {
+    const opening = this.openKey() !== key;
+
+    this.openKey.set(opening ? key : null);
+    this.openTrigger = opening ? (event.currentTarget as HTMLElement) : null;
+
+    /*
+     * Konum, panel DOM'a girdikten SONRA hesaplanır.
+     *
+     * `effect` ve `queueMicrotask` denendi: ikisi de panel şablona işlenmeden
+     * çalışıp ölçümü boşa düşürüyordu. `afterNextRender` bir sonraki render
+     * geçişinin ardından koşar; panel o anda kesin olarak ölçülebilir.
+     */
+    if (opening) afterNextRender(() => this.reposition(), { injector: this.injector });
   }
 
   close(): void {
     this.openKey.set(null);
+    this.openTrigger = null;
+    this.placementState.set(null);
+  }
+
+  /**
+   * Paneli tetikleyiciye göre yerleştirir.
+   *
+   * `fixed` konumlandırma, panelin tablo gibi kaydırma kaplarının dışına
+   * taşabilmesi için gerekli (ADR-074); karşılığında konum burada hesaplanır.
+   */
+  reposition(): void {
+    const trigger = this.openTrigger;
+    if (!trigger) return;
+
+    const panel = this.host.nativeElement.querySelector<HTMLElement>('.filter__menu');
+    if (!panel) return;
+
+    const rect = trigger.getBoundingClientRect();
+
+    this.placementState.set(
+      placePanel({
+        trigger: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right },
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+        panelWidth: panel.offsetWidth,
+        /* Ölçüm kısıtsız yapılır: kısılmış yükseklik yeni ölçümü etkilemesin. */
+        panelHeight: panel.scrollHeight,
+      }),
+    );
+  }
+
+  /**
+   * Dışarı tıklayınca menü kapanır.
+   *
+   * Menü yalnızca tetikleyiciye yeniden basılınca kapanıyordu; kullanıcı
+   * sayfanın başka bir yerine tıkladığında açık kalıp içeriği örtüyordu.
+   */
+  onDocumentClick(event: MouseEvent): void {
+    if (this.openKey() === null) return;
+    if (!this.host.nativeElement.contains(event.target as Node)) this.close();
   }
 
   selectedValues(key: string): readonly string[] {

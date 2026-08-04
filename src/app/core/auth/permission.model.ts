@@ -143,6 +143,8 @@ export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
     'exam:read',
     'exam:write',
     'attempt:read',
+    // Açık uçlu cevapların rubrikle puanlanması ölçme uzmanının asli işidir.
+    'attempt:grade',
     'analytics:student',
     'analytics:cohort',
     'analytics:item',

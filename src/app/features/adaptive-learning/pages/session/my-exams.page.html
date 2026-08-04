@@ -1,0 +1,124 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Sınavlarım</h1>
+      <p class="text-sm text-muted">
+        Yaklaşan sınavlarınıza buradan girebilir, geçmiş denemelerinizi görüntüleyebilirsiniz.
+      </p>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="3" message="Sınavlarınız yükleniyor…" />
+  } @else if (hasError()) {
+    <app-error-state [error]="error()" title="Sınavlar yüklenemedi" (retry)="load()" />
+  } @else {
+    <!-- ── Yaklaşan / açık sınavlar ──────────────────────────────────── -->
+    <app-card title="Yaklaşan sınavlar">
+      @if (upcoming().length === 0) {
+        <app-empty-state
+          icon="calendar"
+          title="Yaklaşan sınav yok"
+          description="Şu anda girebileceğiniz veya planlanmış bir sınav bulunmuyor."
+        />
+      } @else {
+        <ul class="exam-list">
+          @for (exam of upcoming(); track exam.id) {
+            <li class="exam" [class.is-open]="isOpen(exam)">
+              <div class="exam__body">
+                <div class="row-wrap gap-2">
+                  <span class="text-sm text-body-strong">{{ exam.title }}</span>
+                  <app-status-badge
+                    [label]="examStatusLabel(exam)"
+                    [tone]="isOpen(exam) ? 'success' : 'info'"
+                    [dot]="true"
+                  />
+                </div>
+                <span class="text-xs text-subtle">
+                  {{ formatWindow(exam) }} · {{ exam.questions.length }} soru ·
+                  {{ exam.totalPoints }} puan
+                </span>
+              </div>
+
+              <app-button
+                [variant]="isOpen(exam) ? 'primary' : 'secondary'"
+                size="sm"
+                [icon]="isOpen(exam) ? 'circle-play' : 'clock'"
+                (pressed)="enter(exam)"
+              >
+                {{ isOpen(exam) ? 'Sınava gir' : 'Detayları gör' }}
+              </app-button>
+            </li>
+          }
+        </ul>
+      }
+    </app-card>
+
+    <!-- ── Değerlendirme bekleyen denemeler ──────────────────────────── -->
+    <app-card
+      title="Değerlendirme bekleyenler"
+      description="Sonuç henüz açıklanmadı"
+    >
+      @if (pendingHistory().length === 0) {
+        <app-empty-state
+          icon="clock"
+          title="Bekleyen değerlendirme yok"
+          description="Tüm denemelerinizin sonucu açıklandı."
+        />
+      } @else {
+        <ul class="history-list">
+          @for (row of pendingHistory(); track row.attemptId) {
+            <li class="history-row" (click)="openAttempt(row)">
+              <div class="history-row__body">
+                <span class="text-sm text-body-strong">{{ row.examTitle }}</span>
+                <span class="text-xs text-subtle">
+                  {{ row.courseCode }} · {{ formatDate(row.submittedAt) }} ·
+                  {{ durationOf(row) }}
+                </span>
+              </div>
+
+              <div class="history-row__result">
+                <app-status-badge
+                  [label]="toneFor(row.state).label"
+                  [tone]="toneFor(row.state).tone"
+                  [icon]="toneFor(row.state).icon"
+                />
+                <app-icon name="chevron-right" [size]="16" />
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </app-card>
+
+    <!-- ── Sonuçlanan denemeler ─────────────────────────────────────── -->
+    <app-card title="Sonuçlanan sınavlarım" description="Puan ve geçme durumu">
+      @if (releasedHistory().length === 0) {
+        <app-empty-state
+          icon="history"
+          title="Henüz sonuçlanan sınav yok"
+          description="Sonucu açıklanan denemeleriniz burada listelenecek."
+        />
+      } @else {
+        <ul class="history-list">
+          @for (row of releasedHistory(); track row.attemptId) {
+            <li class="history-row" (click)="openAttempt(row)">
+              <div class="history-row__body">
+                <span class="text-sm text-body-strong">{{ row.examTitle }}</span>
+                <span class="text-xs text-subtle">
+                  {{ row.courseCode }} · {{ formatDate(row.submittedAt) }} ·
+                  {{ durationOf(row) }}
+                </span>
+              </div>
+
+              <div class="history-row__result">
+                <span class="history-row__score tabular">{{ resultLabel(row) }}</span>
+                <app-icon name="chevron-right" [size]="16" />
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </app-card>
+  }
+</div>

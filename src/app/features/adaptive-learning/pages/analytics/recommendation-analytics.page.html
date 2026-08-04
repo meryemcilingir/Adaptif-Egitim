@@ -1,0 +1,135 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Öneri motoru analizi</h1>
+      <p class="text-sm text-muted">
+        Kabul oranı, önerinin ardından içeriğin açılıp açılmadığından ölçülür — motorun
+        kendi verdiği bir not değildir.
+      </p>
+    </div>
+  </header>
+
+  <app-analytics-filter-bar
+    [value]="facade.filters()"
+    [filters]="filterDefinitions()"
+    [busy]="isRefreshing()"
+    (valueChange)="onFilterChange($event)"
+    (apply)="onApply()"
+    (reset)="onReset()"
+  />
+
+  @if (isLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="3" message="Öneri analizi hazırlanıyor…" />
+  } @else if (hasError()) {
+    <app-error-state [error]="error()" title="Analiz yüklenemedi" (retry)="load()" />
+  } @else if (report(); as data) {
+    <app-report-header [meta]="data.meta" [exportTable]="exportTable()" />
+
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="sparkles"
+        title="Seçili dönemde öneri yok"
+        description="Bu tarih aralığında öneri üretilmemiş. Aralığı genişletmeyi deneyin."
+        actionLabel="Filtreleri temizle"
+        actionIcon="x"
+        (action)="onReset()"
+      />
+    } @else {
+      <section class="metrics" aria-label="Öneri göstergeleri">
+        <div class="metric">
+          <span class="metric__label text-xs">Toplam öneri</span>
+          <span class="metric__value tabular">{{ data.total }}</span>
+        </div>
+        <div class="metric">
+          <span class="metric__label text-xs">Açıldı</span>
+          <span class="metric__value tabular is-good">{{ data.accepted }}</span>
+        </div>
+        <div class="metric">
+          <span class="metric__label text-xs">Tamamlandı</span>
+          <span class="metric__value tabular is-good">{{ data.completed }}</span>
+        </div>
+        <div class="metric">
+          <span class="metric__label text-xs">Yok sayıldı</span>
+          <span class="metric__value tabular is-muted">{{ data.ignored }}</span>
+        </div>
+        <div class="metric metric--wide">
+          <span class="metric__label text-xs">Kabul oranı</span>
+          <span class="metric__value tabular">%{{ data.acceptanceRate.current }}</span>
+          <app-progress-bar [value]="data.acceptanceRate.current" [max]="100" tone="primary" />
+        </div>
+        <div class="metric metric--wide">
+          <span class="metric__label text-xs">
+            İsabet
+            <span class="hint">açılanların tamamlanma oranı</span>
+          </span>
+          <span class="metric__value tabular">%{{ data.accuracyPercent }}</span>
+          <app-progress-bar [value]="data.accuracyPercent" [max]="100" tone="success" />
+        </div>
+      </section>
+
+      <div class="charts">
+        <app-chart-card
+          title="Öneri akıbetleri"
+          description="Açıldı / tamamlandı / yok sayıldı dağılımı"
+          type="donut"
+          [series]="stateSeries()"
+          [labels]="stateLabels()"
+        />
+
+        <app-chart-card
+          title="Öneri üretimi"
+          description="Günlük üretilen öneri sayısı"
+          type="area"
+          [series]="trendSeries()"
+          [categories]="trendCategories()"
+        />
+      </div>
+
+      <app-chart-card
+        title="Hangi kural kaç öneri üretti"
+        description="Öneri motorunun gerekçe dağılımı"
+        type="bar"
+        [series]="reasonSeries()"
+        [categories]="reasonCategories()"
+        [height]="320"
+      />
+
+      <app-card
+        title="En çok önerilen içerikler"
+        description="Motorun öne çıkardığı içerikler ve açılma oranları"
+      >
+        @if (data.mostRecommended.length === 0) {
+          <app-empty-state
+            icon="sparkles"
+            title="Öneri kaydı yok"
+            description="Bu dönemde içerik önerisi üretilmemiş."
+          />
+        } @else {
+          <ul class="ranked">
+            @for (entry of data.mostRecommended; track entry.id) {
+              <li class="rank">
+                <div class="rank__body">
+                  <span class="text-sm text-body-strong truncate">{{ entry.label }}</span>
+                  <span class="text-xs text-subtle">{{ entry.sublabel }}</span>
+                </div>
+                <div class="rank__bar">
+                  <app-progress-bar
+                    [value]="entry.ratio"
+                    [max]="100"
+                    [tone]="entry.tone === 'success' ? 'success' : 'primary'"
+                  />
+                </div>
+                <span class="tabular">{{ entry.value }}</span>
+              </li>
+            }
+          </ul>
+
+          <p class="note text-xs">
+            <app-icon name="info" [size]="14" />
+            En çok öneri üreten kural: <strong>{{ topReason() }}</strong>
+          </p>
+        }
+      </app-card>
+    }
+  }
+</div>

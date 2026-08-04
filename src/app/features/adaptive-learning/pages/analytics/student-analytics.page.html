@@ -1,0 +1,297 @@
+<div class="page">
+  <app-breadcrumb [items]="breadcrumbs()" />
+
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">
+        {{ isSelf() ? 'Gelişimim' : (report()?.studentName ?? 'Öğrenci analizi') }}
+      </h1>
+      <p class="text-sm text-muted">
+        @if (report(); as data) {
+          {{ data.cohortName }} · Kazanım, çalışma süresi ve sınav başarısının bütünsel görünümü
+        } @else {
+          Kazanım, çalışma süresi ve sınav başarısının bütünsel görünümü
+        }
+      </p>
+    </div>
+  </header>
+
+  <app-analytics-filter-bar
+    [value]="facade.filters()"
+    [filters]="filterDefinitions()"
+    [busy]="isRefreshing()"
+    (valueChange)="onFilterChange($event)"
+    (apply)="onApply()"
+    (reset)="onReset()"
+  />
+
+  @if (isLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="4" message="Analiz hazırlanıyor…" />
+  } @else if (hasError()) {
+    <app-error-state [error]="error()" title="Analiz yüklenemedi" (retry)="load()" />
+  } @else if (report(); as data) {
+    <app-report-header [meta]="data.meta" [exportTable]="exportTable()" />
+
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="chart-line"
+        title="Seçili dönemde etkinlik yok"
+        description="Bu tarih aralığında çalışma veya sınav kaydı bulunmuyor."
+        actionLabel="Filtreleri temizle"
+        actionIcon="x"
+        (action)="onReset()"
+      />
+    } @else {
+      <!-- ── Özet göstergeler ────────────────────────────────────────── -->
+      <section class="stats" aria-label="Özet göstergeler">
+        <div class="stat">
+          <span class="stat__label text-xs">Genel ustalık</span>
+          <span class="stat__value tabular">%{{ data.masteryPercent }}</span>
+          <app-progress-bar [value]="data.masteryPercent" [max]="100" tone="primary" />
+        </div>
+
+        <div class="stat">
+          <span class="stat__label text-xs">Tamamlama oranı</span>
+          <span class="stat__value tabular">%{{ data.completionRate }}</span>
+          <app-progress-bar [value]="data.completionRate" [max]="100" tone="success" />
+        </div>
+
+        <div class="stat">
+          <span class="stat__label text-xs">Sınav ortalaması</span>
+          <span class="stat__value tabular">
+            @if (data.examAveragePercent !== null) {
+              %{{ data.examAveragePercent }}
+            } @else {
+              <span class="text-subtle">Sınava girilmedi</span>
+            }
+          </span>
+        </div>
+
+        <div class="stat">
+          <span class="stat__label text-xs">Quiz ortalaması</span>
+          <span class="stat__value tabular">
+            @if (data.quizAveragePercent !== null) {
+              %{{ data.quizAveragePercent }}
+            } @else {
+              <span class="text-subtle">Quiz çözülmedi</span>
+            }
+          </span>
+        </div>
+
+        <div class="stat">
+          <span class="stat__label text-xs">Çalışma serisi</span>
+          <span class="stat__value tabular">
+            <app-icon name="zap" [size]="18" />
+            {{ data.streakDays }} gün
+          </span>
+        </div>
+
+        <div class="stat">
+          <span class="stat__label text-xs">Toplam çalışma</span>
+          <span class="stat__value tabular">{{ formatMinutes(data.totalStudyMinutes) }}</span>
+        </div>
+      </section>
+
+      <!-- ── Çalışma süresi ──────────────────────────────────────────── -->
+      <div class="charts">
+        <app-chart-card
+          title="Haftalık çalışma süresi"
+          description="Seçili dönemdeki haftalık toplam"
+          type="bar"
+          [series]="weeklySeries()"
+          [categories]="weeklyCategories()"
+        />
+
+        <app-chart-card
+          title="Günlük çalışma süresi"
+          description="Günlük dağılım"
+          type="area"
+          [series]="dailySeries()"
+          [categories]="dailyCategories()"
+        />
+      </div>
+
+      <!-- ── Ders ilerlemesi ─────────────────────────────────────────── -->
+      <app-card title="Ders ilerlemesi">
+        @if (data.courseProgress.length === 0) {
+          <app-empty-state
+            icon="library"
+            title="Ders kaydı yok"
+            description="Bu kapsamda ilerleme kaydı bulunmuyor."
+          />
+        } @else {
+          <ul class="courses">
+            @for (row of data.courseProgress; track row.courseId) {
+              <li class="course">
+                <div class="course__head">
+                  <div class="course__title">
+                    <span class="text-sm text-body-strong">{{ row.courseCode }}</span>
+                    <span class="text-xs text-subtle">{{ row.courseName }}</span>
+                  </div>
+                  <span class="text-xs text-subtle tabular">
+                    {{ row.completedCount }} / {{ row.totalCount }} içerik ·
+                    {{ formatMinutes(row.minutesSpent) }}
+                  </span>
+                </div>
+
+                <div class="course__bars">
+                  <div class="bar">
+                    <span class="text-xs">Tamamlama</span>
+                    <app-progress-bar [value]="row.completionRate" [max]="100" tone="success" />
+                    <span class="text-xs tabular">%{{ row.completionRate }}</span>
+                  </div>
+                  <div class="bar">
+                    <span class="text-xs">Ustalık</span>
+                    <app-progress-bar [value]="row.masteryPercent" [max]="100" tone="primary" />
+                    <span class="text-xs tabular">%{{ row.masteryPercent }}</span>
+                  </div>
+                </div>
+              </li>
+            }
+          </ul>
+        }
+      </app-card>
+
+      <!-- ── Güçlü / zayıf kazanımlar ────────────────────────────────── -->
+      <div class="charts">
+        <app-card title="Geliştirilmesi gereken kazanımlar">
+          @if (data.weakestOutcomes.length === 0) {
+            <app-empty-state
+              icon="target"
+              title="Kazanım verisi yok"
+              description="Bu kapsamda ustalık ölçümü bulunmuyor."
+            />
+          } @else {
+            <ul class="ranked">
+              @for (entry of data.weakestOutcomes; track entry.id) {
+                <li class="rank" (click)="openOutcome(entry.id)">
+                  <div class="rank__body">
+                    <span class="text-sm text-body-strong">{{ entry.label }}</span>
+                    <span class="text-xs text-subtle truncate">{{ entry.sublabel }}</span>
+                  </div>
+                  <span class="rank__value tabular is-weak">%{{ entry.value }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+
+        <app-card title="Güçlü kazanımlar">
+          @if (data.strongestOutcomes.length === 0) {
+            <app-empty-state
+              icon="target"
+              title="Kazanım verisi yok"
+              description="Bu kapsamda ustalık ölçümü bulunmuyor."
+            />
+          } @else {
+            <ul class="ranked">
+              @for (entry of data.strongestOutcomes; track entry.id) {
+                <li class="rank" (click)="openOutcome(entry.id)">
+                  <div class="rank__body">
+                    <span class="text-sm text-body-strong">{{ entry.label }}</span>
+                    <span class="text-xs text-subtle truncate">{{ entry.sublabel }}</span>
+                  </div>
+                  <span class="rank__value tabular is-strong">%{{ entry.value }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+      </div>
+
+      <!-- ── Kazanım tablosu ─────────────────────────────────────────── -->
+      <app-card title="Kazanım ilerlemesi" description="Tüm kazanımlar ve durumları">
+        @if (data.outcomeProgress.length === 0) {
+          <app-empty-state
+            icon="target"
+            title="Kazanım kaydı yok"
+            description="Bu kapsamda ölçülmüş kazanım bulunmuyor."
+          />
+        } @else {
+          <ul class="outcomes">
+            @for (row of data.outcomeProgress; track row.outcomeId) {
+              <li class="outcome" (click)="openOutcome(row.outcomeId)">
+                <div class="outcome__body">
+                  <span class="text-sm text-body-strong">{{ row.outcomeCode }}</span>
+                  <span class="text-xs text-subtle truncate">{{ row.outcomeTitle }}</span>
+                </div>
+                <span class="text-xs text-subtle">{{ row.courseCode }}</span>
+                <span class="tabular">%{{ row.masteryPercent }}</span>
+                <app-status-badge
+                  [label]="statusLabels[row.status]"
+                  [tone]="toneOf(row.status)"
+                />
+              </li>
+            }
+          </ul>
+        }
+      </app-card>
+
+      <!-- ── Ders başına süre ────────────────────────────────────────── -->
+      @if (data.timePerCourse.length > 0) {
+        <app-chart-card
+          title="Ders başına harcanan süre"
+          description="Dakika cinsinden"
+          type="bar"
+          [series]="timeSeries()"
+          [categories]="timeCategories()"
+        />
+      }
+
+      <!-- ── Öneri geçmişi ve başarımlar ─────────────────────────────── -->
+      <div class="charts">
+        <app-card title="Öneri geçmişi" description="Öneriler ve akıbetleri">
+          @if (data.recommendationHistory.length === 0) {
+            <app-empty-state
+              icon="sparkles"
+              title="Öneri yok"
+              description="Bu öğrenci için henüz öneri üretilmedi."
+            />
+          } @else {
+            <ul class="history">
+              @for (row of data.recommendationHistory; track row.id) {
+                <li class="history__item">
+                  <div class="history__body">
+                    <span class="text-sm">{{ row.contentTitle }}</span>
+                    <span class="text-xs text-subtle">
+                      {{ row.outcomeCode }} · {{ formatDate(row.createdAt) }}
+                    </span>
+                  </div>
+                  <app-status-badge
+                    [label]="row.stateLabel"
+                    [tone]="row.state === 'ignored' ? 'neutral' : 'success'"
+                  />
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+
+        <app-card title="Başarım zaman çizelgesi" description="Gerçek ilerlemeden türetilir">
+          @if (data.achievements.length === 0) {
+            <app-empty-state
+              icon="award"
+              title="Henüz başarım yok"
+              description="İçerik tamamladıkça başarımlar burada görünecek."
+            />
+          } @else {
+            <ul class="achievements">
+              @for (item of data.achievements; track item.id) {
+                <li class="achievement">
+                  <span class="achievement__icon">
+                    <app-icon [name]="iconOf(item.icon)" [size]="16" />
+                  </span>
+                  <div class="achievement__body">
+                    <span class="text-sm text-body-strong">{{ item.title }}</span>
+                    <span class="text-xs text-subtle">{{ item.description }}</span>
+                  </div>
+                  <span class="text-xs text-subtle">{{ formatDate(item.earnedAt) }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+      </div>
+    }
+  }
+</div>

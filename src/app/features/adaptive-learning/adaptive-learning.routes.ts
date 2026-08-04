@@ -7,8 +7,8 @@ import { permissionGuard } from '../../core/auth/guards/permission.guard';
  *
  * · Her rota lazy yüklenir.
  * · Yetki kontrolü `canMatch` ile yapılır → yetkisiz kullanıcı bundle'ı indirmez (ADR-007).
- * · Henüz geliştirilmemiş ekranlar `ModulePlaceholderPage` ile açıkça işaretlenir;
- *   böylece rota/menü/yetki akışı baştan doğru kurulur (ROADMAP.md Faz 2+).
+ * · Sprint 9 itibarıyla yer tutucu ekran kalmadı; her rota gerçek bir bileşene
+ *   bağlıdır. `ModulePlaceholderPage` bu nedenle kaldırıldı.
  */
 export const ADAPTIVE_LEARNING_ROUTES: Routes = [
   {
@@ -157,7 +157,23 @@ export const ADAPTIVE_LEARNING_ROUTES: Routes = [
       import('./pages/exams/exam-list.page').then((module) => module.ExamListPage),
   },
   {
-    // Sihirbaz `:id` kalıbından ÖNCE gelmelidir.
+    path: 'my-exams',
+    title: 'Sınavlarım · Adaptif Eğitim',
+    canMatch: [permissionGuard('exam:read')],
+    loadComponent: () =>
+      import('./pages/session/my-exams.page').then((module) => module.MyExamsPage),
+  },
+  {
+    /* Bekleme odası ve sihirbaz, `exams/:id` kalıbından ÖNCE gelmelidir. */
+    path: 'exams/:id/waiting-room',
+    title: 'Sınav Bekleme Odası · Adaptif Eğitim',
+    canMatch: [permissionGuard('exam:read')],
+    loadComponent: () =>
+      import('./pages/session/exam-waiting-room.page').then(
+        (module) => module.ExamWaitingRoomPage,
+      ),
+  },
+  {
     path: 'exams/:id/wizard',
     title: 'Sınav Sihirbazı · Adaptif Eğitim',
     canMatch: [permissionGuard('exam:write')],
@@ -177,35 +193,116 @@ export const ADAPTIVE_LEARNING_ROUTES: Routes = [
     title: 'Değerlendirme · Adaptif Eğitim',
     canMatch: [permissionGuard('attempt:grade')],
     loadComponent: () =>
-      import('../system/pages/module-placeholder/module-placeholder.page').then(
-        (module) => module.ModulePlaceholderPage,
-      ),
-    data: {
-      title: 'Değerlendirme kuyruğu',
-      summary: 'Açık uçlu cevapların rubrikle puanlanması.',
-      phase: 6,
-      scope: [
-        'Kuyruk + filtre',
-        'RubricGrader',
-        'Zorunlu gerekçe (BR-12)',
-        'Optimistic + rollback',
-      ],
-    },
+      import('./pages/grading/grading-queue.page').then((module) => module.GradingQueuePage),
   },
   {
     path: 'grading/:attemptId',
     title: 'Puanlama · Adaptif Eğitim',
     canMatch: [permissionGuard('attempt:grade')],
     loadComponent: () =>
-      import('../system/pages/module-placeholder/module-placeholder.page').then(
-        (module) => module.ModulePlaceholderPage,
+      import('./pages/grading/grading-detail.page').then((module) => module.GradingDetailPage),
+  },
+
+  {
+    path: 'attempts',
+    title: 'Denemeler · Adaptif Eğitim',
+    canMatch: [permissionGuard('attempt:read')],
+    loadComponent: () =>
+      import('./pages/attempts/attempt-list.page').then((module) => module.AttemptListPage),
+  },
+  {
+    path: 'attempts/:attemptId',
+    title: 'Deneme Detayı · Adaptif Eğitim',
+    canMatch: [permissionGuard('attempt:read')],
+    loadComponent: () =>
+      import('./pages/attempts/attempt-detail.page').then((module) => module.AttemptDetailPage),
+  },
+
+  {
+    path: 'analytics',
+    title: 'Analitik · Adaptif Eğitim',
+    canMatch: [permissionGuard('analytics:student')],
+    loadComponent: () =>
+      import('./pages/analytics/analytics-overview.page').then(
+        (module) => module.AnalyticsOverviewPage,
       ),
-    data: {
-      title: 'Deneme puanlama',
-      summary: 'Kriter bazlı puanlama ve yeniden değerlendirme geçmişi.',
-      phase: 6,
-      scope: ['Rubrik puanlama', 'Puan geçmişi', 'Toplam hesabı (BR-13)'],
-    },
+  },
+  {
+    path: 'analytics/trends',
+    title: 'Trend Analizi · Adaptif Eğitim',
+    canMatch: [permissionGuard('analytics:cohort')],
+    loadComponent: () =>
+      import('./pages/analytics/trend-analytics.page').then(
+        (module) => module.TrendAnalyticsPage,
+      ),
+  },
+  {
+    path: 'analytics/outcomes',
+    title: 'Kazanım Analitiği · Adaptif Eğitim',
+    canMatch: [permissionGuard('analytics:cohort')],
+    loadComponent: () =>
+      import('./pages/analytics/outcome-analytics.page').then(
+        (module) => module.OutcomeAnalyticsPage,
+      ),
+  },
+  {
+    path: 'analytics/mastery',
+    title: 'Ustalık Isı Haritası · Adaptif Eğitim',
+    canMatch: [permissionGuard('analytics:cohort')],
+    loadComponent: () =>
+      import('./pages/analytics/mastery-heatmap.page').then(
+        (module) => module.MasteryHeatmapPage,
+      ),
+  },
+  {
+    path: 'analytics/difficulty',
+    title: 'Soru Zorluk Analizi · Adaptif Eğitim',
+    canMatch: [permissionGuard('analytics:item')],
+    loadComponent: () =>
+      import('./pages/analytics/difficulty-analytics.page').then(
+        (module) => module.DifficultyAnalyticsPage,
+      ),
+  },
+  {
+    path: 'analytics/recommendations',
+    title: 'Öneri Motoru Analizi · Adaptif Eğitim',
+    canMatch: [permissionGuard('analytics:cohort')],
+    loadComponent: () =>
+      import('./pages/analytics/recommendation-analytics.page').then(
+        (module) => module.RecommendationAnalyticsPage,
+      ),
+  },
+  {
+    path: 'analytics/velocity',
+    title: 'Öğrenme Hızı · Adaptif Eğitim',
+    canMatch: [permissionGuard('analytics:cohort')],
+    loadComponent: () =>
+      import('./pages/analytics/velocity-analytics.page').then(
+        (module) => module.VelocityAnalyticsPage,
+      ),
+  },
+  {
+    path: 'analytics/performers',
+    title: 'Başarı Panosu · Adaptif Eğitim',
+    canMatch: [permissionGuard('analytics:cohort')],
+    loadComponent: () =>
+      import('./pages/analytics/performers.page').then((module) => module.PerformersPage),
+  },
+  {
+    path: 'analytics/compare',
+    title: 'Karşılaştırmalı Analiz · Adaptif Eğitim',
+    canMatch: [permissionGuard('analytics:cohort')],
+    loadComponent: () =>
+      import('./pages/analytics/compare-analytics.page').then(
+        (module) => module.CompareAnalyticsPage,
+      ),
+  },
+  {
+    path: 'analytics/reports',
+    title: 'Kayıtlı Raporlar · Adaptif Eğitim',
+    canMatch: [permissionGuard('analytics:student')],
+    loadComponent: () =>
+      import('./pages/analytics/saved-reports.page').then((module) => module.SavedReportsPage),
   },
 
   {
@@ -213,60 +310,25 @@ export const ADAPTIVE_LEARNING_ROUTES: Routes = [
     title: 'Öğrenci Analitiği · Adaptif Eğitim',
     canMatch: [permissionGuard('analytics:student')],
     loadComponent: () =>
-      import('../system/pages/module-placeholder/module-placeholder.page').then(
-        (module) => module.ModulePlaceholderPage,
+      import('./pages/analytics/student-analytics.page').then(
+        (module) => module.StudentAnalyticsPage,
       ),
-    data: {
-      title: 'Öğrenci analitiği',
-      summary: 'Kazanım kırılımı, ilerleme trendi ve deneme geçmişi.',
-      phase: 8,
-      scope: ['Ustalık kırılımı', 'Trend grafiği', 'Deneme geçmişi'],
-    },
   },
   {
     path: 'cohort-analytics',
     title: 'Cohort Analitiği · Adaptif Eğitim',
     canMatch: [permissionGuard('analytics:cohort')],
     loadComponent: () =>
-      import('../system/pages/module-placeholder/module-placeholder.page').then(
-        (module) => module.ModulePlaceholderPage,
+      import('./pages/analytics/cohort-analytics.page').then(
+        (module) => module.CohortAnalyticsPage,
       ),
-    data: {
-      title: 'Cohort analitiği',
-      summary: 'Gruplar arası karşılaştırma ve gizlilik eşiği.',
-      phase: 8,
-      scope: ['Cohort karşılaştırma', 'Minimum grup kuralı (BR-17)', 'Kazanım kırılımı'],
-    },
   },
   {
     path: 'item-analysis',
     title: 'Madde Analizi · Adaptif Eğitim',
     canMatch: [permissionGuard('analytics:item')],
     loadComponent: () =>
-      import('../system/pages/module-placeholder/module-placeholder.page').then(
-        (module) => module.ModulePlaceholderPage,
-      ),
-    data: {
-      title: 'Madde analizi',
-      summary: 'Zorluk, ayırt edicilik ve çeldirici analizi.',
-      phase: 8,
-      scope: ['Zorluk / ayırt edicilik', 'Çeldirici dağılımı', 'Kalite bayrakları (BR-19)'],
-    },
+      import('./pages/analytics/item-analysis.page').then((module) => module.ItemAnalysisPage),
   },
 
-  {
-    path: 'audit-log',
-    title: 'Denetim Kaydı · Adaptif Eğitim',
-    canMatch: [permissionGuard('audit:read')],
-    loadComponent: () =>
-      import('../system/pages/module-placeholder/module-placeholder.page').then(
-        (module) => module.ModulePlaceholderPage,
-      ),
-    data: {
-      title: 'Denetim kaydı',
-      summary: 'İşlem tipi, kullanıcı, zaman ve eski/yeni değer geçmişi.',
-      phase: 9,
-      scope: ['Çoklu filtre', 'Eski ↔ yeni değer diff', 'Gerçek zamanlı akış'],
-    },
-  },
 ];

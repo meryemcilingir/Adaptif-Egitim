@@ -1,0 +1,158 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Başarı panosu ve risk listesi</h1>
+      <p class="text-sm text-muted">
+        Bileşik skor; ustalık (%40), sınav ortalaması (%40) ve tamamlama (%20)
+        birleşiminden hesaplanır. Risk listesine girmek için en az iki ölçümün
+        eşiğin altında olması gerekir.
+      </p>
+    </div>
+
+    @if (exportTable(); as table) {
+      <app-export-menu [table]="table" />
+    }
+  </header>
+
+  <app-analytics-filter-bar
+    [value]="facade.filters()"
+    [filters]="filterDefinitions()"
+    [busy]="isRefreshing()"
+    (valueChange)="onFilterChange($event)"
+    (apply)="onApply()"
+    (reset)="onReset()"
+  />
+
+  @if (isLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="3" message="Pano hazırlanıyor…" />
+  } @else if (hasError()) {
+    <app-error-state [error]="error()" title="Pano yüklenemedi" (retry)="load()" />
+  } @else if (board(); as data) {
+    @if (isEmpty()) {
+      <app-empty-state
+        icon="users"
+        title="Kapsamda öğrenci yok"
+        description="Seçili program, ders veya grupta öğrenci bulunmuyor."
+        actionLabel="Filtreleri temizle"
+        actionIcon="x"
+        (action)="onReset()"
+      />
+    } @else {
+      <section class="summary" aria-label="Özet">
+        <div class="metric">
+          <span class="metric__label text-xs">Kapsamdaki öğrenci</span>
+          <span class="metric__value tabular">{{ data.studentCount }}</span>
+        </div>
+        <div class="metric">
+          <span class="metric__label text-xs">Ölçüm yapılabilen</span>
+          <span class="metric__value tabular">{{ data.measuredCount }}</span>
+          <span class="metric__hint text-xs">en az bir ustalık, deneme veya içerik kaydı</span>
+        </div>
+        <div class="metric">
+          <span class="metric__label text-xs">Risk altındaki öğrenci</span>
+          <span class="metric__value tabular" [class.is-warn]="data.atRiskCount > 0">
+            {{ data.atRiskCount }}
+          </span>
+          <span class="metric__hint text-xs">
+            ölçülebilen öğrencilerin %{{ riskShare() }} kadarı
+          </span>
+        </div>
+        <div class="metric">
+          <span class="metric__label text-xs">Ölçüm yok</span>
+          <span class="metric__value tabular is-muted">{{ data.unmeasuredCount }}</span>
+          <span class="metric__hint text-xs">hiç etkinliği olmayan öğrenci — riskli sayılmaz</span>
+        </div>
+      </section>
+
+      @if (data.unmeasuredCount > 0) {
+        <p class="notice text-sm">
+          <app-icon name="info" [size]="15" />
+          {{ data.unmeasuredCount }} öğrencinin seçili kapsamda hiç ölçümü yok. Bu
+          öğrenciler başarısız değil, ölçülmemiştir; hiçbir listeye alınmadı.
+        </p>
+      }
+
+      <div class="boards">
+        <app-card
+          title="En başarılı öğrenciler"
+          description="Bileşik skora göre ilk sıradakiler"
+        >
+          @if (data.topPerformers.length === 0) {
+            <app-empty-state
+              icon="trophy"
+              title="Sıralanacak öğrenci yok"
+              description="Seçili kapsamda ölçülebilir etkinlik bulunmuyor."
+            />
+          } @else {
+            <ol class="rows">
+              @for (row of data.topPerformers; track row.studentId; let index = $index) {
+                <li>
+                  <button type="button" class="row" (click)="openStudent(row)">
+                    <span class="row__rank tabular">{{ index + 1 }}</span>
+
+                    <span class="row__body">
+                      <span class="text-sm text-body-strong truncate">{{ row.studentName }}</span>
+                      <span class="text-xs text-subtle truncate">{{ row.cohortName }}</span>
+                    </span>
+
+                    <span class="row__bar">
+                      <app-progress-bar
+                        [value]="row.compositeScore"
+                        [max]="100"
+                        tone="success"
+                        label="Bileşik skor"
+                      />
+                    </span>
+
+                    <span class="row__score tabular">{{ row.compositeScore }}</span>
+                    <app-icon name="chevron-right" [size]="15" />
+                  </button>
+                </li>
+              }
+            </ol>
+          }
+        </app-card>
+
+        <app-card
+          title="Risk altındaki öğrenciler"
+          description="Her satır hangi ölçümün eşiğin altında kaldığını gösterir"
+        >
+          @if (data.atRisk.length === 0) {
+            <app-empty-state
+              icon="circle-check"
+              title="Risk sinyali yok"
+              description="Seçili kapsamda iki veya daha fazla eşiği aşan öğrenci bulunmuyor."
+            />
+          } @else {
+            <ul class="rows">
+              @for (row of data.atRisk; track row.studentId) {
+                <li>
+                  <button type="button" class="row row--risk" (click)="openStudent(row)">
+                    <span class="row__body">
+                      <span class="text-sm text-body-strong truncate">{{ row.studentName }}</span>
+                      <span class="text-xs text-subtle truncate">{{ row.cohortName }}</span>
+
+                      <span class="reasons">
+                        @for (reason of row.riskReasons; track reason) {
+                          <app-status-badge [label]="reason" tone="warning" />
+                        }
+                      </span>
+                    </span>
+
+                    <span class="row__stats">
+                      <span class="text-xs tabular">Ustalık %{{ row.masteryPercent }}</span>
+                      <span class="text-xs tabular">Sınav %{{ row.examAveragePercent }}</span>
+                      <span class="text-xs tabular">Tamamlama %{{ row.completionRate }}</span>
+                    </span>
+
+                    <app-icon name="chevron-right" [size]="15" />
+                  </button>
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+      </div>
+    }
+  }
+</div>

@@ -83,15 +83,23 @@ export interface DailyStudy {
 
 const DAY_LABELS = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt'];
 
-/** Son 7 günün günlük çalışma dökümü (bugün en sağda). */
+/**
+ * İçinde bulunulan haftanın günlük çalışma dökümü.
+ *
+ * Gün sırası SABİTTİR (Pazartesi'den başlar); "bugün en sağda" kayan pencere
+ * yerine takvim haftası gösterilir, böylece kartlar gün değiştikçe kaymaz.
+ */
 export function buildWeeklyStudy(
   progress: readonly ContentProgress[],
   nowMs: number,
 ): DailyStudy[] {
   const today = Math.floor(nowMs / DAY_MS);
+  const todayWeekday = new Date(today * DAY_MS).getUTCDay(); // 0=Paz … 6=Cmt
+  const offsetFromMonday = (todayWeekday + 6) % 7; // Pzt=0 … Paz=6
+  const monday = today - offsetFromMonday;
 
   return Array.from({ length: 7 }, (_, index) => {
-    const day = today - (6 - index);
+    const day = monday + index;
     const date = new Date(day * DAY_MS);
 
     const sameDay = progress.filter(
@@ -107,46 +115,6 @@ export function buildWeeklyStudy(
       completedCount: sameDay.filter((item) => item.state === 'completed').length,
     };
   });
-}
-
-/* ── Deneyim puanı ───────────────────────────────────────────────────────── */
-
-export const XP_RULES = {
-  perCompletedContent: 50,
-  perStudyMinute: 1,
-  perStreakDay: 10,
-  /** Bir seviyenin gerektirdiği puan. */
-  perLevel: 500,
-} as const;
-
-export interface ExperienceResult {
-  readonly totalXp: number;
-  readonly level: number;
-  readonly xpIntoLevel: number;
-  readonly xpForNextLevel: number;
-  readonly percentToNextLevel: number;
-}
-
-export function calculateExperience(
-  completedCount: number,
-  studyMinutes: number,
-  streakDays: number,
-): ExperienceResult {
-  const totalXp =
-    completedCount * XP_RULES.perCompletedContent +
-    studyMinutes * XP_RULES.perStudyMinute +
-    streakDays * XP_RULES.perStreakDay;
-
-  const level = Math.floor(totalXp / XP_RULES.perLevel) + 1;
-  const xpIntoLevel = totalXp % XP_RULES.perLevel;
-
-  return {
-    totalXp,
-    level,
-    xpIntoLevel,
-    xpForNextLevel: XP_RULES.perLevel,
-    percentToNextLevel: Math.round((xpIntoLevel / XP_RULES.perLevel) * 100),
-  };
 }
 
 /* ── Başarımlar ──────────────────────────────────────────────────────────── */

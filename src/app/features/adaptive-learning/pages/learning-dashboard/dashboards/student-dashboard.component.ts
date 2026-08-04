@@ -6,12 +6,7 @@ import { AppCardComponent } from '../../../../../shared/components/app-card/app-
 import { AppChartCardComponent } from '../../../../../shared/components/app-chart-card/app-chart-card.component';
 import { AppEmptyStateComponent } from '../../../../../shared/components/app-empty-state/app-empty-state.component';
 import { AppProgressBarComponent } from '../../../../../shared/components/app-progress-bar/app-progress-bar.component';
-import {
-  toDonutSeries,
-  toHeatmapSeries,
-  toTimeCategories,
-  toTimeSeries,
-} from '../../../../../shared/utils/chart-adapters';
+import { toHeatmapSeries } from '../../../../../shared/utils/chart-adapters';
 import { DashboardCommonComponent } from '../../../components/dashboard/dashboard-common.component';
 import { KpiGridComponent } from '../../../components/dashboard/kpi-grid.component';
 import { OutcomeHighlightListComponent } from '../../../components/dashboard/outcome-highlight-list.component';
@@ -23,7 +18,6 @@ import { AchievementGridComponent } from '../../../components/gamification/achie
 import { ContinueLearningCardComponent } from '../../../components/gamification/continue-learning-card.component';
 import { DailyGoalCardComponent } from '../../../components/gamification/daily-goal-card.component';
 import { StreakCardComponent } from '../../../components/gamification/streak-card.component';
-import { XpProgressComponent } from '../../../components/gamification/xp-progress.component';
 import { LearningPathTimelineComponent } from '../../../components/learning-path/learning-path-timeline.component';
 import { RecommendationReasonCardComponent } from '../../../components/recommendation-reason-card/recommendation-reason-card.component';
 import {
@@ -46,6 +40,13 @@ import { Recommendation } from '../../../models/recommendation.model';
  * Tüm bloklar sunucudan hazır gelir; burada hesaplama YOKTUR — yalnızca grafik
  * adaptasyonu ve gezinme.
  */
+/** Panoda gösterilen en fazla öneri; kalanı öğrenme yolu ekranındadır. */
+const DASHBOARD_RECOMMENDATION_LIMIT = 3;
+
+/** Isı haritası: eksen/gösterge payı + satır başına yükseklik. */
+const HEATMAP_BASE_HEIGHT = 110;
+const HEATMAP_ROW_HEIGHT = 34;
+
 @Component({
   selector: 'app-student-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
@@ -68,7 +69,6 @@ import { Recommendation } from '../../../models/recommendation.model';
     RecommendationReasonCardComponent,
     StreakCardComponent,
     UpcomingExamsComponent,
-    XpProgressComponent,
   ],
   templateUrl: './student-dashboard.component.html',
   styleUrl: './student-dashboard.component.scss',
@@ -80,17 +80,19 @@ export class StudentDashboardComponent {
   readonly recommendationStart = output<Recommendation>();
   readonly notificationRead = output<Notification>();
 
-  readonly masterySeries = computed(() =>
-    toTimeSeries('Ortalama başarı', this.data().masteryTrend),
-  );
-  readonly masteryCategories = computed(() => toTimeCategories(this.data().masteryTrend));
-
-  readonly distributionSeries = computed(() => toDonutSeries(this.data().outcomeDistribution));
-  readonly distributionLabels = computed(() =>
-    this.data().outcomeDistribution.map((entry) => entry.label),
-  );
-
   readonly heatmapSeries = computed(() => toHeatmapSeries(this.data().masteryHeatmap));
+
+  /*
+   * Isı haritası satır sayısıyla BÜYÜR.
+   *
+   * Sabit 360 px'te 10+ kazanım satırı ~25 px'e sıkışıyor, satır etiketleri ve
+   * hücre değerleri okunmuyordu. Satır başına sabit yükseklik verilir; eksen ve
+   * gösterge için de bir taban pay bırakılır.
+   */
+  readonly heatmapHeight = computed(() => {
+    const rowCount = this.data().masteryHeatmap.rows.length;
+    return HEATMAP_BASE_HEIGHT + rowCount * HEATMAP_ROW_HEIGHT;
+  });
 
   /** Haftalık çalışma: dakika (kolon) + tamamlanan içerik (çizgi) aynı grafikte. */
   readonly weeklySeries = computed(() => [
@@ -107,6 +109,24 @@ export class StudentDashboardComponent {
   readonly weeklyCategories = computed(() =>
     this.data().weeklyProgress.days.map((day) => day.label),
   );
+
+  /*
+   * Panoda öneri listesi KIRPILIR.
+   *
+   * Öneri sayısı öğrencinin durumuna göre değişir; hepsini panoya basmak
+   * sayfayı aşağı doğru uzatıp altındaki haftalık ilerleme bölümünü ekrandan
+   * düşürüyordu. Tam liste öğrenme yolu ekranında zaten var; pano ilk üçünü
+   * gösterip oraya yönlendirir.
+   */
+  readonly visibleRecommendations = computed(() =>
+    this.data().recommendations.slice(0, DASHBOARD_RECOMMENDATION_LIMIT),
+  );
+
+  readonly hiddenRecommendationCount = computed(() =>
+    Math.max(0, this.data().recommendations.length - DASHBOARD_RECOMMENDATION_LIMIT),
+  );
+
+  readonly hasMoreRecommendations = computed(() => this.hiddenRecommendationCount() > 0);
 
   /* ── Gezinme ─────────────────────────────────────────────────────────── */
 

@@ -386,6 +386,121 @@ taslak bir sınav doğrudan yayına alınamaz.
 
 **Yetki.** İş akışı geçişleri `exam:publish` ister (blueprint için `blueprint:write`).
 Yazma yetkisi tek başına yetmez — arayüz de aynı yetkiye bakar (ADR-047).
+
+---
+
+## 19. Sınav Oturumu ve Değerlendirme (Faz 5–6)
+
+**Sınav ekranı kabuğun dışındadır** (`/session/:token`). Menü ve gezinme bağlantısı
+yoktur: sınav sırasında dikkat dağıtmamalı ve öğrenci yanlışlıkla dışarı çıkmamalıdır.
+Teslim makbuzu da (`/session/:token/submitted`) aynı gerekçeyle kabuk dışındadır.
+
+**Süre asla istemci saatinden hesaplanmaz** (BR-07). Sunucu her yanıtta `serverNow`
+gönderir; istemci farkı bir kez ölçer (`serverOffset`) ve sayacı hep bu düzeltmeyle
+yürütür. Otomatik teslim de istemciye bırakılmaz: sunucu, oturuma her dokunulduğunda
+süreyi denetler ve gerekirse denemeyi kendisi oluşturur — sekme kapalıyken de sınav
+kapanır.
+
+**Autosave üç yoldan çalışır.** Cevap değişince 900 ms gecikmeyle, ayrıca 30 saniyede
+bir, ayrıca soru değişiminde ve ekrandan çıkarken. Bağlantı kesilirse istekler
+`OutboxQueue`'ya sıralı biçimde alınır (BR-10); aynı sorunun tekrarlanan kayıtları
+`dedupeKey` ile birleşir, bağlantı gelince yalnızca son değer gider.
+
+**Çakışma sunucu lehine çözülür** (BR-09). Çakışma pratikte öğrencinin sınavı iki
+sekmede açmasından doğar ve iki cevap da kendisine aittir; süre akarken "hangisini
+istersiniz?" diye sormak yanlış olurdu. Sunucudaki değer alınır, kullanıcıya ne
+olduğu açıkça söylenir.
+
+**Öğrenciye doğru cevap gönderilmez** (BR-47). Seçenek doğruluğu, beklenen cevap,
+eşleştirme karşılıkları ve doğru sıra `buildQuestionViews()` içinde ayıklanır.
+Seçenekler öğrenciye özel ama KARARLI biçimde karıştırılır: tohum oturum jetonundan
+türetilir, böylece sayfa yenilendiğinde sıra değişmez.
+
+**Teslimden sonra puan gösterilmez** (BR-49). Açık uçlu cevaplar henüz
+değerlendirilmemişken not vermek yanıltıcı olurdu. Makbuz teslimin gerçekleştiğini
+kanıtlar ve sürecin nasıl ilerleyeceğini anlatır.
+
+**Rubrik puanı elle girilemez** (BR-13). Değerlendirici kriter başına bir seviye seçer,
+puan `evaluateRubric()` ile hesaplanır ve sorunun puanına ölçeklenir. Sunucu da
+istemciden gelen puanı değil seviye kimliklerini kaynak alır.
+
+**Gerekçe yalnızca MEVCUT bir puan değişirken zorunludur** (BR-12). İlk puanlamada
+gerekçe istemek, değerlendiriciyi her soruda anlamsız metin yazmaya iterdi.
+
+**Çakışma ve itiraz saklanmaz, `scoreHistory`'den türetilir** (ADR-050). Kim ne puan
+verdi bilgisi zaten orada; ikinci bir kaynak tutmak ayrışma riski doğururdu. İtiraz
+kayıtları `İTİRAZ:`, çakışma kararları `ÇAKIŞMA:` önekiyle ayrışır.
+## 18. Analitikte Doğruluk Sözleşmesi (Sprint 8)
+
+**Kapsam tek yerde kurulur** (ADR-057). `buildReportScope()` çağıranın rolüne göre
+program / ders / grup / öğrenci kümesini belirler; rapor üreticileri hazır kapsamı
+alır. Hiçbir uç kendi rol filtresini yazmaz — yazsaydı, unutulan bir filtre sessizce
+veri sızdırırdı. Kapsam dışı öğrenci `404` döner, `403` değil (BR-54).
+
+**Ölçüm yokluğu sıfır değildir** (ADR-060, BR-55). Hiç etkinliği olmayan öğrenci
+%0 ustalıkla "riskli" görünüyordu — 102 öğrencinin 57'si. Artık her risk sinyali
+yalnızca KENDİ ölçümü varsa değerlendirilir; ölçülmemiş öğrenciler ayrı sayılır ve
+hiçbir listeye girmez. Aynı ilke karşılaştırma tablosunda `sampleSize` ile, öneri
+analizinde "öneri üretilmedi" mesajıyla uygulanır.
+
+**Birikimli oran iki ana göre karşılaştırılır** (ADR-058). Tamamlama oranı bir
+durum ölçüsüdür; önceki dönemi "o dönemde tamamlananlar" sayınca %789 artış çıkıyordu.
+`completionRateAsOf()` aynı kümeyi iki farklı ana göre ölçer.
+
+**Öneri kabulü davranıştan ölçülür** (ADR-059, BR-57). Öneriden sonra içeriğin
+açılması "kabul", tamamlanması "isabet"tir. Kayıtta bir "kabul edildi" alanı olsaydı
+motorun kendi hakkındaki iddiası olurdu.
+
+**Her içgörü kanıt taşır.** `buildInsights()` ürettiği her cümlenin yanına dayandığı
+ölçümü koyar. Gerekçesiz bir "risk altında" etiketi öğretim elemanına ne yapacağını
+söylemez, öğrenci için de haksız bir damgadır (BR-56).
+
+**Zamanlama ve dışa aktarım dürüstçe etiketlenir** (BR-60). Zamanlayıcı ve e-posta
+gönderimi yoktur; ekran bunu gizlemek yerine yazar. CSV gerçek dosya üretir, Excel
+ve PDF "örnek" etiketlidir.
+
+## 19. Yönetimde Doğruluk Sözleşmesi (Sprint 9)
+
+**İzinler artık veritabanından okunur** (ADR-066). `ROLE_PERMISSIONS` derleme
+zamanı sabiti TOHUM kaynağıdır; tohumlandıktan sonra doğruluk kaynağı
+`roleDefinitions` koleksiyonudur. Yönetici bir rolün izinlerini değiştirdiğinde
+etki `permissionsFromDefinitions()` üzerinden yayılır ve kullanıcının bir
+sonraki oturumunda geçerli olur — ekran bunu söyler, yoksa "kaydettim ama
+değişmedi" izlenimi doğardı.
+
+**Sistem rolleri korunur** (ADR-067). Altı rol silinemez ve adları değişmez;
+kod içinde `Role` tipiyle referans alınırlar. Platform Yöneticisinden
+`admin:manage` kaldırılamaz: kaldırılabilseydi sistem kendini dışarıdan kilitler
+ve ancak veritabanı sıfırlanarak açılırdı.
+
+**Durum bayrağı yerine takvim** (ADR-065). Dönemin `active` alanı kaldırıldı;
+durum `termStatus(term, now)` ile hesaplanır. Aynı ilke sınav çalışma durumunda
+(ADR-041) ve yayın akışında da geçerlidir: saatin ilerlemesiyle kendiliğinden
+yanlışa düşen bir alan tutulmaz.
+
+**Kilit sayaçtan türetilir** (ADR-068, BR-65). `failedLoginCount` sınıra
+ulaştığında hesap kilitlidir; ayrı bir bayrak yoktur. Kilit kontrolü parola
+doğrulamasından sonra yapılır ki hesabın varlığı sızmasın.
+
+**Alıcılar gönderim anında çözülür** (ADR-069, BR-68). Kampanya bir şablondur;
+"kaç kişiye gidecek?" önizlemesi ile gerçek gönderim AYNI fonksiyonu kullanır,
+dolayısıyla önizleme yanıltamaz.
+
+**Formlar sinyal değildir** (ADR-070). `computed` içinde `form.valid` ya da
+`getRawValue()` okumak bağımlılık kurmaz; değer önce `toSignal(form.valueChanges)`
+ile bir sinyale kopyalanır. Bu hata sınıfı üç ekranda birden görüldü: dönem
+çakışma uyarısı hiç çıkmıyor, ayar ihlali donuyor, bildirim düğmesi hep pasif
+kalıyordu.
+
+**Form içinde tek gönderim yolu** (ADR-071). `type="submit"` ile `(pressed)`
+birlikte bağlanınca tek tıklama iki gönderim üretiyordu; form içindeki düğme
+yalnızca `type="submit"` taşır.
+
+**Örnek olan söylenir** (BR-71). Sistem sağlığı, IP adresleri, e-posta gönderimi
+ve zamanlanmış rapor/bildirim — hepsi örnektir ve ekranda öyle etiketlenir.
+Çalışmayan bir göstergeyi çalışıyormuş gibi sunmak, çalışan her şeye duyulan
+güveni de zedeler.
+
 ## 17. Güncel Durum
 
 > Bu bölüm her önemli aşamada güncellenir.
@@ -394,5 +509,9 @@ Yazma yetkisi tek başına yetmez — arayüz de aynı yetkiye bakar (ADR-047).
   **Faz B** (program/ders/kazanım yönetimi, kazanım grafiği, yayın akışı),
   **Faz C** (içerik yönetimi, öğrenme yolu, öneri motoru, öğrenci öğrenme paneli),
   **Faz 3** (soru bankası: CRUD, versiyonlama, editör, ölçme uzmanı paneli),
-  **Faz 4** (blueprint, 7 adımlı sınav sihirbazı, kısıt paneli, doğrulama motoru).
-- **Sonraki:** Faz 5 — Sınav Oturumu & Autosave (Sprint 7). Detay: `ROADMAP.md`.
+  **Faz 4** (blueprint, 7 adımlı sınav sihirbazı, kısıt paneli, doğrulama motoru),
+  **Faz 5–6** (sınav oturumu, autosave/offline, teslim akışı, rubrikli değerlendirme),
+  **Faz 8** (analitik, raporlama, öğrenme içgörüleri — 13 ekran, 15 rapor ucu),
+  **Faz 9** (yönetim paneli, kullanıcı/rol/dönem/ayar yönetimi, bildirim merkezi,
+  denetim kaydı — 9 ekran, veritabanı tabanlı RBAC).
+- **Sonraki:** Faz 10 — test, performans, erişilebilirlik ve teslim. Detay: `ROADMAP.md`.

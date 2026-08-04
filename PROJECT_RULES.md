@@ -259,6 +259,13 @@ Sadece UI'da filtrelemek yetersizdir.
 | BR-44 | Sınav en az bir gruba atanmadan ve blueprint'e bağlanmadan yayına alınamaz | `domain/exam-validation.ts` → `cohort_required`, `empty_exam` |
 | BR-45 | Yayındaki sınav doğrudan düzenlenemez; değişiklik için taslağa geri alınır ya da klonlanır | `pages/exams/exam-detail.page.ts` · `ExamDetail.isEditable` |
 | BR-46 | Sınavın çalışma durumu (planlandı/devam ediyor/kapandı) saklanmaz, tarihlerden türetilir | `domain/exam-runtime.ts` → `examRuntimeStatus()` |
+| BR-47 | Öğrenciye giden soru verisinde doğru cevap bilgisi BULUNMAZ (seçenek doğruluğu, beklenen cevap, eşleştirme karşılıkları, doğru sıra) | `handlers/session/session-context.ts` → `buildQuestionViews()` |
+| BR-48 | Kapanmış oturum ikinci kez teslim edilemez; süre dolduktan sonra cevap değiştirilemez | `domain/session.rules.ts` → `isClosed()`, `acceptsAnswerAt()` |
+| BR-49 | Teslim sonrası öğrenciye puan gösterilmez; sonuç ancak `RELEASED` durumunda açılır | `session.handlers.ts` → `/submit`, `/my/exam-history` |
+| BR-50 | Değerlendirme puanı sorunun en yüksek puanını geçemez ve negatif olamaz | `domain/grading.rules.ts` → `validateScore()` |
+| BR-51 | Elle puanlanacak cevap kaldıkça deneme `GRADED` olmaz; sonucun açıklanması ayrı bir karardır | `domain/grading.rules.ts` → `nextAttemptState()` |
+| BR-52 | İki değerlendirici aynı cevaba farklı puan verdiyse çakışma gösterilir; nihai karar gerekçesiyle kaydedilir | `domain/grading.rules.ts` → `detectConflict()` · `POST /attempts/:id/resolve-conflict` |
+| BR-53 | Oturum süresi, sınav süresi ile sınav penceresinin kapanışından hangisi önce geliyorsa ona göre biter | `domain/session.rules.ts` → `sessionExpiry()` |
 
 ---
 
@@ -312,6 +319,133 @@ Exam / ExamBlueprint (BR-45, BR-46 — ortak akış, ADR-042):
     (BR-39…BR-44); panel "hazır" dese bile sunucu son sözü söyler.
   · Çalışma durumu (planlandı / devam ediyor / kapandı) bu makinenin PARÇASI
     DEĞİLDİR; `opensAt` / `closesAt` tarihlerinden türetilir (BR-46).
+
+
+ExamSession (BR-06, BR-48, BR-53):
+
+    NOT_STARTED ──► IN_PROGRESS ──► SUBMITTED
+                      │    ▲            (son durum)
+                      ▼    │
+                    PAUSED ┘
+                      │
+                      └──► EXPIRED / TERMINATED
+
+  · Bir öğrencinin aynı sınav için TEK aktif oturumu olur; ikinci istek hata
+    yerine mevcut oturumu döndürür (BR-06) — sekmesini kapatıp dönen öğrenci
+    hata ekranıyla karşılaşmamalıdır.
+  · Süre dolunca oturum `EXPIRED` olur ve deneme otomatik oluşur. Bu kararı
+    sunucu verir: istemci sayacına bırakılsaydı sekme kapalıyken hiç
+    tetiklenmezdi.
+  · Kapanmış oturum yeniden açılmaz ve ikinci kez teslim edilemez (BR-48).
+
+Attempt (BR-12, BR-49, BR-51):
+
+    SUBMITTED ──► AUTO_GRADED ──► PENDING_MANUAL ──► GRADED ──► RELEASED
+                                       ▲               │            │
+                                       └───────────────┴─ UNDER_REVIEW
+
+  · Objektif cevaplar teslim anında otomatik puanlanır (BR-11).
+  · Elle puanlanacak cevap kaldıkça `PENDING_MANUAL` kalır.
+  · `RELEASED` AYRI bir karardır; puanlama onu otomatik tetiklemez ve öğrenci
+    o ana kadar puanını görmez (BR-49).
+  · Sonucu açıklanmış deneme doğrudan puanlanamaz; önce itiraz incelemesi
+    (`UNDER_REVIEW`) açılır.
+
+
+## 8.x Analitik ve Raporlama Kuralları (Sprint 8)
+
+**BR-54 — Rapor kapsamı role göre daraltılır.** Öğrenci yalnızca kendi verisini,
+eğitmen sorumlu olduğu ders ve grupları, program yöneticisi programını, platform
+yöneticisi tümünü görür. Kapsam dışı bir öğrenci istendiğinde `403` değil `404`
+döner: `403`, o kimliğin var olduğunu doğrular ve tek başına bilgi sızdırır.
+
+**BR-55 — Ölçüm yokluğu sıfır değildir.** Hiç ustalık ölçümü, denemesi veya
+başlanmış içeriği olmayan öğrenci başarısız sayılmaz; risk listesine girmez ve
+`unmeasuredCount` altında ayrıca raporlanır. Karşılaştırma tablosunda ölçümü
+olmayan hücre `0` değil `—` gösterir (`CompareMetric.sampleSize === 0`).
+
+**BR-56 — Risk için en az iki sinyal gerekir.** Tek bir düşük ölçüm (bir kötü
+sınav, bir hafta düşük katılım) risk değildir. Her risk satırı hangi ölçümün
+eşiğin altında kaldığını GEREKÇE olarak yazar; gerekçesiz "riskli" etiketi
+öğretim elemanına ne yapacağını söylemez.
+
+**BR-57 — Öneri kabul oranı davranıştan ölçülür.** Öneriden sonra içeriğin
+açılması "kabul", tamamlanması "isabet" sayılır. Öneri üretilmemiş bir dönemde
+oran `%0` değil "öneri üretilmedi" olarak gösterilir ve değişim `null` kalır.
+
+**BR-58 — Karşılaştırmada referans ilk seçilen kayıttır.** Farklar her zaman ilk
+tarafa göre hesaplanır. "Ortalamaya göre fark" gibi kayan bir referans, seçim
+değiştikçe aynı öğrencinin farkını da değiştirir. En az iki, en fazla dört taraf
+karşılaştırılır (sunucu da aynı sınırı uygular).
+
+**BR-59 — Tarih aralığı en fazla 365 gündür**, başlangıç bitişten sonra olamaz ve
+gelecek bir tarih seçilemez (`validateRange`). Aralık, boyut filtrelerinden ayrı
+saklanır ve kayıtlı raporla birlikte geri yüklenir.
+
+**BR-60 — Zamanlanmış rapor gerçek bir iş tetiklemez.** Bu projede zamanlayıcı ve
+e-posta gönderimi yoktur; her zamanlanmış rapor kartı ve rapor oluşturucu bunu
+açıkça yazar. Excel ve PDF dışa aktarımları da "örnek" etiketiyle sunulur; yalnızca
+CSV gerçek bir dosya üretir.
+
+**BR-61 — Kayıtlı rapor kişiseldir.** Sunucu yalnızca çağıranın raporlarını döner;
+başkasının raporu "bulunamadı" olarak yanıtlanır. Rapor adı 3–80, açıklama 300,
+bileşen 12, alıcı 10 ile sınırlıdır (`REPORT_LIMITS`).
+
+
+## 8.y Yönetim ve Operasyon Kuralları (Sprint 9)
+
+**BR-62 — Yönetim paneline yalnızca `admin:manage` izniyle girilir.** Kapı
+`canMatch` ile kurulur: yetkisiz kullanıcı için rota eşleşmez, bileşen hiç
+yüklenmez. Denetim kaydı ayrı bir izinle (`audit:read`) korunur; denetimi
+okuyabilen herkesin kullanıcı yönetebilmesi gerekmez.
+
+**BR-63 — Sistem rolleri silinemez, adları değişmez.** Altı rol kod içinde
+`Role` tipiyle referans alınır. İzinleri düzenlenebilir; ancak Platform
+Yöneticisinden `admin:manage` kaldırılamaz — kaldırılabilseydi yönetim ekranına
+bir daha kimse giremezdi. İzin değişikliği kullanıcının BİR SONRAKİ oturumunda
+geçerli olur ve ekran bunu açıkça yazar.
+
+**BR-64 — Son platform yöneticisi devre dışı bırakılamaz.** Askıya alma ve
+arşivleme, sistemde aktif başka bir yönetici yoksa reddedilir. Yönetici kendi
+hesabının durumunu da değiştiremez.
+
+**BR-65 — Hesap kilidi sayaçtan türetilir.** `failedLoginCount` ayarlardaki
+`loginAttempts` sınırına ulaştığında hesap kilitlidir; ayrı bir bayrak tutulmaz.
+Kilitli hesap doğru parolayla da giremez. Kilit kontrolü parola doğrulamasından
+SONRA yapılır ki hesabın varlığı sızmasın.
+
+**BR-66 — Yeni kullanıcı `INVITED` durumunda başlar.** Hesap ancak sahibi ilk
+girişini yapınca gerçekten kullanılıyordur; doğrudan "aktif" saymak kullanıcı
+sayısı raporlarını şişirirdi.
+
+**BR-67 — Aynı anda yalnızca bir aktif dönem olabilir.** Bu, bir bayrakla değil
+ÇAKIŞMA YASAĞIYLA sağlanır: tarihleri çakışmayan dönemlerden ancak biri bugünü
+kapsayabilir. Tamamlanmış ve arşivlenmiş dönemler düzenlenemez; derse bağlı
+dönem arşivlenemez. Akademik yıl `2025-2026` biçiminde ve ardışık iki yıl olmalıdır.
+
+**BR-68 — Bildirim alıcıları gönderim anında çözülür.** Alıcısı olmayan kampanya
+gönderilemez: "gönderildi" deyip kimseye ulaşmamak gönderim geçmişini yalancı
+yapar. Gönderilmiş bildirim düzenlenemez ve silinemez — kullanıcıların gördüğü
+metin ile kayıt farklılaşırsa geçmiş güvenilmez olur.
+
+**BR-69 — Denetim kaydı salt okunurdur.** Hiçbir ekran denetim kaydını düzenleyip
+silemez; düzenlenebilir bir denetim izi denetim sayılmaz. Kim, ne zaman ve hangi
+adresten bilgisi istemciden ALINMAZ, sunucuda atanır. Başarısız işlemler de
+kayda girer (`success: false`).
+
+**BR-70 — Genel arama yetki kontrolünü atlamaz.** Her kategori kendi iznine
+bağlıdır: `admin:manage` olmayan kullanıcı arama sonuçlarında kullanıcı göremez.
+Arama, izin kapısının etrafından dolaşmanın kestirme yolu olmamalıdır.
+
+**BR-71 — Sistem sağlığı örnek veridir.** Bu projede gerçek bir sunucu,
+veritabanı sunucusu veya disk izlenmez. Uyarı göstergelerin YANINDA durur,
+dipnot olarak değil: yönetici gerçek bir arıza anında bu karta güvenmemelidir.
+Değerler yine de uydurulmaz; ölçülebilen şeylerden (kayıt sayısı, açık oturum)
+türetilir.
+
+**BR-72 — Yönetim girdilerinin sınırları.** Rol adı 3–50, açıklama 200; bildirim
+başlığı 3–100, içerik 1000; platform adı 3–100; ad soyad 3–80, kullanıcı adı 3–40.
+Tüm çok satırlı alanlarda karakter sayacı gösterilir.
 
 
 ## 9. Test Kuralları

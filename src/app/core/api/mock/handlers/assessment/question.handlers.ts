@@ -27,6 +27,7 @@ import { equals, inList, includesId } from '../../db/query-engine';
 import { businessRule, notFound, validation } from '../../mock-errors';
 import { isWithinScope, requirePermission } from '../../mock-auth';
 import { MockCaller, MockContext, MockHandler, created, ok } from '../../mock-router';
+import { writeAudit } from '../audit-writer';
 import { createCrudHandlers, diffFields } from '../crud/crud-handlers';
 import { FieldValidator, readNumber, readStringArray, readText } from '../crud/field-validator';
 import { buildQuestionDetail, questionAuthorName } from './question-detail';
@@ -417,7 +418,7 @@ export const QUESTION_HANDLERS: readonly MockHandler[] = [
         updatedBy: caller.userId,
       })!;
 
-      writeAudit(context, caller, 'question.versioned', updated, changeNote);
+      writeAudit(context, caller, 'question.versioned', questionTarget(updated), changeNote);
       return created(updated);
     },
   },
@@ -479,7 +480,7 @@ export const QUESTION_HANDLERS: readonly MockHandler[] = [
       };
 
       questions.insert(copy);
-      writeAudit(context, caller, 'question.duplicated', copy, `Kaynak: ${source.code}`);
+      writeAudit(context, caller, 'question.duplicated', questionTarget(copy), `Kaynak: ${source.code}`);
 
       return created(copy);
     },
@@ -525,7 +526,7 @@ export const QUESTION_HANDLERS: readonly MockHandler[] = [
         updatedBy: caller.userId,
       })!;
 
-      writeAudit(context, caller, 'question.deleted', updated, null);
+      writeAudit(context, caller, 'question.deleted', questionTarget(updated), null);
       return ok(updated);
     },
   },
@@ -554,7 +555,7 @@ export const QUESTION_HANDLERS: readonly MockHandler[] = [
         updatedBy: caller.userId,
       })!;
 
-      writeAudit(context, caller, 'question.restored', updated, null);
+      writeAudit(context, caller, 'question.restored', questionTarget(updated), null);
       return ok(updated);
     },
   },
@@ -806,7 +807,7 @@ function applyTransition(
   if (target === 'PUBLISHED') {
     writeSnapshot(context, updated, updated.versionNumber, 'Toplu yayınlama.', caller.userId);
   }
-  writeAudit(context, caller, TRANSITION_ACTIONS[target], updated, null);
+  writeAudit(context, caller, TRANSITION_ACTIONS[target], questionTarget(updated), null);
 
   return { ok: true };
 }
@@ -863,29 +864,6 @@ function writeSnapshot(
   });
 }
 
-function writeAudit(
-  context: MockContext,
-  caller: MockCaller,
-  action: AuditAction,
-  question: Question,
-  reason: string | null,
-): void {
-  context.db.collection('auditEvents').insert({
-    id: `aud_${context.now}_${Math.random().toString(36).slice(2, 8)}`,
-    action,
-    actorId: caller.userId,
-    actorName: questionAuthorName(context.db, caller.userId),
-    actorRole: caller.role,
-    targetType: 'Question',
-    targetId: question.id,
-    targetLabel: `${question.code} · ${question.title}`,
-    reason,
-    changes: [],
-    correlationId: context.request.headers.get('X-Correlation-Id'),
-    createdAt: new Date(context.now).toISOString(),
-  });
-}
-
 /** Dışa aktarma satırı — iç kimlikler yerine taşınabilir alanlar. */
 function toExportRow(question: Question) {
   return {
@@ -910,4 +888,9 @@ function toExportRow(question: Question) {
     state: question.state,
     versionNumber: question.versionNumber,
   };
+}
+
+/** Denetim kaydında sorunun nasıl görüneceği. */
+function questionTarget(question: Question) {
+  return { type: 'Question', id: question.id, label: `${question.code} · ${question.title}` };
 }

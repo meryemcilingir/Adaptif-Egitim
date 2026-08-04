@@ -24,6 +24,7 @@ import { equals, inList, includesId } from '../../db/query-engine';
 import { businessRule, notFound, validation } from '../../mock-errors';
 import { isWithinScope, requirePermission } from '../../mock-auth';
 import { MockContext, MockHandler, created, ok } from '../../mock-router';
+import { writeAudit } from '../audit-writer';
 import { createCrudHandlers, diffFields } from '../crud/crud-handlers';
 import { FieldValidator, readNumber, readStringArray, readText } from '../crud/field-validator';
 import {
@@ -209,7 +210,7 @@ export const EXAM_HANDLERS: readonly MockHandler[] = [
       };
 
       context.db.collection('exams').insert(copy);
-      writeAudit(context, 'exam.duplicated', copy, `Kaynak: ${source.title}`);
+      writeAudit(context, caller, 'exam.duplicated', examTarget(copy), `Kaynak: ${source.title}`);
 
       return created(copy);
     },
@@ -485,31 +486,6 @@ function saveQuestions(
   })!;
 }
 
-function writeAudit(
-  context: MockContext,
-  action: AuditAction,
-  exam: Exam,
-  reason: string | null,
-): void {
-  const caller = context.caller!;
-  const actor = context.db.collection('users').findById(caller.userId);
-
-  context.db.collection('auditEvents').insert({
-    id: `aud_${context.now}_${Math.random().toString(36).slice(2, 8)}`,
-    action,
-    actorId: caller.userId,
-    actorName: actor?.fullName ?? 'Bilinmiyor',
-    actorRole: caller.role,
-    targetType: 'Exam',
-    targetId: exam.id,
-    targetLabel: exam.title,
-    reason,
-    changes: [],
-    correlationId: context.request.headers.get('X-Correlation-Id'),
-    createdAt: new Date(context.now).toISOString(),
-  });
-}
-
 /* ── Detay ───────────────────────────────────────────────────────────────── */
 
 function buildDetail(context: MockContext, exam: Exam, _callerId: string): ExamDetail {
@@ -599,4 +575,9 @@ function buildStatistics(context: MockContext, exam: Exam): ExamStatistics {
       attempts.map((attempt) => Math.round(attempt.durationSeconds / 60)),
     ),
   };
+}
+
+/** Denetim kaydında sınavın nasıl görüneceği. */
+function examTarget(exam: Exam) {
+  return { type: 'Exam', id: exam.id, label: exam.title };
 }

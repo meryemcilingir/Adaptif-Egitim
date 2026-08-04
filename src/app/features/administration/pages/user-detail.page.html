@@ -1,0 +1,320 @@
+<div class="page">
+  @if (isLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="4" message="Kullanıcı yükleniyor…" />
+  } @else if (hasError()) {
+    <app-error-state
+      [error]="error()"
+      title="Kullanıcı yüklenemedi"
+      (retry)="facade.loadDetail(id())"
+    />
+  } @else if (detail(); as data) {
+    <header class="page-header">
+      <div class="identity">
+        <app-button variant="ghost" size="sm" icon="arrow-left" (pressed)="back()">
+          Kullanıcılar
+        </app-button>
+
+        <h1 class="text-h1">{{ data.user.fullName }}</h1>
+
+        <div class="identity__meta">
+          <app-status-badge
+            [label]="stateLabels[data.user.state]"
+            [tone]="toneOf(data.user.state)"
+          />
+
+          @if (data.locked) {
+            <app-status-badge label="Hesap kilitli" tone="danger" />
+          }
+
+          <span class="text-sm text-muted">{{ data.user.email }}</span>
+        </div>
+      </div>
+
+      @if (canManage()) {
+        <div class="page-header__actions">
+          <app-button variant="secondary" icon="pencil-line" (pressed)="edit()">
+            Düzenle
+          </app-button>
+
+          @if (data.locked) {
+            <app-button variant="secondary" icon="lock-open" (pressed)="unlock()">
+              Kilidi aç
+            </app-button>
+          }
+
+          <app-button variant="secondary" icon="refresh-cw" (pressed)="resetPassword()">
+            Parola sıfırla
+          </app-button>
+
+          <app-button
+            [variant]="data.user.state === 'SUSPENDED' ? 'secondary' : 'ghost'"
+            [icon]="data.user.state === 'SUSPENDED' ? 'lock-open' : 'lock'"
+            (pressed)="toggleState()"
+          >
+            {{ data.user.state === 'SUSPENDED' ? 'Etkinleştir' : 'Askıya al' }}
+          </app-button>
+        </div>
+      }
+    </header>
+
+    @if (temporaryPassword(); as password) {
+      <div class="password-note" role="status">
+        <app-icon name="triangle-alert" [size]="16" />
+        <div class="password-note__body">
+          <p class="text-sm text-body-strong">
+            Geçici parola: <code>{{ password }}</code>
+          </p>
+          <p class="text-xs">
+            Bu projede e-posta gönderimi yoktur. Parolayı kullanıcıya siz iletmelisiniz;
+            sayfadan ayrıldığınızda bir daha görüntülenemez.
+          </p>
+        </div>
+        <app-button
+          variant="ghost"
+          size="sm"
+          icon="x"
+          ariaLabel="Kapat"
+          (pressed)="dismissPassword()"
+        />
+      </div>
+    }
+
+    <app-tabs [tabs]="tabs" [activeId]="activeTab()" (tabChange)="onTab($event)" />
+
+    @switch (activeTab()) {
+      @case ('overview') {
+        <div class="split">
+          <app-card title="Kişisel bilgiler">
+            <dl class="facts">
+              <div><dt>Ad soyad</dt><dd>{{ data.user.fullName }}</dd></div>
+              <div><dt>E-posta</dt><dd>{{ data.user.email }}</dd></div>
+              <div><dt>Kullanıcı adı</dt><dd>{{ data.user.username }}</dd></div>
+              <div><dt>Birim</dt><dd>{{ data.user.department || '—' }}</dd></div>
+              <div><dt>Ünvan</dt><dd>{{ data.user.title || '—' }}</dd></div>
+
+              <div>
+                <dt>Roller</dt>
+                <dd class="chips">
+                  @for (name of roleNames(); track name) {
+                    <span class="chip text-xs">{{ name }}</span>
+                  }
+                </dd>
+              </div>
+
+              <div>
+                <dt>Son giriş</dt>
+                <dd>
+                  {{
+                    data.user.lastLoginAt
+                      ? (data.user.lastLoginAt | date: 'dd MMM yyyy HH:mm')
+                      : 'Hiç giriş yapmadı'
+                  }}
+                </dd>
+              </div>
+
+              <div>
+                <dt>Oluşturma</dt>
+                <dd>{{ data.user.createdAt | date: 'dd MMM yyyy' }}</dd>
+              </div>
+
+              <div>
+                <dt>Başarısız giriş</dt>
+                <dd>{{ data.user.failedLoginCount }}</dd>
+              </div>
+            </dl>
+          </app-card>
+
+          <app-card title="Etkinlik özeti">
+            @if (!hasActivity()) {
+              <app-empty-state
+                icon="activity"
+                title="Henüz etkinlik yok"
+                description="Bu kullanıcı platformda ölçülebilir bir etkinlik üretmemiş."
+              />
+            } @else {
+              <div class="stats">
+                <div class="stat">
+                  <span class="stat__label text-xs">Sınav denemesi</span>
+                  <span class="stat__value tabular">{{ data.activity.examAttempts }}</span>
+                </div>
+
+                <div class="stat">
+                  <span class="stat__label text-xs">Tamamlanan içerik</span>
+                  <span class="stat__value tabular">{{ data.activity.completedContents }}</span>
+                </div>
+
+                <div class="stat">
+                  <span class="stat__label text-xs">Çalışma süresi</span>
+                  <span class="stat__value tabular">{{ data.activity.studyMinutes }} dk</span>
+                </div>
+
+                <div class="stat">
+                  <span class="stat__label text-xs">Sınav ortalaması</span>
+                  <span class="stat__value tabular">
+                    {{
+                      data.activity.averageScorePercent === null
+                        ? '—'
+                        : '%' + data.activity.averageScorePercent
+                    }}
+                  </span>
+                  @if (data.activity.averageScorePercent === null) {
+                    <span class="stat__hint text-xs">deneme yok</span>
+                  }
+                </div>
+              </div>
+
+              @if (data.activity.lastActivityAt) {
+                <p class="note text-xs">
+                  <app-icon name="clock" [size]="13" />
+                  Son etkinlik {{ data.activity.lastActivityAt | date: 'dd MMM yyyy HH:mm' }}
+                </p>
+              }
+            }
+          </app-card>
+        </div>
+      }
+
+      @case ('assignments') {
+        <div class="split">
+          <app-card title="Program ve dersler">
+            <dl class="facts">
+              <div>
+                <dt>Program</dt>
+                <dd>{{ data.assignments.programName ?? 'Atanmamış' }}</dd>
+              </div>
+            </dl>
+
+            @if (data.assignments.courses.length === 0) {
+              <app-empty-state
+                icon="book-open"
+                title="Ders ataması yok"
+                description="Bu kullanıcı herhangi bir derse atanmamış."
+              />
+            } @else {
+              <ul class="list">
+                @for (course of data.assignments.courses; track course.id) {
+                  <li class="list__item text-sm">{{ course.label }}</li>
+                }
+              </ul>
+            }
+          </app-card>
+
+          <app-card title="Gruplar">
+            @if (data.assignments.cohorts.length === 0) {
+              <app-empty-state
+                icon="users"
+                title="Grup ataması yok"
+                description="Bu kullanıcı bir öğrenci grubuna dâhil değil."
+              />
+            } @else {
+              <ul class="list">
+                @for (cohort of data.assignments.cohorts; track cohort.id) {
+                  <li class="list__item text-sm">{{ cohort.label }}</li>
+                }
+              </ul>
+            }
+          </app-card>
+        </div>
+      }
+
+      @case ('logins') {
+        <app-card
+          title="Giriş geçmişi"
+          description="Başarısız denemeler de listelenir. IP adresleri bu projede örnektir."
+        >
+          @if (data.logins.length === 0) {
+            <app-empty-state
+              icon="lock"
+              title="Giriş kaydı yok"
+              description="Bu hesapla henüz giriş denemesi yapılmamış."
+            />
+          } @else {
+            <ul class="rows">
+              @for (login of data.logins; track login.id) {
+                <li class="row" [class.is-failed]="!login.success">
+                  <span class="row__icon">
+                    <app-icon
+                      [name]="login.success ? 'circle-check' : 'circle-alert'"
+                      [size]="15"
+                    />
+                  </span>
+
+                  <span class="row__body">
+                    <span class="text-sm">{{ login.at | date: 'dd MMM yyyy HH:mm' }}</span>
+                    <span class="text-xs text-subtle">{{ login.userAgent }}</span>
+                  </span>
+
+                  <span class="text-xs tabular">{{ login.ipAddress }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+      }
+
+      @case ('notifications') {
+        <app-card title="Bildirim geçmişi" description="Bu kullanıcıya iletilen son bildirimler">
+          @if (data.notifications.length === 0) {
+            <app-empty-state
+              icon="bell"
+              title="Bildirim yok"
+              description="Bu kullanıcıya henüz bildirim gönderilmemiş."
+            />
+          } @else {
+            <ul class="rows">
+              @for (item of data.notifications; track item.id) {
+                <li class="row">
+                  <span class="row__icon">
+                    <app-icon [name]="item.read ? 'check' : 'bell'" [size]="15" />
+                  </span>
+
+                  <span class="row__body">
+                    <span class="text-sm">{{ item.title }}</span>
+                    <span class="text-xs text-subtle">
+                      {{ item.createdAt | date: 'dd MMM yyyy HH:mm' }} ·
+                      {{ item.read ? 'okundu' : 'okunmadı' }}
+                    </span>
+                  </span>
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+      }
+
+      @case ('audit') {
+        <app-card
+          title="Denetim izi"
+          description="Bu kullanıcının yaptığı ve bu kullanıcı üzerinde yapılan işlemler"
+        >
+          @if (data.audit.length === 0) {
+            <app-empty-state
+              icon="scroll-text"
+              title="Denetim kaydı yok"
+              description="Bu hesapla ilgili kayıtlı bir işlem bulunmuyor."
+            />
+          } @else {
+            <ul class="rows">
+              @for (event of data.audit; track event.id) {
+                <li class="row" [class.is-failed]="!event.success">
+                  <span class="row__icon">
+                    <app-icon name="scroll-text" [size]="15" />
+                  </span>
+
+                  <span class="row__body">
+                    <span class="text-sm">{{ actionLabel(event.action) }}</span>
+                    <span class="text-xs text-subtle">
+                      {{ event.targetLabel }} · {{ event.createdAt | date: 'dd MMM HH:mm' }}
+                    </span>
+                  </span>
+
+                  <span class="text-xs tabular">{{ event.ipAddress }}</span>
+                </li>
+              }
+            </ul>
+          }
+        </app-card>
+      }
+    }
+  }
+</div>
