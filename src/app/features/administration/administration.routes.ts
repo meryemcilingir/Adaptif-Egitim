@@ -15,7 +15,15 @@ import { permissionGuard } from '../../core/auth/guards/permission.guard';
  */
 export const ADMINISTRATION_ROUTES: Routes = [
   {
+    /*
+     * `pathMatch: 'full'` ZORUNLU: aksi hâlde Router, 'admin/terms' gibi daha
+     * özgül bir yolu bu genel 'admin' girdisine PREFIX olarak eşleştirmeye
+     * çalışır ve onun `canMatch`'i reddederse (ör. yalnızca `term:read`'i olan
+     * Program Yöneticisi) kullanıcı asıl özgül rotaya hiç ulaşamadan 403'e
+     * düşer — guard bir UrlTree döndürünce Router bir sonraki adayı denemez.
+     */
     path: 'admin',
+    pathMatch: 'full',
     title: 'Yönetim Panosu · Adaptif Eğitim',
     canMatch: [permissionGuard('admin:manage')],
     loadComponent: () =>
@@ -59,9 +67,14 @@ export const ADMINISTRATION_ROUTES: Routes = [
   },
 
   {
+    /*
+     * Program Yöneticisi akademik takvimi SALT OKUNUR görür (`term:read`) —
+     * ayrı bir takvim ekranı yazılmadığı için mevcut sayfa yeniden kullanılır.
+     * Yazma butonları sayfa içinde `admin:manage`'e göre gizlenir.
+     */
     path: 'admin/terms',
     title: 'Akademik Dönemler · Adaptif Eğitim',
-    canMatch: [permissionGuard('admin:manage')],
+    canMatch: [permissionGuard('admin:manage', 'term:read')],
     loadComponent: () => import('./pages/term-list.page').then((module) => module.TermListPage),
   },
 

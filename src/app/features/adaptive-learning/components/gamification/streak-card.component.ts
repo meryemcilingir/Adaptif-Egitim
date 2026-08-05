@@ -57,12 +57,12 @@ import { StreakCard } from '../../models/dashboard.model';
 export class StreakCardComponent {
   readonly streak = input.required<StreakCard>();
 
-  /** Son 7 günün görsel dökümü — seri uzunluğu kadar gün dolu gösterilir. */
+  /** Son 7 günün görsel dökümü — seri uzunluğu kadar gün SOLDAN başlayarak dolu gösterilir. */
   readonly week = computed(() => {
     const current = Math.min(7, this.streak().currentStreak);
     return Array.from({ length: 7 }, (_, index) => ({
       index,
-      active: index >= 7 - current,
+      active: index < current,
     }));
   });
 }

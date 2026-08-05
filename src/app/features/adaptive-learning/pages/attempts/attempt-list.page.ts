@@ -19,6 +19,7 @@ import { AppTableComponent } from '../../../../shared/components/app-table/app-t
 import { ColumnDef } from '../../../../shared/components/app-table/column-def';
 import { statusPresentation } from '../../../../shared/utils/status-tone';
 import { ATTEMPT_STATES, ATTEMPT_STATE_LABELS, Attempt } from '../../models/attempt.model';
+import { FilterValue } from '../../../../core/api/page-request';
 import { formatDuration } from '../../domain/exam-clock';
 import { CourseRepository } from '../../data-access/catalog.repository';
 import { ExamRepository } from '../../data-access/exam.repository';
@@ -56,6 +57,37 @@ export class AttemptListPage implements OnInit {
 
   private readonly courseOptionsState = signal<readonly { value: string; label: string }[]>([]);
   private readonly examOptionsState = signal<readonly { value: string; label: string }[]>([]);
+
+  /*
+   * Değerlendirme bekleyen ve puanlanan denemeler AYRI kovalarda gösterilir.
+   *
+   * Tek karışık tabloda "sonucum çıktı mı?" sorusunu yanıtlamak için tüm
+   * listeyi taramak gerekiyordu; hızlı seçim butonları `state` filtresini bu
+   * iki kovadan birine sabitler.
+   */
+  private static readonly PENDING_STATES = [
+    'SUBMITTED',
+    'AUTO_GRADED',
+    'PENDING_MANUAL',
+    'UNDER_REVIEW',
+  ] as const;
+  private static readonly GRADED_STATES = ['GRADED', 'RELEASED'] as const;
+
+  private readonly bucketState = signal<'all' | 'pending' | 'graded'>('all');
+  readonly bucket = this.bucketState.asReadonly();
+
+  setBucket(bucket: 'all' | 'pending' | 'graded'): void {
+    this.bucketState.set(bucket);
+
+    const states: FilterValue =
+      bucket === 'pending'
+        ? [...AttemptListPage.PENDING_STATES]
+        : bucket === 'graded'
+          ? [...AttemptListPage.GRADED_STATES]
+          : null;
+
+    this.facade.setAttemptFilter('state', states);
+  }
 
   toneFor(state: string) {
     return statusPresentation(state);

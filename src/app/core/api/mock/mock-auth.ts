@@ -68,6 +68,27 @@ export function requirePermission(context: MockContext, permission: Permission):
   return caller;
 }
 
+/**
+ * Verilenlerden EN AZ BİRİ zorunlu — yoksa 403.
+ *
+ * Aynı ekranı birden fazla rolün farklı yetki seviyesiyle paylaştığı yerlerde
+ * kullanılır (ör. akademik dönemleri Platform Yöneticisi tam yetkiyle,
+ * Program Yöneticisi salt okunur görür — route guard'daki `permissionGuard`
+ * ile aynı `canAny` mantığı).
+ */
+export function requireAnyPermission(
+  context: MockContext,
+  ...permissions: readonly Permission[]
+): MockCaller {
+  const caller = requireCaller(context);
+  if (!permissions.some((permission) => caller.can(permission))) {
+    throw forbidden('Bu işlem için gerekli izne sahip değilsiniz.', {
+      permission: permissions.join(', '),
+    });
+  }
+  return caller;
+}
+
 export function scopeOf(caller: MockCaller): DataScope {
   return ROLE_DATA_SCOPE[caller.role];
 }

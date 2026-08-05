@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   Injector,
   afterNextRender,
@@ -31,7 +32,6 @@ import { FilterDefinition, FilterOption } from './filter-definition';
   templateUrl: './app-filter-bar.component.html',
   styleUrl: './app-filter-bar.component.scss',
   host: {
-    '(document:click)': 'onDocumentClick($event)',
     '(document:keydown.escape)': 'close()',
     /* Panel `fixed` konumlandığı için sayfa kaydıkça yeniden hesaplanır. */
     '(window:scroll)': 'reposition()',
@@ -65,6 +65,19 @@ export class AppFilterBarComponent {
   constructor() {
     // Dışarıdan (ör. URL'den) gelen arama değeri girişe yansıtılır.
     effect(() => this.searchDraft.set(this.query().search));
+
+    /*
+     * Dışarı tıklama CAPTURE aşamasında dinlenir.
+     *
+     * `(document:click)` BUBBLE aşamasında çalışıyordu: sayfanın herhangi bir
+     * yerinde `event.stopPropagation()` çağıran bir bileşene tıklandığında
+     * olay `document`'a hiç ulaşmıyor, menü kapanmıyordu. Capture aşaması,
+     * hedefe ulaşmadan ve herhangi bir `stopPropagation()` çağrılmadan ÖNCE
+     * çalışır; bu sınıf hatayı ortadan kaldırır.
+     */
+    const listener = (event: MouseEvent) => this.onOutsideClick(event);
+    document.addEventListener('click', listener, true);
+    inject(DestroyRef).onDestroy(() => document.removeEventListener('click', listener, true));
   }
 
   readonly draft = this.searchDraft.asReadonly();
@@ -129,7 +142,7 @@ export class AppFilterBarComponent {
    * Menü yalnızca tetikleyiciye yeniden basılınca kapanıyordu; kullanıcı
    * sayfanın başka bir yerine tıkladığında açık kalıp içeriği örtüyordu.
    */
-  onDocumentClick(event: MouseEvent): void {
+  private onOutsideClick(event: MouseEvent): void {
     if (this.openKey() === null) return;
     if (!this.host.nativeElement.contains(event.target as Node)) this.close();
   }

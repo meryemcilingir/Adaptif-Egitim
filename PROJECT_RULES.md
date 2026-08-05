@@ -159,39 +159,50 @@ Etiket listesi `tagList()` validator'ı ile hem adet hem tek etiket uzunluğu i�
 
 Format: `resource:action`
 
+**ADR-075 (2026-08-04) ile yeniden düzenlendi:** Eğitmen artık soru bankası, blueprint ve
+sınav oluşturma/yayınlama yapamaz (bu tamamen Ölçme Uzmanının işi); ders/kazanım kataloğu
+yazma yetkisi de eğitmende değil, yalnızca Program Yöneticisindedir. Ölçme Uzmanı Sınav
+Oluşturucu hattını uçtan uca (yayına kadar) tek başına yönetir. Program Yöneticisi madde
+analizi yapmaz, akademik takvimi salt okunur görür (`term:read`).
+
 | Permission | STUDENT | INSTRUCTOR | ASSESSMENT_SPECIALIST | PROGRAM_MANAGER | OBSERVER | PLATFORM_ADMIN |
 |---|:--:|:--:|:--:|:--:|:--:|:--:|
-| `course:read` | ✔ (kendi) | ✔ | ✔ | ✔ | ✔ | ✔ |
-| `course:write` | | ✔ | | ✔ | | ✔ |
+| `course:read` | ✔ (kendi) | ✔ (kendi dersleri) | ✔ | ✔ | ✔ | ✔ |
+| `course:write` | | | | ✔ | | ✔ |
 | `course:publish` | | | | ✔ | | ✔ |
 | `outcome:read` | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
-| `outcome:write` | | ✔ | | ✔ | | ✔ |
+| `outcome:write` | | | | ✔ | | ✔ |
 | `outcome:map` | | | | ✔ | | ✔ |
 | `content:read` | ✔ | ✔ | | ✔ | ✔ | ✔ |
 | `content:write` | | ✔ | | ✔ | | ✔ |
-| `question:read` | | ✔ | ✔ | ✔ | | ✔ |
-| `question:write` | | ✔ | ✔ | | | ✔ |
-| `question:publish` | | ✔ | ✔ | | | ✔ |
-| `blueprint:read` | | ✔ | ✔ | ✔ | | ✔ |
-| `blueprint:write` | | ✔ | ✔ | | | ✔ |
-| `exam:read` | ✔ (atanan) | ✔ | ✔ | ✔ | ✔ | ✔ |
-| `exam:write` | | ✔ | ✔ | | | ✔ |
-| `exam:publish` | | ✔ | | ✔ | | ✔ |
+| `question:read` | | | ✔ | | | ✔ |
+| `question:write` | | | ✔ | | | ✔ |
+| `question:publish` | | | ✔ | | | ✔ |
+| `blueprint:read` | | | ✔ | | | ✔ |
+| `blueprint:write` | | | ✔ | | | ✔ |
+| `exam:read` | ✔ (atanan) | ✔ (kendi dersleri) | ✔ | ✔ | ✔ | ✔ |
+| `exam:write` | | | ✔ | | | ✔ |
+| `exam:publish` | | | ✔ | ✔ | | ✔ |
 | `session:start` | ✔ | | | | | |
-| `session:terminate` | | ✔ | | ✔ | | ✔ |
+| `session:terminate` | | | | ✔ | | ✔ |
 | `attempt:read` | ✔ (kendi) | ✔ | ✔ | ✔ | ✔ | ✔ |
-| `attempt:grade` | | ✔ | | | | ✔ |
+| `attempt:grade` | | ✔ | ✔ | | | ✔ |
 | `attempt:override` | | | | ✔ | | ✔ |
 | `rubric:write` | | ✔ | | | | ✔ |
 | `analytics:student` | ✔ (kendi) | ✔ | ✔ | ✔ | ✔ | ✔ |
-| `analytics:cohort` | | ✔ | ✔ | ✔ | ✔ | ✔ |
-| `analytics:item` | | | ✔ | ✔ | | ✔ |
+| `analytics:cohort` | | ✔ (kendi dersleri) | ✔ | ✔ | ✔ | ✔ |
+| `analytics:item` | | | ✔ | | | ✔ |
 | `audit:read` | | | | | | ✔ |
 | `admin:manage` | | | | | | ✔ |
+| `term:read` | | | | ✔ | | ✔ |
 
 > **Not:** `session:start` yalnızca öğrencide bulunur — platform yöneticisi dâhil hiçbir rol
 > sınav oturumu başlatamaz. Bu izin aynı zamanda "öğrenciye özgü menü" filtresi olarak da
 > kullanılır (`Öğrenme yolum`, `Gelişimim`).
+>
+> **Not:** `term:read`, Program Yöneticisine akademik takvimi (`/admin/terms`) SALT OKUNUR
+> açar — ayrı bir takvim ekranı yoktur, mevcut Akademik Dönemler sayfası paylaşılır; yazma
+> butonları yalnızca `admin:manage` sahibinde görünür (ADR-075).
 
 ### Veri kapsamı (data scope)
 

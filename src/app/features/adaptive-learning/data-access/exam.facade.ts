@@ -71,7 +71,7 @@ export class ExamFacade extends CatalogFacade<Exam, ExamCreateRequest> {
       repository: inject(ExamRepository),
       toast: inject(ToastStore),
       labels: { entity: 'Sınav', nameOf: (item) => (item as Exam).title },
-      initialQuery: { sort: { field: 'updatedAt', direction: 'desc' } },
+      initialQuery: { sort: { field: 'opensAt', direction: 'asc' } },
     });
   }
 

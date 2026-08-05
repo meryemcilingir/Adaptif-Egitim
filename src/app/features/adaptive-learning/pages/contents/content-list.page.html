@@ -89,99 +89,29 @@
         (action)="openForm(null)"
         (clearFilters)="facade.clearFilters()"
       />
+    } @else if (showGrouped()) {
+      @for (group of groupedContent(); track group.courseId) {
+        <section class="content-group">
+          <h3 class="content-group__title text-h3">{{ group.courseLabel }}</h3>
+          <div class="content-grid">
+            @for (item of group.items; track item.id) {
+              <ng-container [ngTemplateOutlet]="cardTpl" [ngTemplateOutletContext]="{ $implicit: item }" />
+            }
+          </div>
+        </section>
+      }
+
+      <app-pagination
+        [page]="facade.query().page"
+        [size]="facade.query().size"
+        [total]="facade.total()"
+        (pageChange)="facade.goToPage($event)"
+        (sizeChange)="facade.setPageSize($event)"
+      />
     } @else {
       <div class="content-grid">
         @for (item of facade.items(); track item.id) {
-          <article
-            class="content-card"
-            [class.is-selected]="facade.isSelected(item.id)"
-            [class.is-busy]="facade.mutatingIds().has(item.id)"
-          >
-            <div class="content-card__media">
-              @if (item.thumbnailUrl) {
-                <img class="content-card__image" [src]="item.thumbnailUrl" [alt]="item.title" />
-              } @else {
-                <div class="content-card__placeholder">
-                  <app-icon [name]="typeIcon(item.type)" [size]="28" />
-                </div>
-              }
-
-              @if (canWrite()) {
-                <label class="content-card__select">
-                  <input
-                    type="checkbox"
-                    [checked]="facade.isSelected(item.id)"
-                    [attr.aria-label]="item.title + ' seç'"
-                    (change)="facade.toggleSelection(item.id)"
-                  />
-                </label>
-              }
-
-              <span class="content-card__type">
-                <app-icon [name]="typeIcon(item.type)" [size]="13" />
-                {{ typeLabel(item.type) }}
-              </span>
-            </div>
-
-            <div class="content-card__body">
-              <div class="content-card__top">
-                <app-status-badge
-                  [label]="toneFor(item.state).label"
-                  [tone]="toneFor(item.state).tone"
-                  [icon]="toneFor(item.state).icon"
-                  [subtle]="true"
-                />
-                <span class="text-xs text-subtle">{{ item.estimatedDurationMinutes }} dk</span>
-              </div>
-
-              <h3 class="content-card__title text-body-strong">{{ item.title }}</h3>
-              @if (item.description) {
-                <p class="content-card__description text-sm text-muted">{{ item.description }}</p>
-              }
-
-              <dl class="content-card__meta">
-                <div>
-                  <dt>Ders</dt>
-                  <dd>{{ courseLabel(item.courseId) || '—' }}</dd>
-                </div>
-                <div>
-                  <dt>Kazanım</dt>
-                  <dd>{{ outcomeCode(item.outcomeId) }}</dd>
-                </div>
-                <div>
-                  <dt>Zorluk</dt>
-                  <dd>{{ difficultyLabel(item.difficulty) }}</dd>
-                </div>
-              </dl>
-
-              @if (item.tags.length > 0) {
-                <div class="content-card__tags">
-                  @for (tag of item.tags.slice(0, 3); track tag) {
-                    <span class="cell-tag">{{ tag }}</span>
-                  }
-                  @if (item.tags.length > 3) {
-                    <span class="text-xs text-subtle">+{{ item.tags.length - 3 }}</span>
-                  }
-                </div>
-              }
-            </div>
-
-            <footer class="content-card__footer">
-              <app-button variant="ghost" size="sm" icon="eye" (pressed)="openPreview(item)">
-                Önizle
-              </app-button>
-              <div class="row gap-1">
-                <app-button variant="ghost" size="sm" (pressed)="openDetail(item)"
-                  >Detay</app-button
-                >
-                <app-dropdown
-                  [items]="rowActions(item)"
-                  triggerLabel="İçerik işlemleri"
-                  (itemSelect)="onRowAction(item, $event)"
-                />
-              </div>
-            </footer>
-          </article>
+          <ng-container [ngTemplateOutlet]="cardTpl" [ngTemplateOutletContext]="{ $implicit: item }" />
         }
       </div>
 
@@ -215,6 +145,97 @@
     />
   }
 </div>
+
+<ng-template #cardTpl let-item>
+  <article
+    class="content-card"
+    [class.is-selected]="facade.isSelected(item.id)"
+    [class.is-busy]="facade.mutatingIds().has(item.id)"
+  >
+    <div class="content-card__media">
+      @if (item.thumbnailUrl) {
+        <img class="content-card__image" [src]="item.thumbnailUrl" [alt]="item.title" />
+      } @else {
+        <div class="content-card__placeholder">
+          <app-icon [name]="typeIcon(item.type)" [size]="28" />
+        </div>
+      }
+
+      @if (canWrite()) {
+        <label class="content-card__select">
+          <input
+            type="checkbox"
+            [checked]="facade.isSelected(item.id)"
+            [attr.aria-label]="item.title + ' seç'"
+            (change)="facade.toggleSelection(item.id)"
+          />
+        </label>
+      }
+
+      <span class="content-card__type">
+        <app-icon [name]="typeIcon(item.type)" [size]="13" />
+        {{ typeLabel(item.type) }}
+      </span>
+    </div>
+
+    <div class="content-card__body">
+      <div class="content-card__top">
+        <app-status-badge
+          [label]="toneFor(item.state).label"
+          [tone]="toneFor(item.state).tone"
+          [icon]="toneFor(item.state).icon"
+          [subtle]="true"
+        />
+        <span class="text-xs text-subtle">{{ item.estimatedDurationMinutes }} dk</span>
+      </div>
+
+      <h3 class="content-card__title text-body-strong">{{ item.title }}</h3>
+      @if (item.description) {
+        <p class="content-card__description text-sm text-muted">{{ item.description }}</p>
+      }
+
+      <dl class="content-card__meta">
+        <div>
+          <dt>Ders</dt>
+          <dd>{{ courseLabel(item.courseId) || '—' }}</dd>
+        </div>
+        <div>
+          <dt>Kazanım</dt>
+          <dd>{{ outcomeCode(item.outcomeId) }}</dd>
+        </div>
+        <div>
+          <dt>Zorluk</dt>
+          <dd>{{ difficultyLabel(item.difficulty) }}</dd>
+        </div>
+      </dl>
+
+      @if (item.tags.length > 0) {
+        <div class="content-card__tags">
+          @for (tag of item.tags.slice(0, 3); track tag) {
+            <span class="cell-tag">{{ tag }}</span>
+          }
+          @if (item.tags.length > 3) {
+            <span class="text-xs text-subtle">+{{ item.tags.length - 3 }}</span>
+          }
+        </div>
+      }
+    </div>
+
+    <footer class="content-card__footer">
+      <app-button variant="ghost" size="sm" icon="eye" (pressed)="openPreview(item)">
+        Önizle
+      </app-button>
+      <div class="row gap-1">
+        <app-button variant="ghost" size="sm" (pressed)="openDetail(item)">Detay</app-button>
+        <app-dropdown
+          [items]="rowActions(item)"
+          triggerLabel="İçerik işlemleri"
+          (itemSelect)="onRowAction(item, $event)"
+        />
+      </div>
+    </footer>
+  </article>
+</ng-template>
 
 <ng-template #selectCell let-content>
   <label class="row-select" (click)="$event.stopPropagation()">

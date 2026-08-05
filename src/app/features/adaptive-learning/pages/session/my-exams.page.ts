@@ -70,6 +70,49 @@ export class MyExamsPage implements OnInit {
 
   readonly stateLabels = ATTEMPT_STATE_LABELS;
 
+  /* ── Arama ve ders filtresi ───────────────────────────────────────────── */
+
+  private readonly searchState = signal('');
+  private readonly courseFilterState = signal<string | null>(null);
+
+  readonly search = this.searchState.asReadonly();
+  readonly courseFilter = this.courseFilterState.asReadonly();
+
+  /** Sınav başlıkları hep "DERSKODU Sınav adı" biçimindedir. */
+  private courseCodeOf(title: string): string {
+    return title.split(' ')[0] ?? '';
+  }
+
+  readonly courseOptions = computed(() => {
+    const codes = new Set<string>();
+    for (const exam of this.examState()) codes.add(this.courseCodeOf(exam.title));
+    for (const row of this.historyState()) codes.add(row.courseCode);
+    return [...codes].sort((a, b) => a.localeCompare(b, 'tr-TR'));
+  });
+
+  private matchesFilters(title: string, courseCode: string): boolean {
+    const course = this.courseFilterState();
+    if (course && courseCode !== course) return false;
+
+    const term = this.searchState().trim().toLocaleLowerCase('tr-TR');
+    if (term.length === 0) return true;
+    return title.toLocaleLowerCase('tr-TR').includes(term);
+  }
+
+  onSearchInput(event: Event): void {
+    this.searchState.set((event.target as HTMLInputElement).value);
+  }
+
+  onCourseFilterChange(event: Event): void {
+    const value = (event.target as HTMLSelectElement).value;
+    this.courseFilterState.set(value === '' ? null : value);
+  }
+
+  clearFilters(): void {
+    this.searchState.set('');
+    this.courseFilterState.set(null);
+  }
+
   /**
    * Girilebilir veya yaklaşan sınavlar.
    *
@@ -82,6 +125,7 @@ export class MyExamsPage implements OnInit {
         const status = examRuntimeStatus(exam, this.nowMs);
         return status === 'active' || status === 'scheduled';
       })
+      .filter((exam) => this.matchesFilters(exam.title, this.courseCodeOf(exam.title)))
       .sort((a, b) => a.opensAt.localeCompare(b.opensAt)),
   );
 
@@ -91,9 +135,17 @@ export class MyExamsPage implements OnInit {
    * Tek liste hâlinde puanlı ve puansız satırlar iç içe geçince "sonucum çıktı
    * mı?" sorusunu yanıtlamak için tüm listeyi taramak gerekiyordu.
    */
-  readonly releasedHistory = computed(() => this.history().filter((row) => this.isReleased(row)));
+  readonly releasedHistory = computed(() =>
+    this.history()
+      .filter((row) => this.isReleased(row))
+      .filter((row) => this.matchesFilters(row.examTitle, row.courseCode)),
+  );
 
-  readonly pendingHistory = computed(() => this.history().filter((row) => !this.isReleased(row)));
+  readonly pendingHistory = computed(() =>
+    this.history()
+      .filter((row) => !this.isReleased(row))
+      .filter((row) => this.matchesFilters(row.examTitle, row.courseCode)),
+  );
 
   ngOnInit(): void {
     this.load();

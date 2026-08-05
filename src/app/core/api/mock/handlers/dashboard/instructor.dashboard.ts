@@ -98,7 +98,7 @@ export function buildInstructorDashboard(scope: DashboardScope): InstructorDashb
       }),
     ],
 
-    quickActions: buildQuickActions(scope, pendingAttempts.length, questions.length),
+    quickActions: buildQuickActions(scope, pendingAttempts.length),
     notifications: buildNotifications(db, caller.userId),
     recentActivity: buildRecentActivity(db, (event) => event.actorId === caller.userId),
     statistics: buildStatistics(scope, pendingAttempts.length),
@@ -125,11 +125,7 @@ function buildPendingSeries(scope: DashboardScope): number[] {
   });
 }
 
-function buildQuickActions(
-  scope: DashboardScope,
-  pendingCount: number,
-  questionCount: number,
-): QuickAction[] {
+function buildQuickActions(scope: DashboardScope, pendingCount: number): QuickAction[] {
   return [
     {
       id: 'grading',
@@ -141,18 +137,9 @@ function buildQuickActions(
       tone: pendingCount > 0 ? 'warning' : 'neutral',
     },
     {
-      id: 'question-bank',
-      label: 'Soru bankası',
-      description: `${questionCount} soru`,
-      icon: 'circle-help',
-      link: '/question-bank',
-      badge: null,
-      tone: 'primary',
-    },
-    {
       id: 'exams',
-      label: 'Sınav oluştur',
-      description: 'Blueprint ile yeni sınav',
+      label: 'Sınav takvimi',
+      description: 'Derslerinin sınav programı',
       icon: 'file-text',
       link: '/exams',
       badge: null,

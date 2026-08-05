@@ -29,7 +29,6 @@ import { progressIndex, tallyRecommendations } from './recommendation.report';
 export function buildOverview(scope: ReportScope): AnalyticsOverview {
   const { db } = scope;
 
-  const students = [...scope.studentIds];
   const courses = [...scope.courseIds];
 
   const exams = db.collection('exams').filter((exam) => scope.courseIds.has(exam.courseId));
@@ -40,14 +39,6 @@ export function buildOverview(scope: ReportScope): AnalyticsOverview {
   const recommendations = db
     .collection('recommendations')
     .filter((item) => scope.studentIds.has(item.studentId));
-
-  /* Aktif öğrenci: pencere içinde içerik açmış ya da sınava girmiş olan. */
-  const activeStudentIds = new Set([
-    ...scope.attempts.map((attempt) => attempt.studentId),
-    ...scope.progress
-      .filter((item) => item.lastAccessedAt && isWithin(scope.range, item.lastAccessedAt))
-      .map((item) => item.studentId),
-  ]);
 
   /*
    * Tamamlama oranı BİRİKEN bir durumdur: "açtığım içeriğin ne kadarını
@@ -120,17 +111,6 @@ export function buildOverview(scope: ReportScope): AnalyticsOverview {
   const peers = peerAverages(scope);
 
   const metrics: OverviewMetric[] = [
-    metric('students', 'Toplam öğrenci', students.length, '', 'users', 'Kapsamınızdaki öğrenciler', null, '/analytics/performers'),
-    metric(
-      'active-students',
-      'Aktif öğrenci',
-      activeStudentIds.size,
-      '',
-      'activity',
-      'Seçili dönemde etkinlik gösteren',
-      null,
-      '/analytics/velocity',
-    ),
     metric('courses', 'Ders', courses.length, '', 'library', 'Kapsamınızdaki dersler', null, '/courses'),
     metric('exams', 'Sınav', exams.length, '', 'file-check', 'Tanımlı sınavlar', null, '/exams'),
     metric('questions', 'Soru', questions.length, '', 'circle-help', 'Soru bankasındaki maddeler', null, '/question-bank'),

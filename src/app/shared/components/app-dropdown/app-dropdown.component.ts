@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   Injector,
   afterNextRender,
@@ -77,7 +78,6 @@ export interface DropdownItem {
   `,
   styleUrl: './app-dropdown.component.scss',
   host: {
-    '(document:click)': 'onDocumentClick($event)',
     /* Panel `fixed` konumlandığı için sayfa kaydıkça yeniden hesaplanır. */
     '(window:scroll)': 'reposition()',
     '(window:resize)': 'reposition()',
@@ -86,6 +86,21 @@ export interface DropdownItem {
 export class AppDropdownComponent {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly injector = inject(Injector);
+
+  /*
+   * Dışarı tıklama CAPTURE aşamasında dinlenir.
+   *
+   * `(document:click)` BUBBLE aşamasında çalışıyordu: sayfanın herhangi bir
+   * yerinde `event.stopPropagation()` çağıran bir bileşene tıklandığında olay
+   * `document`'a hiç ulaşmıyor, menü kapanmıyordu. Capture aşaması, hedefe
+   * ulaşmadan ve herhangi bir `stopPropagation()` çağrılmadan ÖNCE çalışır;
+   * bu sınıf hatayı ortadan kaldırır.
+   */
+  constructor() {
+    const listener = (event: MouseEvent) => this.onOutsideClick(event);
+    document.addEventListener('click', listener, true);
+    inject(DestroyRef).onDestroy(() => document.removeEventListener('click', listener, true));
+  }
 
   readonly items = input.required<readonly DropdownItem[]>();
   readonly triggerIcon = input<AppIconName | null>('ellipsis-vertical');
@@ -165,7 +180,7 @@ export class AppDropdownComponent {
   }
 
   /** Menü dışına tıklanınca kapanır. */
-  onDocumentClick(event: MouseEvent): void {
+  private onOutsideClick(event: MouseEvent): void {
     if (!this.openState()) return;
     if (!this.host.nativeElement.contains(event.target as Node)) this.close();
   }

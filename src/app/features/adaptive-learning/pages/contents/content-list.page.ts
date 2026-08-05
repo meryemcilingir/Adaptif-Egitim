@@ -1,3 +1,4 @@
+import { NgTemplateOutlet } from '@angular/common';
 import {
   ChangeDetectionStrategy,
   Component,
@@ -80,6 +81,7 @@ import { ContentPreviewComponent } from './content-preview.component';
     AppTableComponent,
     ContentFormComponent,
     ContentPreviewComponent,
+    NgTemplateOutlet,
   ],
   templateUrl: './content-list.page.html',
   styleUrl: './content-list.page.scss',
@@ -127,6 +129,35 @@ export class ContentListPage implements OnInit {
   readonly hasError = computed(() => this.facade.status() === 'error');
   readonly isGrid = computed(() => this.facade.viewMode() === 'grid');
 
+  /*
+   * İçerik düzenleme yetkisi olmayan (öğrenci) görünümünde kartlar dersine
+   * göre GRUPLANIR.
+   *
+   * Yazma yetkisi olan roller (eğitmen vb.) toplu işlem ve düzenleme için
+   * tek akışta filtrelenebilir bir liste ister; öğrenci içinse ders ders
+   * ayrılmış, düzenli bir kütüphane görünümü daha anlaşılırdır.
+   */
+  readonly showGrouped = computed(() => this.isGrid() && !this.canWrite());
+
+  readonly groupedContent = computed(() => {
+    const groups = new Map<string, { courseId: string; courseLabel: string; items: ContentItem[] }>();
+
+    for (const item of this.facade.items()) {
+      const existing = groups.get(item.courseId);
+      if (existing) {
+        existing.items.push(item);
+      } else {
+        groups.set(item.courseId, {
+          courseId: item.courseId,
+          courseLabel: this.courseLabel(item.courseId) || 'Diğer',
+          items: [item],
+        });
+      }
+    }
+
+    return [...groups.values()].sort((a, b) => a.courseLabel.localeCompare(b.courseLabel, 'tr-TR'));
+  });
+
   private readonly courseNameById = computed(
     () => new Map(this.courseOptionsState().map((option) => [option.value, option.label] as const)),
   );
@@ -141,15 +172,27 @@ export class ContentListPage implements OnInit {
   );
 
   readonly filters = computed<readonly FilterDefinition[]>(() => [
-    {
-      key: 'state',
-      label: 'Durum',
-      kind: 'multi',
-      options: PUBLISH_STATES.map((state) => ({
-        value: state,
-        label: PUBLISH_STATE_LABELS[state],
-      })),
-    },
+    /*
+     * "Durum" filtresi yalnızca içerik yazma yetkisi olanlara gösterilir.
+     *
+     * Öğrenci (ve diğer salt-okunur roller) zaten yalnızca YAYINDAKİ içeriği
+     * görür (BR-31, `isContentVisible()`) — Taslak/İncelemede/Arşiv seçenekleri
+     * onlar için hep boş sonuç döner ve var olmayan bir şeyi filtreleyebiliyor
+     * izlenimi verir.
+     */
+    ...(this.canWrite()
+      ? [
+          {
+            key: 'state',
+            label: 'Durum',
+            kind: 'multi' as const,
+            options: PUBLISH_STATES.map((state) => ({
+              value: state,
+              label: PUBLISH_STATE_LABELS[state],
+            })),
+          },
+        ]
+      : []),
     {
       key: 'type',
       label: 'Tür',

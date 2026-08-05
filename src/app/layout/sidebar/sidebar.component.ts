@@ -5,7 +5,7 @@ import { AuthStore } from '../../core/auth/auth.store';
 import { PermissionService } from '../../core/auth/permission.service';
 import { UiStore } from '../../core/state/ui.store';
 import { AppIconComponent } from '../../shared/components/app-icon/app-icon.component';
-import { NAV_GROUPS, NavGroup, resolveNavLink } from '../nav.config';
+import { NAV_GROUPS_BY_ROLE, NavGroup, resolveNavLink } from '../nav.config';
 
 /**
  * Sol menü.
@@ -31,16 +31,27 @@ export class SidebarComponent {
   private readonly permissions = inject(PermissionService);
   private readonly auth = inject(AuthStore);
 
-  /** İzin matrisine göre filtrelenmiş, kişisel bağlantıları çözülmüş menü. */
+  /**
+   * Aktif rolün menüsü — izin matrisine göre filtrelenmiş, kişisel
+   * bağlantıları çözülmüş.
+   *
+   * Rol seçimi ile izin kontrolü İKİ AYRI süzgeçtir (ADR-075): rol hangi
+   * öğelerin GÖSTERİLECEĞİNİ belirler, izin ise güvenlik ağı olarak kalır —
+   * biri yanlış yapılandırılsa bile diğeri kullanıcıyı korur.
+   */
   readonly groups = computed<readonly NavGroup[]>(() => {
     const userId = this.auth.user()?.id ?? null;
+    const role = this.permissions.role();
+    const roleGroups = role ? NAV_GROUPS_BY_ROLE[role] : [];
 
-    return NAV_GROUPS.map((group) => ({
-      ...group,
-      items: group.items
-        .filter((item) => this.permissions.canAny(item.permissions))
-        .map((item) => ({ ...item, link: resolveNavLink(item.link, userId) })),
-    })).filter((group) => group.items.length > 0);
+    return roleGroups
+      .map((group) => ({
+        ...group,
+        items: group.items
+          .filter((item) => this.permissions.canAny(item.permissions))
+          .map((item) => ({ ...item, link: resolveNavLink(item.link, userId) })),
+      }))
+      .filter((group) => group.items.length > 0);
   });
 
   readonly isCollapsed = this.ui.isSidebarCollapsed;

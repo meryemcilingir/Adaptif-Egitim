@@ -13,6 +13,31 @@
   } @else if (hasError()) {
     <app-error-state [error]="error()" title="Sınavlar yüklenemedi" (retry)="load()" />
   } @else {
+    <div class="my-exams-toolbar">
+      <div class="my-exams-search">
+        <app-icon name="search" [size]="15" />
+        <input
+          type="search"
+          placeholder="Sınav veya ders kodunda ara…"
+          [value]="search()"
+          (input)="onSearchInput($event)"
+        />
+      </div>
+
+      <select class="my-exams-filter" [value]="courseFilter() ?? ''" (change)="onCourseFilterChange($event)">
+        <option value="">Tüm dersler</option>
+        @for (code of courseOptions(); track code) {
+          <option [value]="code">{{ code }}</option>
+        }
+      </select>
+
+      @if (search().length > 0 || courseFilter() !== null) {
+        <app-button variant="ghost" size="sm" icon="x" (pressed)="clearFilters()">
+          Filtreleri temizle
+        </app-button>
+      }
+    </div>
+
     <!-- ── Yaklaşan / açık sınavlar ──────────────────────────────────── -->
     <app-card title="Yaklaşan sınavlar">
       @if (upcoming().length === 0) {

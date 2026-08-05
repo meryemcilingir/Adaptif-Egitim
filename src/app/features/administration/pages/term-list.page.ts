@@ -18,6 +18,7 @@ import { AppInputComponent } from '../../../shared/components/app-input/app-inpu
 import { AppLoadingStateComponent } from '../../../shared/components/app-loading-state/app-loading-state.component';
 import { AppSelectComponent } from '../../../shared/components/app-select/app-select.component';
 import { AppStatusBadgeComponent } from '../../../shared/components/app-status-badge/app-status-badge.component';
+import { PermissionService } from '../../../core/auth/permission.service';
 import {
   SEMESTERS,
   SEMESTER_LABELS,
@@ -74,6 +75,14 @@ const STATUS_TONES: Readonly<Record<TermStatus, 'success' | 'warning' | 'neutral
 export class TermListPage implements OnInit {
   protected readonly facade = inject(AdminFacade);
   private readonly dialog = inject(DialogService);
+  private readonly permissions = inject(PermissionService);
+
+  /**
+   * Program Yöneticisi bu sayfayı SALT OKUNUR görür (`term:read`) — ayrı bir
+   * takvim ekranı olmadığı için mevcut sayfa paylaşılıyor. Yazma butonları
+   * yalnızca `admin:manage` sahibi (Platform Yöneticisi) için görünür.
+   */
+  readonly canWrite = computed(() => this.permissions.can('admin:manage'));
 
   private readonly editingState = signal<Term | null>(null);
   private readonly dialogOpenState = signal(false);
@@ -190,6 +199,8 @@ export class TermListPage implements OnInit {
   }
 
   openCreate(): void {
+    if (!this.canWrite()) return;
+
     this.editingState.set(null);
     this.form.reset({ academicYear: '', semester: 'FALL', startDate: '', endDate: '' });
     this.nowState.set(Date.now());
@@ -197,6 +208,8 @@ export class TermListPage implements OnInit {
   }
 
   openEdit(term: Term): void {
+    if (!this.canWrite()) return;
+
     this.editingState.set(term);
     this.form.setValue({
       academicYear: term.academicYear,
@@ -228,6 +241,8 @@ export class TermListPage implements OnInit {
   }
 
   async toggleArchive(term: Term): Promise<void> {
+    if (!this.canWrite()) return;
+
     if (!term.archivedAt) {
       const confirmed = await this.dialog.confirm({
         title: 'Dönem arşivlensin mi?',

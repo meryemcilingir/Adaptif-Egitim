@@ -68,7 +68,7 @@ const GROUP_DEFINITIONS: readonly { key: string; label: string; prefixes: readon
   { key: 'session', label: 'Sınav oturumu', prefixes: ['session'] },
   { key: 'grading', label: 'Değerlendirme', prefixes: ['attempt'] },
   { key: 'analytics', label: 'Analitik ve raporlama', prefixes: ['analytics'] },
-  { key: 'administration', label: 'Yönetim', prefixes: ['admin', 'audit'] },
+  { key: 'administration', label: 'Yönetim', prefixes: ['admin', 'audit', 'term'] },
 ];
 
 export const PERMISSION_GROUPS: readonly PermissionGroup[] = buildGroups();

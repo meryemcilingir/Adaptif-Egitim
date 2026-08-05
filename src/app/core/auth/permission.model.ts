@@ -63,6 +63,7 @@ export const PERMISSIONS = [
   'analytics:item',
   'audit:read',
   'admin:manage',
+  'term:read',
 ] as const;
 
 export type Permission = (typeof PERMISSIONS)[number];
@@ -95,6 +96,7 @@ export const PERMISSION_LABELS: Readonly<Record<Permission, string>> = {
   'analytics:item': 'Madde analizi',
   'audit:read': 'Denetim kaydı görüntüleme',
   'admin:manage': 'Sistem yönetimi',
+  'term:read': 'Akademik dönem görüntüleme',
 };
 
 /** İzin matrisi — tek doğruluk kaynağı. */
@@ -109,22 +111,19 @@ export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
     'analytics:student',
   ],
 
+  /*
+   * Eğitmen yalnızca KENDİ dersinin günlük işleyişinden sorumludur: içerik,
+   * değerlendirme ve kendi ders kapsamındaki analitik. Soru bankası, blueprint
+   * ve sınav oluşturma/yayınlama tamamen Ölçme Uzmanının işidir — eğitmen
+   * sınavı yalnızca GÖRÜR ve değerlendirir, oluşturmaz. Ders/program kataloğu
+   * (course:write) ve kazanım tanımı (outcome:write) Program Yöneticisinindir.
+   */
   INSTRUCTOR: [
     'course:read',
-    'course:write',
     'outcome:read',
-    'outcome:write',
     'content:read',
     'content:write',
-    'question:read',
-    'question:write',
-    'question:publish',
-    'blueprint:read',
-    'blueprint:write',
     'exam:read',
-    'exam:write',
-    'exam:publish',
-    'session:terminate',
     'attempt:read',
     'attempt:grade',
     'rubric:write',
@@ -132,6 +131,12 @@ export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
     'analytics:cohort',
   ],
 
+  /*
+   * Ölçme uzmanı, soru bankası → blueprint → sınav oluşturucu hattının TEK
+   * sahibidir; bu yüzden `exam:publish` de burada — Taslak→İnceleme→Yayında
+   * geçişlerinin tamamı bu izni ister (aksi hâlde sihirbazı sonuna kadar
+   * kullanamaz).
+   */
   ASSESSMENT_SPECIALIST: [
     'course:read',
     'outcome:read',
@@ -142,6 +147,7 @@ export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
     'blueprint:write',
     'exam:read',
     'exam:write',
+    'exam:publish',
     'attempt:read',
     // Açık uçlu cevapların rubrikle puanlanması ölçme uzmanının asli işidir.
     'attempt:grade',
@@ -150,6 +156,11 @@ export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
     'analytics:item',
   ],
 
+  /*
+   * Program yöneticisi kataloğun (program/ders/kazanım) akademik sahibidir;
+   * soru/blueprint/madde analizi ölçme uzmanının işidir — bu yüzden onlara
+   * dokunmaz. `term:read` ile akademik takvimi salt okunur görür.
+   */
   PROGRAM_MANAGER: [
     'course:read',
     'course:write',
@@ -159,7 +170,6 @@ export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
     'outcome:map',
     'content:read',
     'content:write',
-    'blueprint:read',
     'exam:read',
     'exam:publish',
     'session:terminate',
@@ -167,7 +177,7 @@ export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
     'attempt:override',
     'analytics:student',
     'analytics:cohort',
-    'analytics:item',
+    'term:read',
   ],
 
   OBSERVER: [

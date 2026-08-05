@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   computed,
   forwardRef,
@@ -40,10 +41,24 @@ export interface MultiSelectOption {
   ],
   templateUrl: './app-multi-select.component.html',
   styleUrl: './app-multi-select.component.scss',
-  host: { '(document:click)': 'onDocumentClick($event)' },
 })
 export class AppMultiSelectComponent implements ControlValueAccessor {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+
+  /*
+   * Dışarı tıklama CAPTURE aşamasında dinlenir.
+   *
+   * `(document:click)` BUBBLE aşamasında çalışıyordu: sayfanın herhangi bir
+   * yerinde `event.stopPropagation()` çağıran bir bileşene tıklandığında olay
+   * `document`'a hiç ulaşmıyor, liste kapanmıyordu. Capture aşaması, hedefe
+   * ulaşmadan ve herhangi bir `stopPropagation()` çağrılmadan ÖNCE çalışır;
+   * bu sınıf hatayı ortadan kaldırır.
+   */
+  constructor() {
+    const listener = (event: MouseEvent) => this.onOutsideClick(event);
+    document.addEventListener('click', listener, true);
+    inject(DestroyRef).onDestroy(() => document.removeEventListener('click', listener, true));
+  }
 
   readonly inputId = input.required<string>();
   readonly options = input.required<readonly MultiSelectOption[]>();
@@ -154,7 +169,7 @@ export class AppMultiSelectComponent implements ControlValueAccessor {
     if (event.key === 'Escape') this.close();
   }
 
-  onDocumentClick(event: MouseEvent): void {
+  private onOutsideClick(event: MouseEvent): void {
     if (!this.openState()) return;
     if (!this.host.nativeElement.contains(event.target as Node)) this.close();
   }

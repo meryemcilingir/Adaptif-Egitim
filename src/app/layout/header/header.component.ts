@@ -1,6 +1,7 @@
 import {
   ChangeDetectionStrategy,
   Component,
+  DestroyRef,
   ElementRef,
   computed,
   inject,
@@ -32,7 +33,7 @@ import { AppIconComponent } from '../../shared/components/app-icon/app-icon.comp
 import { AppStatusBadgeComponent } from '../../shared/components/app-status-badge/app-status-badge.component';
 import { AdminFacade } from '../../features/administration/data-access/admin.facade';
 import { GlobalSearchPanelComponent } from '../../features/administration/components/global-search-panel.component';
-import { NAV_GROUPS } from '../nav.config';
+import { ALL_NAV_ITEMS } from '../nav.config';
 
 /**
  * Üst çubuk: kırılım, arama, rol değiştirici, bildirim merkezi ve kullanıcı menüsü.
@@ -56,7 +57,6 @@ import { NAV_GROUPS } from '../nav.config';
   ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
-  host: { '(document:click)': 'onDocumentClick($event)' },
 })
 export class HeaderComponent {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
@@ -64,6 +64,23 @@ export class HeaderComponent {
   private readonly mockConfig = inject(MockConfig);
   private readonly permissions = inject(PermissionService);
   private readonly router = inject(Router);
+
+  /*
+   * Dışarı tıklamada panel/arama kapanır — CAPTURE aşamasında dinlenir.
+   *
+   * `(document:click)` host binding'i BUBBLE aşamasında çalışıyordu: sayfanın
+   * herhangi bir yerinde `event.stopPropagation()` çağıran bir bileşene
+   * (tablo satır aksiyonu, onay kutusu, devre dışı buton, çip kaldırma vb.)
+   * tıklandığında olay `document`'a hiç ulaşmıyor, panel kapanmıyordu — "bazen
+   * kapanıyor bazen kapanmıyor" hatasının kaynağı buydu. Capture aşaması,
+   * olay hedefine ulaşmadan ve herhangi bir `stopPropagation()` çağrılmadan
+   * ÖNCE çalışır; bu sınıf hatayı tamamen ortadan kaldırır.
+   */
+  constructor() {
+    const listener = (event: MouseEvent) => this.onOutsideClick(event);
+    document.addEventListener('click', listener, true);
+    inject(DestroyRef).onDestroy(() => document.removeEventListener('click', listener, true));
+  }
 
   protected readonly ui = inject(UiStore);
   protected readonly auth = inject(AuthFacade);
@@ -90,11 +107,7 @@ export class HeaderComponent {
   readonly breadcrumb = computed<readonly BreadcrumbItem[]>(() => {
     const path = this.url().split('?')[0] ?? '';
 
-    const match = NAV_GROUPS.flatMap((group) =>
-      group.items
-        .filter((item) => this.permissions.canAny(item.permissions))
-        .map((item) => ({ group: group.title, item })),
-    )
+    const match = ALL_NAV_ITEMS.filter((entry) => this.permissions.canAny(entry.item.permissions))
       // En uzun eşleşme kazanır: `/outcomes/map`, `/outcomes`ten önce gelmelidir.
       .sort((a, b) => b.item.link.length - a.item.link.length)
       .find((entry) => path.startsWith(entry.item.link.split('/:')[0] ?? entry.item.link));
@@ -145,7 +158,7 @@ export class HeaderComponent {
     this.notifications.markAllRead();
   }
 
-  onDocumentClick(event: MouseEvent): void {
+  private onOutsideClick(event: MouseEvent): void {
     // Dışarı tıklamada hem bildirim paneli hem arama paneli kapanır.
     if (this.host.nativeElement.contains(event.target as Node)) return;
 

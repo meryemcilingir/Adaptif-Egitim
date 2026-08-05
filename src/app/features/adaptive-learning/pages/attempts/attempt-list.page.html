@@ -8,6 +8,36 @@
     </div>
   </header>
 
+  <div class="bucket-toggle" role="group" aria-label="Duruma göre grupla">
+    <button
+      type="button"
+      class="bucket-toggle__button"
+      [class.is-active]="bucket() === 'all'"
+      [attr.aria-pressed]="bucket() === 'all'"
+      (click)="setBucket('all')"
+    >
+      Tümü
+    </button>
+    <button
+      type="button"
+      class="bucket-toggle__button"
+      [class.is-active]="bucket() === 'pending'"
+      [attr.aria-pressed]="bucket() === 'pending'"
+      (click)="setBucket('pending')"
+    >
+      Değerlendirme bekleyenler
+    </button>
+    <button
+      type="button"
+      class="bucket-toggle__button"
+      [class.is-active]="bucket() === 'graded'"
+      [attr.aria-pressed]="bucket() === 'graded'"
+      (click)="setBucket('graded')"
+    >
+      Puanlananlar
+    </button>
+  </div>
+
   <app-filter-bar
     [query]="facade.attemptsQuery()"
     [filters]="filters()"

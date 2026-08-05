@@ -6,7 +6,7 @@ import {
   validateTerm,
 } from '../../../../../features/adaptive-learning/domain/academic-term.rules';
 import { Term } from '../../../../../features/adaptive-learning/models/common.model';
-import { requirePermission } from '../../mock-auth';
+import { requireAnyPermission, requirePermission } from '../../mock-auth';
 import { businessRule, conflict, notFound, validation } from '../../mock-errors';
 import { MockContext, MockHandler, created, ok } from '../../mock-router';
 import { writeAudit } from '../audit-writer';
@@ -23,7 +23,8 @@ export const TERM_ADMIN_HANDLERS: readonly MockHandler[] = [
     method: 'GET',
     path: '/api/admin/terms',
     handle: (context) => {
-      requirePermission(context, 'admin:manage');
+      // Program Yöneticisi akademik takvimi salt okunur görür (`term:read`).
+      requireAnyPermission(context, 'admin:manage', 'term:read');
 
       return ok(
         [...context.db.collection('terms').all()].sort(

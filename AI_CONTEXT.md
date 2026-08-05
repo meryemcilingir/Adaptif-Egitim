@@ -514,4 +514,8 @@ güveni de zedeler.
   **Faz 8** (analitik, raporlama, öğrenme içgörüleri — 13 ekran, 15 rapor ucu),
   **Faz 9** (yönetim paneli, kullanıcı/rol/dönem/ayar yönetimi, bildirim merkezi,
   denetim kaydı — 9 ekran, veritabanı tabanlı RBAC).
+- **2026-08-04:** RBAC yeniden düzenlemesi (ADR-075/076) — sidebar rol bazlı
+  (`NAV_GROUPS_BY_ROLE`), izin matrisi gerçek LMS iş bölümüne göre sıkılaştırıldı
+  (Eğitmen artık soru bankası/blueprint/sınav yazamaz; Program Yöneticisi madde analizi
+  yapmaz, akademik takvimi salt okunur görür — yeni `term:read` izni).
 - **Sonraki:** Faz 10 — test, performans, erişilebilirlik ve teslim. Detay: `ROADMAP.md`.

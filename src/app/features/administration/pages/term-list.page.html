@@ -13,7 +13,9 @@
         <app-export-menu [table]="table" />
       }
 
-      <app-button variant="primary" icon="plus" (pressed)="openCreate()">Yeni dönem</app-button>
+      @if (canWrite()) {
+        <app-button variant="primary" icon="plus" (pressed)="openCreate()">Yeni dönem</app-button>
+      }
     </div>
   </header>
 
@@ -26,7 +28,7 @@
       icon="calendar"
       title="Tanımlı dönem yok"
       description="Ders ve sınav takvimleri döneme bağlıdır. İlk akademik dönemi oluşturun."
-      actionLabel="Yeni dönem"
+      [actionLabel]="canWrite() ? 'Yeni dönem' : null"
       actionIcon="plus"
       (action)="openCreate()"
     />
@@ -71,26 +73,28 @@
                 }
               </div>
 
-              <div class="term__actions">
-                <app-button
-                  variant="secondary"
-                  size="sm"
-                  icon="pencil-line"
-                  [disabled]="!canEdit(term)"
-                  (pressed)="openEdit(term)"
-                >
-                  Düzenle
-                </app-button>
+              @if (canWrite()) {
+                <div class="term__actions">
+                  <app-button
+                    variant="secondary"
+                    size="sm"
+                    icon="pencil-line"
+                    [disabled]="!canEdit(term)"
+                    (pressed)="openEdit(term)"
+                  >
+                    Düzenle
+                  </app-button>
 
-                <app-button
-                  variant="ghost"
-                  size="sm"
-                  [icon]="term.archivedAt ? 'rotate-ccw' : 'archive'"
-                  (pressed)="toggleArchive(term)"
-                >
-                  {{ term.archivedAt ? 'Arşivden çıkar' : 'Arşivle' }}
-                </app-button>
-              </div>
+                  <app-button
+                    variant="ghost"
+                    size="sm"
+                    [icon]="term.archivedAt ? 'rotate-ccw' : 'archive'"
+                    (pressed)="toggleArchive(term)"
+                  >
+                    {{ term.archivedAt ? 'Arşivden çıkar' : 'Arşivle' }}
+                  </app-button>
+                </div>
+              }
             </div>
           </app-card>
         </li>

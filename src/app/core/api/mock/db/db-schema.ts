@@ -122,4 +122,4 @@ export const COLLECTION_NAMES: readonly CollectionName[] = [
  * Şema sürümü. Seed yapısı değişince artırılır; tarayıcıdaki eski veri
  * otomatik olarak atılıp yeniden üretilir.
  */
-export const DB_SCHEMA_VERSION = 17;
+export const DB_SCHEMA_VERSION = 18;
