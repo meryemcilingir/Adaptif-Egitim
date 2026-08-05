@@ -16,6 +16,8 @@ export interface ConfirmRequest {
   readonly reasonLabel?: string;
   readonly reasonHint?: string;
   readonly minReasonLength?: number;
+  /** Belirtilmezse gerekçe alanı sınırsız kalır (mevcut davranış korunur). */
+  readonly maxReasonLength?: number;
 }
 
 export interface ConfirmResult {

@@ -7,23 +7,31 @@
     <span class="text-overline text-muted">Toplam soru</span>
     <span class="total__value tabular">{{ totals.total }}</span>
   </button>
-  <button type="button" class="total total--draft" (click)="openQuestionBank()">
+  <button type="button" class="total total--draft" (click)="openQuestionBankByState('DRAFT')">
     <span class="text-overline text-muted">Taslak</span>
     <span class="total__value tabular">{{ totals.draft }}</span>
   </button>
-  <button type="button" class="total total--review" (click)="openQuestionBank()">
+  <button type="button" class="total total--review" (click)="openQuestionBankByState('REVIEW')">
     <span class="text-overline text-muted">İncelemede</span>
     <span class="total__value tabular">{{ totals.review }}</span>
   </button>
-  <button type="button" class="total total--published" (click)="openQuestionBank()">
+  <button
+    type="button"
+    class="total total--published"
+    (click)="openQuestionBankByState('PUBLISHED')"
+  >
     <span class="text-overline text-muted">Yayında</span>
     <span class="total__value tabular">{{ totals.published }}</span>
   </button>
-  <button type="button" class="total total--archived" (click)="openQuestionBank()">
+  <button
+    type="button"
+    class="total total--archived"
+    (click)="openQuestionBankByState('ARCHIVED')"
+  >
     <span class="text-overline text-muted">Arşiv</span>
     <span class="total__value tabular">{{ totals.archived }}</span>
   </button>
-  <button type="button" class="total total--favorite" (click)="openQuestionBank()">
+  <button type="button" class="total total--favorite" (click)="openQuestionBankFavorites()">
     <span class="text-overline text-muted">Favorilerim</span>
     <span class="total__value tabular">{{ totals.favorites }}</span>
   </button>
@@ -65,8 +73,10 @@
   >
     <app-ranked-list
       [entries]="dashboard.outcomeDistribution"
+      [selectable]="true"
       emptyTitle="Kazanım yok"
       emptyDescription="Kapsamınızda tanımlı kazanım bulunmuyor."
+      (entrySelect)="openOutcome($event)"
     />
   </app-card>
 </section>
@@ -286,8 +296,10 @@
   >
     <app-ranked-list
       [entries]="dashboard.blueprintCoverage"
+      [selectable]="true"
       emptyTitle="Blueprint yok"
       emptyDescription="Tanımlı blueprint bulunmuyor."
+      (entrySelect)="openBlueprint($event)"
     />
   </app-card>
 </section>

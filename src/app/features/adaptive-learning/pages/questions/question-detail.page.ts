@@ -19,9 +19,11 @@ import { AppEmptyStateComponent } from '../../../../shared/components/app-empty-
 import { AppErrorStateComponent } from '../../../../shared/components/app-error-state/app-error-state.component';
 import { AppIconComponent } from '../../../../shared/components/app-icon/app-icon.component';
 import { AppLoadingStateComponent } from '../../../../shared/components/app-loading-state/app-loading-state.component';
+import { AppStatusBadgeComponent } from '../../../../shared/components/app-status-badge/app-status-badge.component';
 import { RelativeTimePipe } from '../../../../shared/pipes/relative-time.pipe';
+import { statusPresentation } from '../../../../shared/utils/status-tone';
 import { PublishState } from '../../models/common.model';
-import { Question } from '../../models/question.model';
+import { QUESTION_LIMITS, Question } from '../../models/question.model';
 import { availableActions } from '../../domain/publish-workflow';
 import { canCreateNewVersion } from '../../domain/question.rules';
 import {
@@ -56,6 +58,7 @@ import { QuestionFacade } from '../../data-access/question.facade';
     AppErrorStateComponent,
     AppIconComponent,
     AppLoadingStateComponent,
+    AppStatusBadgeComponent,
     PublishActionsComponent,
     QuestionBadgesComponent,
     QuestionPreviewComponent,
@@ -150,7 +153,8 @@ export class QuestionDetailPage implements OnInit, OnDestroy {
       tone: 'primary',
       requireReason: true,
       reasonLabel: 'Değişiklik notu',
-      reasonHint: 'Bu not versiyon geçmişinde görünür. En az 10 karakter girin.',
+      reasonHint: `Bu not versiyon geçmişinde görünür. En az 10, en fazla ${QUESTION_LIMITS.changeNote.max} karakter.`,
+      maxReasonLength: QUESTION_LIMITS.changeNote.max,
     });
 
     if (result.confirmed) {
@@ -201,6 +205,11 @@ export class QuestionDetailPage implements OnInit, OnDestroy {
   /** Yayın butonlarının görünürlüğü durum makinesinden gelir. */
   hasWorkflowActions(state: PublishState): boolean {
     return availableActions(state).length > 0;
+  }
+
+  /** Kullanım listesindeki sınavın yayın durumu — ham enum yerine Türkçe rozet. */
+  examStateOf(state: string) {
+    return statusPresentation(state);
   }
 
   /* ── Versiyon karşılaştırma ──────────────────────────────────────────── */

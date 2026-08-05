@@ -21,6 +21,7 @@ import { DashboardCommonComponent } from '../../../components/dashboard/dashboar
 import { KpiGridComponent } from '../../../components/dashboard/kpi-grid.component';
 import { QuickActionsComponent } from '../../../components/dashboard/quick-actions.component';
 import { RankedListComponent } from '../../../components/dashboard/ranked-list.component';
+import { RankedEntry } from '../../../models/analytics.model';
 import { MeasurementDashboard } from '../../../models/dashboard.model';
 import { Notification } from '../../../models/notification.model';
 
@@ -88,8 +89,29 @@ export class MeasurementDashboardComponent {
     void this.router.navigate(['/question-bank']);
   }
 
+  /**
+   * Soru bankası sayaçları artık ilgili duruma FİLTRELENMİŞ görünüme götürür.
+   * Hepsi aynı genel listeye gitmek yerine "Taslak" tıklanınca taslakları,
+   * "Yayında" tıklanınca yayındakileri görmek işlevsel bir kart demektir.
+   */
+  openQuestionBankByState(state: 'DRAFT' | 'REVIEW' | 'PUBLISHED' | 'ARCHIVED'): void {
+    void this.router.navigate(['/question-bank'], { queryParams: { state } });
+  }
+
+  openQuestionBankFavorites(): void {
+    void this.router.navigate(['/question-bank'], { queryParams: { favoriteOnly: 'true' } });
+  }
+
   openNewQuestion(): void {
     void this.router.navigate(['/questions/new']);
+  }
+
+  openOutcome(entry: RankedEntry): void {
+    void this.router.navigate(['/outcomes', entry.id]);
+  }
+
+  openBlueprint(entry: RankedEntry): void {
+    void this.router.navigate(['/blueprints', entry.id]);
   }
 
   readonly qualitySeries = computed(() =>

@@ -1,7 +1,7 @@
 <div class="page">
   <header class="page-header">
     <div>
-      <h1 class="text-h1">Ustalık ısı haritası</h1>
+      <h1 class="text-h1">Kazanım ısı haritası</h1>
       <p class="text-sm text-muted">
         Kazanım × ders matrisi. Hücreye tıklayarak kazanım detayına gidebilirsiniz.
       </p>
@@ -29,7 +29,14 @@
       description="Renkler ortalama ustalık yüzdesini gösterir; ölçülmemiş hücreler boş bırakılır"
     >
       @if (hasData()) {
-        <app-mastery-heatmap [matrix]="data" (select)="onSelect($event)" />
+        <app-mastery-heatmap [matrix]="pagedMatrix() ?? data" (select)="onSelect($event)" />
+        <app-pagination
+          [page]="page()"
+          [size]="pageSize()"
+          [total]="rowCount()"
+          (pageChange)="onPageChange($event)"
+          (sizeChange)="onPageSizeChange($event)"
+        />
       } @else {
         <app-empty-state
           icon="target"

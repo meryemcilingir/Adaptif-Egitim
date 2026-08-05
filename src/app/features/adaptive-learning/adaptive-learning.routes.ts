@@ -247,7 +247,7 @@ export const ADAPTIVE_LEARNING_ROUTES: Routes = [
   },
   {
     path: 'analytics/mastery',
-    title: 'Ustalık Isı Haritası · Adaptif Eğitim',
+    title: 'Kazanım Isı Haritası · Adaptif Eğitim',
     canMatch: [permissionGuard('analytics:cohort')],
     loadComponent: () =>
       import('./pages/analytics/mastery-heatmap.page').then(

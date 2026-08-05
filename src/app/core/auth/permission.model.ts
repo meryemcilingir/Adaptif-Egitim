@@ -148,9 +148,13 @@ export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
     'exam:read',
     'exam:write',
     'exam:publish',
+    /*
+     * Ölçme uzmanı ölçme ARAÇLARINDAN (soru, blueprint, sınav) sorumludur;
+     * öğrenci cevaplarını değerlendirmek eğitmenin işidir — bu yüzden
+     * `attempt:grade` burada YOK. Sonuçları görebilir (`attempt:read`,
+     * madde analizi için) ama puanlayamaz.
+     */
     'attempt:read',
-    // Açık uçlu cevapların rubrikle puanlanması ölçme uzmanının asli işidir.
-    'attempt:grade',
     'analytics:student',
     'analytics:cohort',
     'analytics:item',

@@ -116,7 +116,11 @@
                       {{ exam.courseCode }} · {{ exam.opensAt | appRelativeTime }}
                     </span>
                   </div>
-                  <span class="usage__state text-xs">{{ exam.state }}</span>
+                  <app-status-badge
+                    [label]="examStateOf(exam.state).label"
+                    [tone]="examStateOf(exam.state).tone"
+                    [subtle]="true"
+                  />
                 </li>
               }
             </ul>

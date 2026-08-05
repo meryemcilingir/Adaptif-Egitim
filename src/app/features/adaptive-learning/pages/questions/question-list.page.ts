@@ -38,6 +38,7 @@ import {
 } from '../../models/common.model';
 import { LearningOutcome } from '../../models/learning-outcome.model';
 import {
+  QUESTION_LIMITS,
   QUESTION_TYPES,
   QUESTION_TYPE_LABELS,
   Question,
@@ -92,6 +93,10 @@ export class QuestionListPage implements OnInit {
 
   /** Route'tan gelen ders filtresi. */
   readonly courseId = input<string | null>(null);
+  /** Panodaki durum sayaçlarından gelen filtre (ör. ?state=DRAFT). */
+  readonly state = input<string | null>(null);
+  /** Panodaki "Favorilerim" sayacından gelen filtre (ör. ?favoriteOnly=true). */
+  readonly favoriteOnly = input<string | null>(null);
 
   private readonly selectCell =
     viewChild.required<TemplateRef<{ $implicit: Question }>>('selectCell');
@@ -110,10 +115,28 @@ export class QuestionListPage implements OnInit {
   private readonly outcomeListState = signal<readonly LearningOutcome[]>([]);
   private readonly previewState = signal<Question | null>(null);
   private readonly hiddenColumnsState = signal<ReadonlySet<string>>(new Set());
+  private readonly activeCourseId = signal<string | null>(null);
 
   readonly courseOptions = this.courseOptionsState.asReadonly();
   readonly preview = this.previewState.asReadonly();
   readonly canWrite = computed(() => this.permissions.can('question:write'));
+
+  /*
+   * Soru bankası DERS DERS açılır (kartlı seçim), tıklanan dersin sorularını
+   * mevcut tablo görünümünde gösterir.
+   *
+   * Bir durum/favori filtresiyle (panodaki sayaçlardan) veya doğrudan bir
+   * derse gelindiyse kart ızgarası atlanıp doğrudan filtrelenmiş listeye
+   * gidilir — kullanıcı "Yayında" sayacına tıkladığında önce ders seçmesi
+   * istenmemeli.
+   */
+  readonly showCourseGrid = computed(
+    () => this.activeCourseId() === null && !this.facade.isFiltered(),
+  );
+
+  readonly selectedCourseLabel = computed(
+    () => this.courseOptionsState().find((option) => option.value === this.activeCourseId())?.label ?? null,
+  );
 
   readonly toggleableColumns = TOGGLEABLE_COLUMNS;
 
@@ -276,11 +299,30 @@ export class QuestionListPage implements OnInit {
   ]);
 
   ngOnInit(): void {
-    const courseId = this.courseId();
-    if (courseId) this.facade.setFilter('courseId', courseId);
-    else this.facade.load();
-
     this.loadReferences();
+
+    const courseId = this.courseId();
+    const state = this.state();
+
+    if (courseId) {
+      this.selectCourse(courseId);
+    } else if (state) {
+      this.facade.setFilter('state', [state]);
+    } else if (this.favoriteOnly()) {
+      this.facade.setFilter('favoriteOnly', 'true');
+    }
+  }
+
+  /* ── Ders seçimi (kartlı görünüm) ──────────────────────────────────────── */
+
+  selectCourse(courseId: string): void {
+    this.activeCourseId.set(courseId);
+    this.facade.setFilter('courseId', courseId);
+  }
+
+  backToCourses(): void {
+    this.activeCourseId.set(null);
+    this.facade.clearFilters();
   }
 
   /* ── Görünüm yardımcıları ────────────────────────────────────────────── */
@@ -435,7 +477,8 @@ export class QuestionListPage implements OnInit {
       tone: 'primary',
       requireReason: true,
       reasonLabel: 'Değişiklik notu',
-      reasonHint: 'Bu not versiyon geçmişinde görünür. En az 10 karakter girin.',
+      reasonHint: `Bu not versiyon geçmişinde görünür. En az 10, en fazla ${QUESTION_LIMITS.changeNote.max} karakter.`,
+      maxReasonLength: QUESTION_LIMITS.changeNote.max,
     });
 
     if (result.confirmed) {

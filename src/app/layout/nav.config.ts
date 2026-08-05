@@ -171,12 +171,6 @@ export const NAV_GROUPS_BY_ROLE: Readonly<Record<Role, readonly NavGroup[]>> = {
           permissions: ['blueprint:read'],
         },
         { label: 'Sınavlar', link: '/exams', icon: 'file-check', permissions: ['exam:read'] },
-        {
-          label: 'Değerlendirme',
-          link: '/grading',
-          icon: 'clipboard-list',
-          permissions: ['attempt:grade'],
-        },
       ],
     },
     {
@@ -208,15 +202,9 @@ export const NAV_GROUPS_BY_ROLE: Readonly<Record<Role, readonly NavGroup[]>> = {
           permissions: ['analytics:item'],
         },
         {
-          label: 'Ustalık haritası',
+          label: 'Kazanım Isı Haritası',
           link: '/analytics/mastery',
           icon: 'grid-2x2',
-          permissions: ['analytics:cohort'],
-        },
-        {
-          label: 'Cohort analitiği',
-          link: '/cohort-analytics',
-          icon: 'users',
           permissions: ['analytics:cohort'],
         },
         {
@@ -412,7 +400,7 @@ export const NAV_GROUPS_BY_ROLE: Readonly<Record<Role, readonly NavGroup[]>> = {
           permissions: ['analytics:cohort'],
         },
         {
-          label: 'Ustalık haritası',
+          label: 'Kazanım Isı Haritası',
           link: '/analytics/mastery',
           icon: 'grid-2x2',
           permissions: ['analytics:cohort'],

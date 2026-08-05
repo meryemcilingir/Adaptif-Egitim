@@ -8,41 +8,62 @@
       </p>
     </div>
 
-    @if (canWrite()) {
+    @if (canWrite() && !showCourseGrid()) {
       <app-button variant="primary" icon="plus" (pressed)="createBlueprint()">
         Yeni plan
       </app-button>
     }
   </header>
 
-  <app-filter-bar
-    [query]="facade.query()"
-    [filters]="filters()"
-    searchPlaceholder="Plan adı veya açıklamasında ara…"
-    (searchChange)="facade.setSearch($event)"
-    (filterChange)="facade.setFilter($event.key, $event.value)"
-    (clearAll)="facade.clearFilters()"
-  />
+  @if (showCourseGrid()) {
+    <div class="course-grid">
+      @for (course of courseList(); track course.id) {
+        <button type="button" class="course-card" (click)="selectCourse(course.id)">
+          <app-icon name="file-text" [size]="20" />
+          <span class="text-body-strong truncate">{{ course.label }}</span>
+          <app-icon class="course-card__chevron" name="chevron-right" [size]="16" />
+        </button>
+      }
+    </div>
+  } @else {
+    <div class="course-context">
+      <app-button variant="ghost" size="sm" icon="arrow-left" (pressed)="backToCourses()">
+        Derslere dön
+      </app-button>
+      @if (selectedCourseLabel(); as label) {
+        <span class="text-sm text-body-strong">{{ label }}</span>
+      }
+    </div>
 
-  <app-table
-    [columns]="columns()"
-    [rows]="facade.items()"
-    [query]="facade.query()"
-    [total]="facade.total()"
-    [status]="facade.status()"
-    [error]="facade.error()"
-    [filtered]="facade.isFiltered()"
-    [rowClickable]="true"
-    [mutatingIds]="facade.mutatingIds()"
-    emptyTitle="Plan bulunamadı"
-    emptyDescription="Bu kapsamda görüntülenecek ölçme planı yok."
-    (sortChange)="facade.toggleSort($event)"
-    (pageChange)="facade.goToPage($event)"
-    (sizeChange)="facade.setPageSize($event)"
-    (rowClick)="openDetail($event)"
-    (retry)="facade.load()"
-    (clearFilters)="facade.clearFilters()"
-  />
+    <app-filter-bar
+      [query]="facade.query()"
+      [filters]="filters()"
+      searchPlaceholder="Plan adı veya açıklamasında ara…"
+      (searchChange)="facade.setSearch($event)"
+      (filterChange)="facade.setFilter($event.key, $event.value)"
+      (clearAll)="facade.clearFilters()"
+    />
+
+    <app-table
+      [columns]="columns()"
+      [rows]="facade.items()"
+      [query]="facade.query()"
+      [total]="facade.total()"
+      [status]="facade.status()"
+      [error]="facade.error()"
+      [filtered]="facade.isFiltered()"
+      [rowClickable]="true"
+      [mutatingIds]="facade.mutatingIds()"
+      emptyTitle="Plan bulunamadı"
+      emptyDescription="Bu kapsamda görüntülenecek ölçme planı yok."
+      (sortChange)="facade.toggleSort($event)"
+      (pageChange)="facade.goToPage($event)"
+      (sizeChange)="facade.setPageSize($event)"
+      (rowClick)="openDetail($event)"
+      (retry)="facade.load()"
+      (clearFilters)="facade.clearFilters()"
+    />
+  }
 </div>
 
 <ng-template #nameCell let-blueprint>

@@ -74,12 +74,21 @@
 
 /* ── Soru listeleri ──────────────────────────────────────────────────────── */
 
+/*
+ * Liste yüksekliği SINIRLIDIR — üç kart farklı sayıda soru taşıyabilir
+ * (son düzenlenen / en çok kullanılan / favori); sınırsız uzunlukta biri
+ * diğer ikisini de aynı yüksekliğe zorlayıp sayfayı gereksiz uzatıyordu.
+ * `grid`'in varsayılan `stretch` davranışıyla birlikte üç kart artık hep
+ * aynı boyda görünür.
+ */
 .questions {
   display: flex;
   flex-direction: column;
   gap: var(--space-2);
   margin: 0;
   padding: 0;
+  max-height: 420px;
+  overflow-y: auto;
   list-style: none;
 }
 

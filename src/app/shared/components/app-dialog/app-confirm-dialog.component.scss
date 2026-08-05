@@ -29,3 +29,15 @@
 p {
   margin-top: var(--space-2);
 }
+
+.confirm__hint {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--space-3);
+}
+
+.confirm__counter {
+  flex: none;
+  color: var(--color-text-subtle);
+}

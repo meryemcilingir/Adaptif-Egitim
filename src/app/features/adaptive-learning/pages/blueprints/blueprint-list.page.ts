@@ -20,6 +20,7 @@ import {
   DropdownItem,
 } from '../../../../shared/components/app-dropdown/app-dropdown.component';
 import { AppFilterBarComponent } from '../../../../shared/components/app-filter-bar/app-filter-bar.component';
+import { AppIconComponent } from '../../../../shared/components/app-icon/app-icon.component';
 import { FilterDefinition } from '../../../../shared/components/app-filter-bar/filter-definition';
 import { AppStatusBadgeComponent } from '../../../../shared/components/app-status-badge/app-status-badge.component';
 import { AppTableComponent } from '../../../../shared/components/app-table/app-table.component';
@@ -51,6 +52,7 @@ interface Reference {
     AppButtonComponent,
     AppDropdownComponent,
     AppFilterBarComponent,
+    AppIconComponent,
     AppStatusBadgeComponent,
     AppTableComponent,
   ],
@@ -76,8 +78,23 @@ export class BlueprintListPage implements OnInit {
 
   private readonly courseListState = signal<readonly Reference[]>([]);
   private readonly cohortListState = signal<readonly Reference[]>([]);
+  private readonly activeCourseId = signal<string | null>(null);
 
+  readonly courseList = this.courseListState.asReadonly();
   readonly canWrite = computed(() => this.permissions.can('exam:write'));
+
+  /*
+   * Liste sıralı ama karmaşık duruyordu: ders geneli ve gruba özel onlarca
+   * plan aynı büyük tabloda karışıyordu. Soru bankasındaki desenle aynı
+   * şekilde önce DERS seçilir, sonra o dersin planları görünür.
+   */
+  readonly showCourseGrid = computed(
+    () => this.activeCourseId() === null && !this.facade.isFiltered(),
+  );
+
+  readonly selectedCourseLabel = computed(
+    () => this.courseListState().find((course) => course.id === this.activeCourseId())?.label ?? null,
+  );
 
   private readonly cohortNames = computed(
     () => new Map(this.cohortListState().map((cohort) => [cohort.id, cohort.label])),
@@ -179,8 +196,19 @@ export class BlueprintListPage implements OnInit {
   ]);
 
   ngOnInit(): void {
-    this.facade.load();
     this.loadReferences();
+  }
+
+  /* ── Ders seçimi (kartlı görünüm) ──────────────────────────────────────── */
+
+  selectCourse(courseId: string): void {
+    this.activeCourseId.set(courseId);
+    this.facade.setFilter('courseId', courseId);
+  }
+
+  backToCourses(): void {
+    this.activeCourseId.set(null);
+    this.facade.clearFilters();
   }
 
   /* ── Satır işlemleri ─────────────────────────────────────────────────── */

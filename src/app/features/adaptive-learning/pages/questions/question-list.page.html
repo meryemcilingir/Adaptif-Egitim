@@ -29,51 +29,74 @@
     </div>
   </header>
 
-  <app-filter-bar
-    [query]="facade.query()"
-    [filters]="filters()"
-    searchPlaceholder="Soru kodu, başlığı, gövdesi veya etiketinde ara…"
-    (searchChange)="facade.setSearch($event)"
-    (filterChange)="facade.setFilter($event.key, $event.value)"
-    (clearAll)="facade.clearFilters()"
-  />
-
-  @if (facade.hasSelection()) {
-    <div class="bulk-bar" role="region" aria-label="Toplu işlemler">
-      <span class="text-sm text-body-strong">{{ facade.selectedCount() }} soru seçildi</span>
-      <div class="row gap-2">
-        <app-dropdown
-          [items]="bulkActions"
-          triggerText="Toplu işlem"
-          triggerIcon="square-check"
-          triggerVariant="secondary"
-          triggerSize="md"
-          (itemSelect)="onBulkAction($event)"
-        />
-        <app-button variant="ghost" (pressed)="facade.clearSelection()">Seçimi temizle</app-button>
-      </div>
+  @if (showCourseGrid()) {
+    <div class="course-grid">
+      @for (course of courseOptions(); track course.value) {
+        <button type="button" class="course-card" (click)="selectCourse(course.value)">
+          <app-icon name="library" [size]="20" />
+          <span class="text-body-strong truncate">{{ course.label }}</span>
+          <app-icon class="course-card__chevron" name="chevron-right" [size]="16" />
+        </button>
+      }
     </div>
-  }
+  } @else {
+    <div class="course-context">
+      <app-button variant="ghost" size="sm" icon="arrow-left" (pressed)="backToCourses()">
+        Derslere dön
+      </app-button>
+      @if (selectedCourseLabel(); as label) {
+        <span class="text-sm text-body-strong">{{ label }}</span>
+      }
+    </div>
 
-  <app-table
-    [columns]="columns()"
-    [rows]="facade.items()"
-    [query]="facade.query()"
-    [total]="facade.total()"
-    [status]="facade.status()"
-    [error]="facade.error()"
-    [filtered]="facade.isFiltered()"
-    [rowClickable]="true"
-    [mutatingIds]="facade.mutatingIds()"
-    emptyTitle="Soru bulunamadı"
-    emptyDescription="Bu kapsamda görüntülenecek soru yok."
-    (sortChange)="facade.toggleSort($event)"
-    (pageChange)="facade.goToPage($event)"
-    (sizeChange)="facade.setPageSize($event)"
-    (rowClick)="openDetail($event)"
-    (retry)="facade.load()"
-    (clearFilters)="facade.clearFilters()"
-  />
+    <app-filter-bar
+      [query]="facade.query()"
+      [filters]="filters()"
+      searchPlaceholder="Soru kodu, başlığı, gövdesi veya etiketinde ara…"
+      (searchChange)="facade.setSearch($event)"
+      (filterChange)="facade.setFilter($event.key, $event.value)"
+      (clearAll)="facade.clearFilters()"
+    />
+
+    @if (facade.hasSelection()) {
+      <div class="bulk-bar" role="region" aria-label="Toplu işlemler">
+        <span class="text-sm text-body-strong">{{ facade.selectedCount() }} soru seçildi</span>
+        <div class="row gap-2">
+          <app-dropdown
+            [items]="bulkActions"
+            triggerText="Toplu işlem"
+            triggerIcon="square-check"
+            triggerVariant="secondary"
+            triggerSize="md"
+            (itemSelect)="onBulkAction($event)"
+          />
+          <app-button variant="ghost" (pressed)="facade.clearSelection()"
+            >Seçimi temizle</app-button
+          >
+        </div>
+      </div>
+    }
+
+    <app-table
+      [columns]="columns()"
+      [rows]="facade.items()"
+      [query]="facade.query()"
+      [total]="facade.total()"
+      [status]="facade.status()"
+      [error]="facade.error()"
+      [filtered]="facade.isFiltered()"
+      [rowClickable]="true"
+      [mutatingIds]="facade.mutatingIds()"
+      emptyTitle="Soru bulunamadı"
+      emptyDescription="Bu kapsamda görüntülenecek soru yok."
+      (sortChange)="facade.toggleSort($event)"
+      (pageChange)="facade.goToPage($event)"
+      (sizeChange)="facade.setPageSize($event)"
+      (rowClick)="openDetail($event)"
+      (retry)="facade.load()"
+      (clearFilters)="facade.clearFilters()"
+    />
+  }
 </div>
 
 <ng-template #selectCell let-question>

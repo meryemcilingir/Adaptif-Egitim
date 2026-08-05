@@ -35,14 +35,22 @@ const DEFAULT_MIN_REASON_LENGTH = 10;
             class="confirm__reason"
             rows="3"
             [value]="reason()"
+            [attr.maxlength]="maxLength()"
             [attr.aria-describedby]="'confirm-reason-hint'"
             (input)="onReasonInput($event)"
           ></textarea>
-          <p id="confirm-reason-hint" class="text-xs" [class.text-danger]="!isReasonValid()">
-            {{
-              current.request.reasonHint ??
-                'Bu işlem denetim kaydına yazılır. En az ' + minLength() + ' karakter girin.'
-            }}
+          <p id="confirm-reason-hint" class="confirm__hint text-xs">
+            <span [class.text-danger]="!isReasonValid()">
+              {{
+                current.request.reasonHint ??
+                  'Bu işlem denetim kaydına yazılır. En az ' + minLength() + ' karakter girin.'
+              }}
+            </span>
+            @if (maxLength(); as max) {
+              <span class="confirm__counter tabular" [class.text-danger]="reason().length > max">
+                {{ reason().length }}/{{ max }}
+              </span>
+            }
           </p>
         }
 
@@ -74,10 +82,14 @@ export class AppConfirmDialogComponent {
   readonly minLength = computed(
     () => this.pending()?.request.minReasonLength ?? DEFAULT_MIN_REASON_LENGTH,
   );
+  readonly maxLength = computed(() => this.pending()?.request.maxReasonLength ?? null);
 
-  readonly isReasonValid = computed(
-    () => !this.requiresReason() || this.reasonState().trim().length >= this.minLength(),
-  );
+  readonly isReasonValid = computed(() => {
+    if (!this.requiresReason()) return true;
+    const length = this.reasonState().trim().length;
+    const max = this.maxLength();
+    return length >= this.minLength() && (max === null || length <= max);
+  });
 
   onReasonInput(event: Event): void {
     this.reasonState.set((event.target as HTMLTextAreaElement).value);

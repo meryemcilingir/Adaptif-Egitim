@@ -13,6 +13,7 @@ import { AppCardComponent } from '../../../../shared/components/app-card/app-car
 import { AppEmptyStateComponent } from '../../../../shared/components/app-empty-state/app-empty-state.component';
 import { AppErrorStateComponent } from '../../../../shared/components/app-error-state/app-error-state.component';
 import { AppLoadingStateComponent } from '../../../../shared/components/app-loading-state/app-loading-state.component';
+import { AppPaginationComponent } from '../../../../shared/components/app-pagination/app-pagination.component';
 import {
   AnalyticsFilterBarComponent,
   AnalyticsFilterValue,
@@ -44,6 +45,7 @@ import { AnalyticsFacade, ReportStatus } from '../../data-access/analytics.facad
     AppEmptyStateComponent,
     AppErrorStateComponent,
     AppLoadingStateComponent,
+    AppPaginationComponent,
     MasteryHeatmapComponent,
     ReportHeaderComponent,
   ],
@@ -57,8 +59,12 @@ export class MasteryHeatmapPage implements OnInit {
   private readonly data = signal<MatrixData | null>(null);
   private readonly status = signal<ReportStatus>('idle');
   private readonly errorState = signal<ApiError | null>(null);
+  private readonly pageState = signal(1);
+  private readonly pageSizeState = signal(25);
 
   readonly matrix = this.data.asReadonly();
+  readonly page = this.pageState.asReadonly();
+  readonly pageSize = this.pageSizeState.asReadonly();
   readonly error = this.errorState.asReadonly();
   readonly isLoading = computed(() => this.status() === 'loading' && this.data() === null);
   readonly isRefreshing = computed(() => this.status() === 'loading' && this.data() !== null);
@@ -72,6 +78,30 @@ export class MasteryHeatmapPage implements OnInit {
   readonly hasData = computed(() =>
     (this.data()?.cells ?? []).some((cell) => cell.value !== null),
   );
+
+  /** Sayfalanacak toplam kazanım (satır) sayısı — filtreden sonra kalan. */
+  readonly rowCount = computed(() => this.data()?.rows.length ?? 0);
+
+  /*
+   * Matris SATIR bazında sayfalanır — sütunlar (dersler) her sayfada aynı
+   * kalır. Filtresiz kapsamda 100'ün üzerinde kazanım tek tabloda birikip
+   * sayfayı kilometrelerce uzatıyordu; sunucu tarafında sayfalama yoktur
+   * (tüm matris tek istekte gelir), bu yüzden dilimleme istemcide yapılır.
+   */
+  readonly pagedMatrix = computed<MatrixData | null>(() => {
+    const matrix = this.data();
+    if (!matrix) return null;
+
+    const start = (this.pageState() - 1) * this.pageSizeState();
+    const pageRows = matrix.rows.slice(start, start + this.pageSizeState());
+    const pageRowIds = new Set(pageRows.map((row) => row.id));
+
+    return {
+      columns: matrix.columns,
+      rows: pageRows,
+      cells: matrix.cells.filter((cell) => pageRowIds.has(cell.rowId)),
+    };
+  });
 
   /** Künye için sahte bir meta değil, matristen türetilen gerçek örneklem. */
   readonly meta = computed(() => {
@@ -114,11 +144,21 @@ export class MasteryHeatmapPage implements OnInit {
   }
 
   load(): void {
+    this.pageState.set(1);
     this.facade.load(this.facade.reports.masteryMatrix(this.facade.query()), {
       data: this.data,
       status: this.status,
       error: this.errorState,
     });
+  }
+
+  onPageChange(page: number): void {
+    this.pageState.set(page);
+  }
+
+  onPageSizeChange(size: number): void {
+    this.pageSizeState.set(size);
+    this.pageState.set(1);
   }
 
   onFilterChange(value: AnalyticsFilterValue): void {
