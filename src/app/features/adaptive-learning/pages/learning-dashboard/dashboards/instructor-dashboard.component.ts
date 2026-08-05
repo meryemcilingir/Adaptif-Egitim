@@ -1,8 +1,10 @@
 import { ChangeDetectionStrategy, Component, computed, inject, input, output } from '@angular/core';
 import { Router } from '@angular/router';
 
+import { AppButtonComponent } from '../../../../../shared/components/app-button/app-button.component';
 import { AppCardComponent } from '../../../../../shared/components/app-card/app-card.component';
 import { AppChartCardComponent } from '../../../../../shared/components/app-chart-card/app-chart-card.component';
+import { AppIconComponent } from '../../../../../shared/components/app-icon/app-icon.component';
 import { AppProgressBarComponent } from '../../../../../shared/components/app-progress-bar/app-progress-bar.component';
 import {
   toDistributionCategories,
@@ -20,6 +22,9 @@ import { UpcomingExamsComponent } from '../../../components/dashboard/upcoming-e
 import { GradingQueueEntry, InstructorDashboard } from '../../../models/dashboard.model';
 import { Notification } from '../../../models/notification.model';
 
+/** Değerlendirme kuyruğundaki bir denemenin "geciktiği" sayılacağı gün sayısı. */
+const OVERDUE_WAITING_DAYS = 7;
+
 /**
  * Eğitmen paneli.
  * Odak: değerlendirme kuyruğu, ders bazlı ilerleme ve risk altındaki öğrenciler.
@@ -28,8 +33,10 @@ import { Notification } from '../../../models/notification.model';
   selector: 'app-instructor-dashboard',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
+    AppButtonComponent,
     AppCardComponent,
     AppChartCardComponent,
+    AppIconComponent,
     AppProgressBarComponent,
     DashboardCommonComponent,
     GradingQueueComponent,
@@ -47,6 +54,23 @@ export class InstructorDashboardComponent {
 
   readonly data = input.required<InstructorDashboard>();
   readonly notificationRead = output<Notification>();
+
+  readonly overdueThresholdDays = OVERDUE_WAITING_DAYS;
+
+  /*
+   * Değerlendirme kuyruğu kartı sayfanın ortasında kalıyordu; eğitmen panele
+   * girip aşağı kaydırmadan bekleyen değerlendirme olduğunu fark etmiyordu.
+   * Üstte bir uyarı, özellikle geciken denemeler için, işi öne çıkarır.
+   */
+  readonly pendingGradingCount = computed(() => this.data().gradingQueue.length);
+
+  readonly overdueGradingCount = computed(
+    () => this.data().gradingQueue.filter((entry) => entry.waitingDays >= OVERDUE_WAITING_DAYS).length,
+  );
+
+  readonly maxWaitingDays = computed(() =>
+    this.data().gradingQueue.reduce((max, entry) => Math.max(max, entry.waitingDays), 0),
+  );
 
   readonly performanceSeries = computed(() => toMultiSeries(this.data().classPerformance));
   readonly performanceCategories = computed(() => toMultiCategories(this.data().classPerformance));

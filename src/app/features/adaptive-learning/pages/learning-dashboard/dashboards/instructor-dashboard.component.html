@@ -1,5 +1,27 @@
 @let dashboard = data();
 
+@if (pendingGradingCount() > 0) {
+  <div class="grading-alert" [class.is-danger]="overdueGradingCount() > 0" role="alert">
+    <app-icon name="triangle-alert" [size]="18" />
+    <div class="grading-alert__body">
+      <p class="text-body-strong">
+        {{ pendingGradingCount() }} deneme değerlendirme bekliyor
+      </p>
+      <p class="text-sm text-muted">
+        @if (overdueGradingCount() > 0) {
+          {{ overdueGradingCount() }} tanesi {{ overdueThresholdDays }} günden uzun süredir
+          bekliyor — öğrenciler sonuçlarını göremiyor.
+        } @else {
+          En uzun bekleyen deneme {{ maxWaitingDays() }} gündür sırada.
+        }
+      </p>
+    </div>
+    <app-button variant="secondary" size="sm" trailingIcon="arrow-right" (pressed)="openGrading()">
+      Değerlendirmeye git
+    </app-button>
+  </div>
+}
+
 <app-kpi-grid [cards]="dashboard.kpis" />
 
 <app-quick-actions [actions]="dashboard.quickActions" />

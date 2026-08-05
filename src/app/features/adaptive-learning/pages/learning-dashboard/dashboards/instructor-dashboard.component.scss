@@ -6,6 +6,52 @@
   gap: var(--space-6);
 }
 
+.grading-alert {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-3);
+  padding: var(--space-4);
+  background: var(--color-warning-subtle);
+  border: var(--border-width) solid var(--color-warning-border);
+  border-radius: var(--radius-lg);
+  color: var(--color-warning-text);
+
+  app-icon {
+    margin-top: 2px;
+    flex: none;
+  }
+
+  app-button {
+    margin-inline-start: auto;
+    flex: none;
+  }
+
+  &.is-danger {
+    background: var(--color-danger-subtle);
+    border-color: var(--color-danger-border);
+    color: var(--color-danger-text);
+  }
+}
+
+.grading-alert__body {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+@media (max-width: 560px) {
+  .grading-alert {
+    flex-wrap: wrap;
+  }
+
+  .grading-alert app-button {
+    margin-inline-start: 0;
+    width: 100%;
+  }
+}
+
 .courses {
   display: flex;
   flex-direction: column;
