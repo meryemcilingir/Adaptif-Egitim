@@ -1,0 +1,106 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Sonuçlarım</h1>
+      <p class="text-sm text-muted">Girdiğiniz sınavların sonuçlarını buradan görüntüleyebilirsiniz.</p>
+    </div>
+  </header>
+
+  @if (isLoading()) {
+    <app-loading-state variant="skeleton-card" [rows]="3" message="Sonuçlarınız yükleniyor…" />
+  } @else if (hasError()) {
+    <app-error-state [error]="error()" title="Sonuçlar yüklenemedi" (retry)="load()" />
+  } @else {
+    <div class="results-toolbar">
+      <div class="results-search">
+        <app-icon name="search" [size]="15" />
+        <input
+          type="search"
+          placeholder="Sınav veya ders kodunda ara…"
+          [value]="search()"
+          (input)="onSearchInput($event)"
+        />
+      </div>
+
+      <select class="results-filter" [value]="courseFilter() ?? ''" (change)="onCourseFilterChange($event)">
+        <option value="">Tüm dersler</option>
+        @for (code of courseOptions(); track code) {
+          <option [value]="code">{{ code }}</option>
+        }
+      </select>
+
+      @if (search().length > 0 || courseFilter() !== null) {
+        <app-button variant="ghost" size="sm" icon="x" (pressed)="clearFilters()">
+          Filtreleri temizle
+        </app-button>
+      }
+    </div>
+
+    <!-- ── Değerlendirme bekleyen denemeler ──────────────────────────── -->
+    <app-card
+      title="Değerlendirme bekleyenler"
+      description="Sonuç henüz açıklanmadı"
+    >
+      @if (pendingHistory().length === 0) {
+        <app-empty-state
+          icon="clock"
+          title="Bekleyen değerlendirme yok"
+          description="Tüm denemelerinizin sonucu açıklandı."
+        />
+      } @else {
+        <ul class="history-list">
+          @for (row of pendingHistory(); track row.attemptId) {
+            <li class="history-row" (click)="openAttempt(row)">
+              <div class="history-row__body">
+                <span class="text-sm text-body-strong">{{ row.examTitle }}</span>
+                <span class="text-xs text-subtle">
+                  {{ row.courseCode }} · {{ formatDate(row.submittedAt) }} ·
+                  {{ durationOf(row) }}
+                </span>
+              </div>
+
+              <div class="history-row__result">
+                <app-status-badge
+                  [label]="toneFor(row.state).label"
+                  [tone]="toneFor(row.state).tone"
+                  [icon]="toneFor(row.state).icon"
+                />
+                <app-icon name="chevron-right" [size]="16" />
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </app-card>
+
+    <!-- ── Sonuçlanan denemeler ─────────────────────────────────────── -->
+    <app-card title="Sonuçlanan sınavlarım" description="Puan ve geçme durumu">
+      @if (releasedHistory().length === 0) {
+        <app-empty-state
+          icon="history"
+          title="Henüz sonuçlanan sınav yok"
+          description="Sonucu açıklanan denemeleriniz burada listelenecek."
+        />
+      } @else {
+        <ul class="history-list">
+          @for (row of releasedHistory(); track row.attemptId) {
+            <li class="history-row" (click)="openAttempt(row)">
+              <div class="history-row__body">
+                <span class="text-sm text-body-strong">{{ row.examTitle }}</span>
+                <span class="text-xs text-subtle">
+                  {{ row.courseCode }} · {{ formatDate(row.submittedAt) }} ·
+                  {{ durationOf(row) }}
+                </span>
+              </div>
+
+              <div class="history-row__result">
+                <span class="history-row__score tabular">{{ resultLabel(row) }}</span>
+                <app-icon name="chevron-right" [size]="16" />
+              </div>
+            </li>
+          }
+        </ul>
+      }
+    </app-card>
+  }
+</div>

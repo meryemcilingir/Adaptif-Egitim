@@ -1,36 +1,32 @@
-import {
-  ChangeDetectionStrategy,
-  Component,
-  OnInit,
-  computed,
-  inject,
-  signal,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, OnInit, computed, inject, signal } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { ApiError } from '../../../../core/api/api-error';
-import { createPageRequest } from '../../../../core/api/page-request';
-import { AppButtonComponent } from '../../../../shared/components/app-button/app-button.component';
 import { AppCardComponent } from '../../../../shared/components/app-card/app-card.component';
 import { AppEmptyStateComponent } from '../../../../shared/components/app-empty-state/app-empty-state.component';
 import { AppErrorStateComponent } from '../../../../shared/components/app-error-state/app-error-state.component';
 import { AppIconComponent } from '../../../../shared/components/app-icon/app-icon.component';
 import { AppLoadingStateComponent } from '../../../../shared/components/app-loading-state/app-loading-state.component';
 import { AppStatusBadgeComponent } from '../../../../shared/components/app-status-badge/app-status-badge.component';
-import { Exam } from '../../models/exam.model';
-import { examRuntimeStatus } from '../../domain/exam-runtime';
-import { ExamRepository } from '../../data-access/exam.repository';
+import { AppButtonComponent } from '../../../../shared/components/app-button/app-button.component';
+import { statusPresentation } from '../../../../shared/utils/status-tone';
+import { ATTEMPT_STATE_LABELS } from '../../models/attempt.model';
+import { formatDuration } from '../../domain/exam-clock';
+import { ExamHistoryRow, SessionRepository } from '../../data-access/session.repository';
 
 /**
- * Öğrencinin sınav sayfası.
+ * Öğrencinin sınav sonuçları sayfası.
  *
- * Yalnızca henüz girilmemiş (açık veya yaklaşan) sınavları listeler.
- * Girilmiş denemeler ve sonuçlar ayrı bir ekranda toplanır (`/exam-results`) —
- * "yapılacak iş" ile "olan biten" aynı listede karışınca öğrenci hangi
- * sınava hâlâ girmesi gerektiğini ayırt etmekte zorlanıyordu.
+ * Girilmiş tüm denemeler burada toplanır: sonucu açıklananlar VE değerlendirme
+ * bekleyenler. Yaklaşan/açık sınavlar burada YOKTUR — onlar `/my-exams`'te
+ * kalır; "yapılacak iş" ile "olan biten" ayrı ekranlar olunca öğrenci hangi
+ * sınava hâlâ girmesi gerektiğini karıştırmaz.
+ *
+ * Puan yalnızca sonucu AÇIKLANMIŞ denemelerde görünür (BR-49); diğerlerinde
+ * sürecin hangi aşamada olduğu yazılır.
  */
 @Component({
-  selector: 'app-my-exams-page',
+  selector: 'app-exam-results-page',
   changeDetection: ChangeDetectionStrategy.OnPush,
   imports: [
     AppButtonComponent,
@@ -41,22 +37,22 @@ import { ExamRepository } from '../../data-access/exam.repository';
     AppLoadingStateComponent,
     AppStatusBadgeComponent,
   ],
-  templateUrl: './my-exams.page.html',
-  styleUrl: './my-exams.page.scss',
+  templateUrl: './exam-results.page.html',
+  styleUrl: './exam-results.page.scss',
 })
-export class MyExamsPage implements OnInit {
-  private readonly exams = inject(ExamRepository);
+export class ExamResultsPage implements OnInit {
+  private readonly sessions = inject(SessionRepository);
   private readonly router = inject(Router);
 
-  private readonly examState = signal<readonly Exam[]>([]);
+  private readonly historyState = signal<readonly ExamHistoryRow[]>([]);
   private readonly statusState = signal<'loading' | 'ready' | 'error'>('loading');
   private readonly errorState = signal<ApiError | null>(null);
-
-  private readonly nowMs = Date.now();
 
   readonly error = this.errorState.asReadonly();
   readonly isLoading = computed(() => this.statusState() === 'loading');
   readonly hasError = computed(() => this.statusState() === 'error');
+
+  readonly stateLabels = ATTEMPT_STATE_LABELS;
 
   /* ── Arama ve ders filtresi ───────────────────────────────────────────── */
 
@@ -66,14 +62,9 @@ export class MyExamsPage implements OnInit {
   readonly search = this.searchState.asReadonly();
   readonly courseFilter = this.courseFilterState.asReadonly();
 
-  /** Sınav başlıkları hep "DERSKODU Sınav adı" biçimindedir. */
-  private courseCodeOf(title: string): string {
-    return title.split(' ')[0] ?? '';
-  }
-
   readonly courseOptions = computed(() => {
     const codes = new Set<string>();
-    for (const exam of this.examState()) codes.add(this.courseCodeOf(exam.title));
+    for (const row of this.historyState()) codes.add(row.courseCode);
     return [...codes].sort((a, b) => a.localeCompare(b, 'tr-TR'));
   });
 
@@ -100,20 +91,22 @@ export class MyExamsPage implements OnInit {
     this.courseFilterState.set(null);
   }
 
-  /**
-   * Girilebilir veya yaklaşan sınavlar.
+  /*
+   * Geçmiş denemeler İKİYE ayrılır: sonucu açıklanan ve değerlendirme bekleyen.
    *
-   * Kapanmış sınavlar burada gösterilmez; onlar zaten geçmişte yer alır.
-   * Sıralama en yakın tarihli önce gelecek biçimdedir.
+   * Tek liste hâlinde puanlı ve puansız satırlar iç içe geçince "sonucum çıktı
+   * mı?" sorusunu yanıtlamak için tüm listeyi taramak gerekiyordu.
    */
-  readonly upcoming = computed(() =>
-    this.examState()
-      .filter((exam) => {
-        const status = examRuntimeStatus(exam, this.nowMs);
-        return status === 'active' || status === 'scheduled';
-      })
-      .filter((exam) => this.matchesFilters(exam.title, this.courseCodeOf(exam.title)))
-      .sort((a, b) => a.opensAt.localeCompare(b.opensAt)),
+  readonly releasedHistory = computed(() =>
+    this.historyState()
+      .filter((row) => this.isReleased(row))
+      .filter((row) => this.matchesFilters(row.examTitle, row.courseCode)),
+  );
+
+  readonly pendingHistory = computed(() =>
+    this.historyState()
+      .filter((row) => !this.isReleased(row))
+      .filter((row) => this.matchesFilters(row.examTitle, row.courseCode)),
   );
 
   ngOnInit(): void {
@@ -124,9 +117,9 @@ export class MyExamsPage implements OnInit {
     this.statusState.set('loading');
     this.errorState.set(null);
 
-    this.exams.list(createPageRequest({ size: 100 })).subscribe({
-      next: (exams) => {
-        this.examState.set(exams.items);
+    this.sessions.myHistory().subscribe({
+      next: (history) => {
+        this.historyState.set(history);
         this.statusState.set('ready');
       },
       error: (error: ApiError) => {
@@ -138,28 +131,37 @@ export class MyExamsPage implements OnInit {
 
   /* ── Gösterim ──────────────────────────────────────────────────────────── */
 
-  isOpen(exam: Exam): boolean {
-    return examRuntimeStatus(exam, this.nowMs) === 'active';
-  }
-
-  examStatusLabel(exam: Exam): string {
-    return this.isOpen(exam) ? 'Şu anda açık' : 'Planlandı';
-  }
-
-  formatWindow(exam: Exam): string {
-    const opens = new Date(exam.opensAt).toLocaleString('tr-TR', {
+  formatDate(iso: string): string {
+    return new Date(iso).toLocaleString('tr-TR', {
       day: '2-digit',
-      month: 'long',
+      month: '2-digit',
+      year: 'numeric',
       hour: '2-digit',
       minute: '2-digit',
     });
+  }
 
-    return `${opens} · ${exam.durationMinutes} dakika`;
+  durationOf(row: ExamHistoryRow): string {
+    return formatDuration(row.durationSeconds * 1000);
+  }
+
+  toneFor(state: string) {
+    return statusPresentation(state);
+  }
+
+  /** Sonuç açıklandıysa puan, açıklanmadıysa sürecin aşaması gösterilir. */
+  resultLabel(row: ExamHistoryRow): string {
+    if (row.scorePercent === null) return this.stateLabels[row.state];
+    return `%${row.scorePercent} · ${row.passed ? 'Geçti' : 'Kaldı'}`;
+  }
+
+  isReleased(row: ExamHistoryRow): boolean {
+    return row.scorePercent !== null;
   }
 
   /* ── Gezinme ───────────────────────────────────────────────────────────── */
 
-  enter(exam: Exam): void {
-    void this.router.navigate(['/exams', exam.id, 'waiting-room']);
+  openAttempt(row: ExamHistoryRow): void {
+    void this.router.navigate(['/attempts', row.attemptId]);
   }
 }

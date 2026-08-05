@@ -74,6 +74,12 @@ export const NAV_GROUPS_BY_ROLE: Readonly<Record<Role, readonly NavGroup[]>> = {
           icon: 'file-check',
           permissions: ['session:start'],
         },
+        {
+          label: 'Sonuçlarım',
+          link: '/exam-results',
+          icon: 'clipboard-list',
+          permissions: ['session:start'],
+        },
       ],
     },
     {

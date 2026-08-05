@@ -164,6 +164,13 @@ export const ADAPTIVE_LEARNING_ROUTES: Routes = [
       import('./pages/session/my-exams.page').then((module) => module.MyExamsPage),
   },
   {
+    path: 'exam-results',
+    title: 'Sonuçlarım · Adaptif Eğitim',
+    canMatch: [permissionGuard('exam:read')],
+    loadComponent: () =>
+      import('./pages/session/exam-results.page').then((module) => module.ExamResultsPage),
+  },
+  {
     /* Bekleme odası ve sihirbaz, `exams/:id` kalıbından ÖNCE gelmelidir. */
     path: 'exams/:id/waiting-room',
     title: 'Sınav Bekleme Odası · Adaptif Eğitim',

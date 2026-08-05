@@ -55,7 +55,7 @@ export class ExamSubmittedPage {
   );
 
   goToHistory(): void {
-    void this.router.navigate(['/my-exams']);
+    void this.router.navigate(['/exam-results']);
   }
 
   goToDashboard(): void {
