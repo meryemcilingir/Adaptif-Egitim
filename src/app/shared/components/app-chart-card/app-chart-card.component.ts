@@ -11,6 +11,7 @@ import {
 import { ApexNonAxisChartSeries, ChartComponent } from 'ng-apexcharts';
 
 import { ApiError } from '../../../core/api/api-error';
+import { ThemeStore } from '../../../core/state/theme.store';
 import { AppCardComponent } from '../app-card/app-card.component';
 import { AppEmptyStateComponent } from '../app-empty-state/app-empty-state.component';
 import { AppErrorStateComponent } from '../app-error-state/app-error-state.component';
@@ -19,8 +20,6 @@ import {
   AppChartSeries,
   AppChartType,
   BASE_DATA_LABELS,
-  BASE_TOOLTIP,
-  CHART_COLORS,
   areaFill,
   baseChart,
   baseGrid,
@@ -28,8 +27,10 @@ import {
   baseMarkers,
   basePlotOptions,
   baseStroke,
+  baseTooltip,
   baseXAxis,
   baseYAxis,
+  chartColors,
 } from './chart-theme';
 
 /**
@@ -61,7 +62,8 @@ export class AppChartCardComponent {
   readonly categories = input<readonly string[]>([]);
   readonly labels = input<readonly string[]>([]);
   readonly height = input(280);
-  readonly colors = input<readonly string[]>(CHART_COLORS);
+  /** Boş bırakılırsa tema paletindeki sekiz renk kullanılır. */
+  readonly colors = input<readonly string[]>([]);
   readonly showLegend = input(true);
   readonly showGrid = input(true);
   readonly horizontal = input(false);
@@ -88,20 +90,40 @@ export class AppChartCardComponent {
    */
   readonly apexSeries = computed(() => this.series() as ApexNonAxisChartSeries);
 
+  private readonly theme = inject(ThemeStore);
+
+  /*
+   * Grafik seçenekleri renkleri CSS token'larından okur, ama ApexCharts bunları
+   * bir kez alıp saklar. Aşağıdaki hesaplananların tema değişiminde yeniden
+   * çalışması için `resolved()` bilinçli olarak okunur — yoksa tema değişince
+   * ızgara ve etiketler eski renkte kalıyordu.
+   */
+  private readonly themeKey = computed(() => this.theme.resolved());
+
   readonly chart = computed(() => baseChart(this.type(), this.height()));
-  readonly grid = computed(() => baseGrid(this.showGrid()));
+  readonly grid = computed(() => (this.themeKey(), baseGrid(this.showGrid())));
   readonly stroke = computed(() => baseStroke(this.type()));
-  readonly legend = computed(() => baseLegend(this.showLegend()));
-  readonly plotOptions = computed(() => basePlotOptions(this.type(), this.horizontal()));
-  readonly xaxis = computed(() => baseXAxis(this.categories(), this.type() === 'scatter'));
+  readonly legend = computed(() => (this.themeKey(), baseLegend(this.showLegend())));
+  readonly plotOptions = computed(
+    () => (this.themeKey(), basePlotOptions(this.type(), this.horizontal())),
+  );
+  readonly xaxis = computed(
+    () => (this.themeKey(), baseXAxis(this.categories(), this.type() === 'scatter')),
+  );
   readonly markers = computed(() => baseMarkers(this.type()));
-  readonly yaxis = computed(() => baseYAxis(this.valueSuffix(), this.type() === 'heatmap'));
+  readonly yaxis = computed(
+    () => (this.themeKey(), baseYAxis(this.valueSuffix(), this.type() === 'heatmap')),
+  );
   readonly fill = computed(() => (this.type() === 'area' ? areaFill() : {}));
   readonly chartLabels = computed(() => [...this.labels()]);
-  readonly chartColors = computed(() => [...this.colors()]);
+  readonly chartColors = computed(() => {
+    this.themeKey();
+    const explicit = this.colors();
+    return explicit.length > 0 ? [...explicit] : [...chartColors()];
+  });
 
   readonly dataLabels = BASE_DATA_LABELS;
-  readonly tooltip = BASE_TOOLTIP;
+  readonly tooltip = computed(() => (this.themeKey(), baseTooltip()));
 
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
   private readonly destroyRef = inject(DestroyRef);

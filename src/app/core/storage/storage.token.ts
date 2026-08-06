@@ -23,4 +23,5 @@ export const STORAGE_KEYS = {
   outbox: 'adaptif.outbox',
   uiPreferences: 'adaptif.ui',
   mockConfig: 'adaptif.mock-config',
+  theme: 'adaptif.theme',
 } as const;

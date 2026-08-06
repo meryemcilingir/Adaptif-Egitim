@@ -21,8 +21,16 @@ Vercel Dashboard, Notion, GitHub Projects.
 | Lucide ikonlar | Emoji, eski tip ikon setleri |
 | Sakin mikro-animasyon (150–200ms) | Dikkat dağıtan animasyon |
 
-**Tema:** Light theme (tek tema). Tüm renkler CSS custom property olarak tanımlanır ki
-ileride dark theme eklenebilsin.
+**Tema:** Açık ve koyu tema. Tüm renkler CSS custom property olarak tanımlıdır; koyu tema
+yalnızca RENK token'larını geçersiz kılar (ölçü, tipografi, yarıçap ve hareket ortaktır).
+
+- Açık tema `:root` bloğunda, koyu tema `:root[data-theme='dark']` bloğundadır.
+- Damgayı `ThemeStore` (`core/state/theme.store.ts`) basar; tercih saklanır, seçim
+  yapılmamışsa işletim sistemi ayarı (`prefers-color-scheme`) geçerlidir.
+- Bileşenler hangi temanın açık olduğunu **bilmez**; yalnızca token okur. Bir bileşende
+  `data-theme` koşulu yazmak gerekiyorsa, eksik olan bir token vardır.
+- ApexCharts renkleri CSS değişkeni kabul etmediği için `chart-theme.ts` token'ları
+  çizim anında `<html>` üzerinden okur.
 
 ---
 
@@ -94,6 +102,9 @@ Kategorik seriler için sıra: indigo → sky → emerald → amber → rose →
 
 **Heatmap (ustalık) skalası** — düşükten yükseğe:
 `#FEE2E2 → #FED7AA → #FEF08A → #BBF7D0 → #86EFAC → #22C55E`
+
+Koyu temada aynı sıra korunur, değerler koyulaştırılır (`--chart-*` ve `--heat-*`
+`_tokens.scss` içindeki koyu blokta yeniden tanımlanır); grafik kodu değişmez.
 
 **Kural:** Durum yalnızca renkle anlatılmaz; badge'de her zaman metin (+ikon) bulunur.
 

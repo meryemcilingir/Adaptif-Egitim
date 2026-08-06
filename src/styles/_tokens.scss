@@ -162,6 +162,114 @@
   --content-max-width: 1440px;
 }
 
+/**
+ * ── Koyu tema ────────────────────────────────────────────────────────────
+ *
+ * Yalnızca RENK token'ları geçersiz kılınır; ölçü, tipografi, yarıçap ve
+ * hareket değerleri temadan bağımsızdır.
+ *
+ * Koyu yüzeyde aynı vurgu renkleri sönük göründüğü için marka ve anlamsal
+ * renkler bir ton açılır; "subtle" arka planlar ise açık tema karşılıklarının
+ * koyu eşdeğerleriyle değiştirilir (beyaza yaklaşan bir rozet koyu zeminde
+ * göz alırdı). Metin/zemin çiftleri WCAG AA kontrast oranını korur.
+ */
+@mixin dark-theme-colors {
+  color-scheme: dark;
+
+  /* ── Yüzeyler ───────────────────────────────────────────────── */
+  --color-bg: #0b1120;
+  --color-surface: #131a2a;
+  --color-surface-subtle: #1a2233;
+  --color-surface-muted: #232c3d;
+  --color-overlay: rgb(2 6 23 / 65%);
+
+  /* ── Kenarlıklar ────────────────────────────────────────────── */
+  --color-border: #2a3446;
+  --color-border-strong: #3b4759;
+  --color-border-focus: #818cf8;
+
+  /* ── Metin ──────────────────────────────────────────────────── */
+  --color-text: #e6eaf2;
+  --color-text-secondary: #a5b0c2;
+  --color-text-tertiary: #78859b;
+  --color-text-inverse: #0b1120;
+
+  /* ── Marka / aksiyon ────────────────────────────────────────── */
+  --color-primary: #6366f1;
+  --color-primary-hover: #818cf8;
+  --color-primary-active: #a5b4fc;
+  --color-primary-subtle: #1e1b4b;
+  --color-primary-border: #3730a3;
+
+  /* ── Anlamsal ───────────────────────────────────────────────── */
+  --color-success: #34d399;
+  --color-success-subtle: #06281d;
+  --color-success-border: #065f46;
+  --color-success-text: #6ee7b7;
+
+  --color-warning: #fbbf24;
+  --color-warning-subtle: #33240a;
+  --color-warning-border: #92400e;
+  --color-warning-text: #fcd34d;
+
+  --color-danger: #f87171;
+  --color-danger-subtle: #3a1517;
+  --color-danger-border: #991b1b;
+  --color-danger-text: #fca5a5;
+
+  --color-info: #38bdf8;
+  --color-info-subtle: #082b40;
+  --color-info-border: #075985;
+  --color-info-text: #7dd3fc;
+
+  --color-neutral-subtle: #1f2937;
+  --color-neutral-border: #374151;
+  --color-neutral-text: #cbd5e1;
+
+  /* ── Grafik paleti — koyu zeminde okunur olacak şekilde açıldı ── */
+  --chart-1: #818cf8;
+  --chart-2: #38bdf8;
+  --chart-3: #34d399;
+  --chart-4: #fbbf24;
+  --chart-5: #fb7185;
+  --chart-6: #a78bfa;
+  --chart-7: #2dd4bf;
+  --chart-8: #94a3b8;
+
+  /* Isı haritası: koyu uçtan parlak uca — bantlar arası fark korunur */
+  --heat-0: #7f1d1d;
+  --heat-1: #9a3412;
+  --heat-2: #854d0e;
+  --heat-3: #166534;
+  --heat-4: #15803d;
+  --heat-5: #22c55e;
+
+  /* Koyu zeminde gölge daha yoğun olmalı, yoksa kart zeminden ayrışmaz. */
+  --shadow-xs: 0 1px 2px rgb(0 0 0 / 40%);
+  --shadow-sm: 0 1px 3px rgb(0 0 0 / 45%), 0 1px 2px rgb(0 0 0 / 30%);
+  --shadow-md: 0 4px 12px rgb(0 0 0 / 45%);
+  --shadow-lg: 0 12px 32px rgb(0 0 0 / 55%);
+  --shadow-focus: 0 0 0 3px rgb(129 140 248 / 35%);
+  --shadow-focus-danger: 0 0 0 3px rgb(248 113 113 / 35%);
+}
+
+/* Kullanıcının açık seçimi. */
+:root[data-theme='dark'] {
+  @include dark-theme-colors;
+}
+
+/*
+ * Henüz seçim yapılmamışsa işletim sistemi tercihi geçerlidir. `ThemeStore`
+ * açılışta `data-theme` damgasını bastığı için bu blok pratikte yalnızca
+ * uygulama önyüklenene kadarki ilk karede iş görür — sayfanın beyaz parlayıp
+ * sonra koyuya dönmesini engeller.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    @include dark-theme-colors;
+  }
+}
+
 /*
  * Breakpoint'ler burada DEĞİL, `_breakpoints.scss` içindedir.
  * Bileşen stilleri yalnızca o dosyayı `@use` eder; böylece bu `:root` bloğu

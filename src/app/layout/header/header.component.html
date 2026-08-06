@@ -60,6 +60,16 @@
     <app-status-badge [label]="auth.activeRoleLabel()" tone="primary" icon="shield-check" />
   }
 
+  <button
+    type="button"
+    class="header__theme"
+    [attr.aria-label]="theme.isDark() ? 'Açık temaya geç' : 'Koyu temaya geç'"
+    [attr.aria-pressed]="theme.isDark()"
+    (click)="theme.toggle()"
+  >
+    <app-icon [name]="theme.isDark() ? 'sun' : 'moon'" [size]="17" />
+  </button>
+
   <div class="header__notifications">
     <button
       type="button"

@@ -483,6 +483,18 @@ Hiçbir yerden import edilmeyen, dokümanlarda ise "kullanımda" gibi anlatılan
 - [x] `prefers-reduced-motion` genel kapatma kuralı mevcut; 77 `focus-visible` kuralı
 - [x] Geniş tablolar `.scroll-x` / `overflow-x: auto` ile sarılı — yatay taşma yok
 
+### 10.6 Koyu tema `[x]`
+- [x] `_tokens.scss` içinde koyu renk paleti (`:root[data-theme='dark']`); yalnızca renk
+      token'ları geçersiz kılınır, ölçü/tipografi ortak kalır
+- [x] `ThemeStore` — tercih saklanır, seçim yoksa `prefers-color-scheme` izlenir, işletim
+      sistemi teması değişince `system` seçili kullanıcılar anında takip eder
+- [x] Başlıkta güneş/ay geçiş düğmesi (`aria-pressed` ile durum bildirimi)
+- [x] `index.html`'e önyükleme öncesi tema damgası — açılışta beyaz parlama olmuyor
+- [x] Grafikler temaya uyar: `chart-theme.ts` sabit hex yerine CSS token'larını çizim
+      anında okur; `AppChartCard` tema değişiminde seçenekleri yeniden hesaplar
+- [x] Kontrast doğrulaması: sekiz metin/zemin çiftinin tamamı WCAG AA'yı geçiyor
+      (en düşük 4.65:1, ana metin 14.41:1)
+
 ### Devam eden
 - [ ] Gerçek zamanlı akış (SSE/WebSocket simülasyonu) — Faz 9'dan ertelendi
 - [ ] `@defer` ile lazy chart rendering — Faz 8'den ertelendi
@@ -505,4 +517,3 @@ Hiçbir yerden import edilmeyen, dokümanlarda ise "kullanımda" gibi anlatılan
 |------|-----|
 | Kazanım grafiği çizim tekniği | SVG + manuel layout mı, `d3-force` mü? Faz 2'de karar verilecek. |
 | Virtual scroll | `@angular/cdk` eklensin mi, elle mi? Faz 3'te ölçülüp karar verilecek. |
-| Dark theme | Token'lar hazır; kapsam dışı, zaman kalırsa. |

@@ -15,6 +15,7 @@ import { MockConfig } from '../../core/api/mock/mock-config';
 import { AuthFacade } from '../../core/auth/auth.facade';
 import { ROLE_LABELS, Role } from '../../core/auth/permission.model';
 import { PermissionService } from '../../core/auth/permission.service';
+import { ThemeStore } from '../../core/state/theme.store';
 import { UiStore } from '../../core/state/ui.store';
 import { NotificationFacade } from '../../features/adaptive-learning/data-access/notification.facade';
 import { NotificationListComponent } from '../../features/adaptive-learning/components/dashboard/notification-list.component';
@@ -83,6 +84,7 @@ export class HeaderComponent {
   }
 
   protected readonly ui = inject(UiStore);
+  protected readonly theme = inject(ThemeStore);
   protected readonly auth = inject(AuthFacade);
   protected readonly notifications = inject(NotificationFacade);
 

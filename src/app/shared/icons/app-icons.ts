@@ -74,6 +74,7 @@ import {
   LucideMenu,
   LucideMicroscope,
   LucideMinus,
+  LucideMoon,
   LucideOctagonX,
   LucidePanelLeftClose,
   LucidePanelLeftOpen,
@@ -93,6 +94,7 @@ import {
   LucideSquareCheck,
   LucideSquarePen,
   LucideStar,
+  LucideSun,
   LucideTarget,
   LucideTimer,
   LucideTrash2,
@@ -196,6 +198,7 @@ export const APP_ICONS = [
   LucideMenu,
   LucideMicroscope,
   LucideMinus,
+  LucideMoon,
   LucideOctagonX,
   LucidePanelLeftClose,
   LucidePanelLeftOpen,
@@ -215,6 +218,7 @@ export const APP_ICONS = [
   LucideSquareCheck,
   LucideSquarePen,
   LucideStar,
+  LucideSun,
   LucideTarget,
   LucideTimer,
   LucideTrash2,
@@ -311,6 +315,7 @@ export type AppIconName =
   | 'menu'
   | 'microscope'
   | 'minus'
+  | 'moon'
   | 'octagon-x'
   | 'panel-left-close'
   | 'panel-left-open'
@@ -330,6 +335,7 @@ export type AppIconName =
   | 'square-check'
   | 'square-pen'
   | 'star'
+  | 'sun'
   | 'target'
   | 'timer'
   | 'trash-2'
