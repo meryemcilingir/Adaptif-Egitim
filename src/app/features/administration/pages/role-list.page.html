@@ -82,7 +82,12 @@
                 [maxLength]="descriptionMax"
                 hint="Bu rolün ne işe yaradığını bir cümleyle yazın."
               >
-                <app-textarea inputId="role-description" formControlName="description" [rows]="2" />
+                <app-textarea
+                  inputId="role-description"
+                  formControlName="description"
+                  [rows]="2"
+                  [maxLength]="descriptionMax"
+                />
               </app-form-field>
             </form>
 
@@ -162,6 +167,7 @@
           inputId="new-role-description"
           formControlName="description"
           [rows]="3"
+          [maxLength]="descriptionMax"
           placeholder="Bu rol ne yapar?"
         />
       </app-form-field>

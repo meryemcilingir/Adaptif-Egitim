@@ -400,6 +400,15 @@ export class QuestionEditorPage implements OnInit {
     });
   }
 
+  /*
+   * "İptal" düğmesi kendi onayını gösteriyordu, ancak kenar menüden başka bir
+   * sayfaya geçildiğinde değişiklikler sessizce kayboluyordu. Rota koruyucusu
+   * (`unsavedChangesGuard`) aynı onayı gezinme yolunda da uygular.
+   */
+  hasUnsavedChanges(): boolean {
+    return this.form.dirty && !this.savingState();
+  }
+
   async cancel(): Promise<void> {
     if (this.form.dirty) {
       const confirmed = await this.dialogs.confirm({

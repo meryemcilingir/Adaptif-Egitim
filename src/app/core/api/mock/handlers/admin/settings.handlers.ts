@@ -1,6 +1,9 @@
 import { AuditChange } from '../../../../observability/audit.model';
 import { SystemSettings } from '../../../../../features/administration/models/admin.model';
-import { validateSettings } from '../../../../../features/adaptive-learning/domain/system-settings.rules';
+import {
+  SETTING_LIMITS,
+  validateSettings,
+} from '../../../../../features/adaptive-learning/domain/system-settings.rules';
 import { StoredSettings } from '../../db/db-schema';
 import { requirePermission } from '../../mock-auth';
 import { conflict, notFound, validation } from '../../mock-errors';
@@ -43,7 +46,10 @@ export const SETTINGS_HANDLERS: readonly MockHandler[] = [
       const next: StoredSettings = {
         ...current,
         platformName: (body.platformName ?? current.platformName).trim(),
-        logoInitials: (body.logoInitials ?? current.logoInitials).trim().slice(0, 3).toUpperCase(),
+        logoInitials: (body.logoInitials ?? current.logoInitials)
+          .trim()
+          .slice(0, SETTING_LIMITS.logoInitials.max)
+          .toUpperCase(),
         timeZone: body.timeZone ?? current.timeZone,
         language: body.language ?? current.language,
 

@@ -34,9 +34,14 @@
           <app-form-field
             fieldId="set-logo"
             label="Logo baş harfleri"
+            [maxLength]="limits.logoInitials.max"
             hint="En fazla üç harf; kabuktaki logoda görünür."
           >
-            <app-input inputId="set-logo" formControlName="logoInitials" />
+            <app-input
+              inputId="set-logo"
+              formControlName="logoInitials"
+              [maxLength]="limits.logoInitials.max"
+            />
           </app-form-field>
 
           <app-form-field fieldId="set-tz" label="Saat dilimi">

@@ -279,6 +279,15 @@ export class ExamWizardPage implements OnInit, OnDestroy {
     if (this.facade.isDirty()) event.preventDefault();
   }
 
+  /*
+   * `beforeunload` yalnızca sekme kapatma/yenilemeyi yakalar; uygulama içinde
+   * kenar menüden başka bir sayfaya geçildiğinde tetiklenmez. Rota koruyucusu
+   * (`unsavedChangesGuard`) bu boşluğu kapatır.
+   */
+  hasUnsavedChanges(): boolean {
+    return this.facade.isDirty();
+  }
+
   private load(): void {
     this.loadingState.set(true);
     this.loadErrorState.set(null);

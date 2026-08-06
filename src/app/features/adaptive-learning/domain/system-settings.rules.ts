@@ -9,6 +9,8 @@
 
 export const SETTING_LIMITS = {
   platformName: { min: 3, max: 100 },
+  /* Kabuktaki logo rozetine sığan harf sayısı; sunucu da bu değere kırpar. */
+  logoInitials: { min: 1, max: 3 },
   examDurationMinutes: { min: 5, max: 480 },
   autosaveSeconds: { min: 5, max: 300 },
   sessionTimeoutMinutes: { min: 5, max: 480 },

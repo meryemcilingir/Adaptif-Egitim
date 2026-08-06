@@ -29,6 +29,7 @@
       hint="Raporun kimin için ve neyi yanıtladığını yazın."
     >
       <app-textarea
+        [maxLength]="limits.description.max"
         inputId="report-description"
         formControlName="description"
         [rows]="3"

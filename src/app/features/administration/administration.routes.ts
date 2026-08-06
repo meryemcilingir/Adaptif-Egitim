@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { permissionGuard } from '../../core/auth/guards/permission.guard';
+import { unsavedChangesGuard } from '../../core/auth/guards/unsaved-changes.guard';
 
 /**
  * Yönetim modülü rotaları (Sprint 9 §15).
@@ -42,6 +43,7 @@ export const ADMINISTRATION_ROUTES: Routes = [
     path: 'admin/users/new',
     title: 'Yeni Kullanıcı · Adaptif Eğitim',
     canMatch: [permissionGuard('admin:manage')],
+    canDeactivate: [unsavedChangesGuard],
     loadComponent: () => import('./pages/user-editor.page').then((module) => module.UserEditorPage),
   },
 
@@ -49,6 +51,7 @@ export const ADMINISTRATION_ROUTES: Routes = [
     path: 'admin/users/:id/edit',
     title: 'Kullanıcıyı Düzenle · Adaptif Eğitim',
     canMatch: [permissionGuard('admin:manage')],
+    canDeactivate: [unsavedChangesGuard],
     loadComponent: () => import('./pages/user-editor.page').then((module) => module.UserEditorPage),
   },
 

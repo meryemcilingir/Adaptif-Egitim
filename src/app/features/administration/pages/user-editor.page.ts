@@ -204,10 +204,20 @@ export class UserEditorPage implements OnInit {
       : this.facade.create(draft);
 
     request.subscribe({
-      next: (user) => void this.router.navigate(['/admin/users', user.id]),
+      next: (user) => {
+        // Kayıt başarılı: form artık kirli sayılmamalı, yoksa çıkışta
+        // gereksiz "kaydedilmemiş değişiklik" uyarısı çıkar.
+        this.form.markAsPristine();
+        void this.router.navigate(['/admin/users', user.id]);
+      },
       // Hata mesajını facade toast olarak gösterdi; ekran formda kalır.
       error: () => undefined,
     });
+  }
+
+  /** Kaydedilmemiş değişiklik varken gezinmeyi onaya bağlar (rota koruyucusu). */
+  hasUnsavedChanges(): boolean {
+    return this.form.dirty;
   }
 
   cancel(): void {

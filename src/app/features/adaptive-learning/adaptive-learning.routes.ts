@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { permissionGuard } from '../../core/auth/guards/permission.guard';
+import { unsavedChangesGuard } from '../../core/auth/guards/unsaved-changes.guard';
 
 /**
  * Adaptif öğrenme modülünün rotaları.
@@ -114,6 +115,7 @@ export const ADAPTIVE_LEARNING_ROUTES: Routes = [
     path: 'questions/new',
     title: 'Yeni Soru · Adaptif Eğitim',
     canMatch: [permissionGuard('question:write')],
+    canDeactivate: [unsavedChangesGuard],
     loadComponent: () =>
       import('./pages/questions/question-editor.page').then((module) => module.QuestionEditorPage),
   },
@@ -121,6 +123,7 @@ export const ADAPTIVE_LEARNING_ROUTES: Routes = [
     path: 'questions/:id/edit',
     title: 'Soruyu Düzenle · Adaptif Eğitim',
     canMatch: [permissionGuard('question:write')],
+    canDeactivate: [unsavedChangesGuard],
     loadComponent: () =>
       import('./pages/questions/question-editor.page').then((module) => module.QuestionEditorPage),
   },
@@ -184,6 +187,7 @@ export const ADAPTIVE_LEARNING_ROUTES: Routes = [
     path: 'exams/:id/wizard',
     title: 'Sınav Sihirbazı · Adaptif Eğitim',
     canMatch: [permissionGuard('exam:write')],
+    canDeactivate: [unsavedChangesGuard],
     loadComponent: () =>
       import('./pages/exams/exam-wizard.page').then((module) => module.ExamWizardPage),
   },

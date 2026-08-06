@@ -38,7 +38,12 @@
             [maxLength]="limits.body.max"
             hint="Ne olduğunu ve kullanıcının ne yapması gerektiğini yazın."
           >
-            <app-textarea inputId="ntf-body" formControlName="body" [rows]="5" />
+            <app-textarea
+              inputId="ntf-body"
+              formControlName="body"
+              [rows]="5"
+              [maxLength]="limits.body.max"
+            />
           </app-form-field>
 
           <div class="grid">

@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { anonymousGuard, authGuard } from './core/auth/guards/auth.guard';
+import { permissionGuard } from './core/auth/guards/permission.guard';
 
 /**
  * Uygulama rota ağacı.
@@ -71,8 +72,14 @@ export const routes: Routes = [
       { path: 'users', pathMatch: 'full', redirectTo: 'admin/users' },
 
       {
+        /*
+         * Geliştirici paneli veritabanını sıfırlayabildiği için `admin:manage`
+         * ister. Menüde zaten yalnızca yöneticiye gösteriliyordu, ancak rota
+         * korumasız olduğu için adres çubuğundan herkes erişebiliyordu.
+         */
         path: 'dev-tools',
         title: 'Geliştirici Paneli · Adaptif Eğitim',
+        canMatch: [permissionGuard('admin:manage')],
         loadComponent: () =>
           import('./features/system/pages/dev-tools/dev-tools.page').then(
             (module) => module.DevToolsPage,
