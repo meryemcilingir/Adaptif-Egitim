@@ -110,7 +110,6 @@ src/
     │   │   ├── auth.repository.ts
     │   │   ├── permission.model.ts  # Role, Permission, ROLE_PERMISSIONS matrisi
     │   │   ├── permission.service.ts# can(), canAny(), canAll()
-    │   │   ├── data-scope.service.ts# veri kapsamı (kendi/cohort/program/global)
     │   │   └── guards/              # auth, role, permission, unsaved-changes
     │   ├── state/
     │   │   ├── ui.store.ts          # sidebar, tema, breakpoint
@@ -123,11 +122,9 @@ src/
     │   │   └── outbox-queue.ts      # offline sıralı senkronizasyon kuyruğu
     │   └── observability/
     │       ├── audit.service.ts     # AuditEvent üretimi
-    │       ├── telemetry.service.ts
     │       └── toast.store.ts       # bildirim kuyruğu
     ├── shared/
     │   ├── components/   # bkz. DESIGN_SYSTEM.md § Component Kataloğu
-    │   ├── directives/
     │   ├── validators/
     │   ├── pipes/
     │   └── utils/
@@ -209,13 +206,17 @@ Feature store'ları bu sınıfı **composition** ile kullanır (kalıtım değil
 ### 3.3 Türetilmiş değerler
 
 Şartname: *"Türetilen değerler tek bir hesaplama/selector katmanından üretilmelidir."*
-→ Tüm türetim `computed()` içinde, `state/*.selectors.ts` dosyalarında toplanır.
-Ağır hesaplar (heatmap matrisi, cohort istatistiği) `memoize()` (utils) ile sarılır.
+→ Tüm türetim `computed()` içinde toplanır. Sinyal tabanlı `computed()` zaten
+sonucu önbelleğe alır ve yalnızca bağımlılığı değiştiğinde yeniden hesaplar;
+ayrıca bir memoize sarmalayıcısı kullanılmaz. Ağır matris/istatistik hesapları
+zaten sunucu (mock handler) tarafında yapılır, istemciye hazır gelir.
 
 ### 3.4 URL ↔ State senkronizasyonu
 
-`shared/utils/query-param-sync.ts`, filtre/sayfa/sıralama state'ini query param'a yazar ve
-sayfa açılışında geri okur. Böylece tablo/rapor filtreleri paylaşılabilir olur.
+`app.config.ts` içinde `withComponentInputBinding()` etkindir: rota ve query
+parametreleri, aynı adı taşıyan `input()` sinyallerine doğrudan bağlanır. Ayrı
+bir senkronizasyon yardımcısı yoktur — çatının sağladığı mekanizma yeterlidir ve
+ikinci bir yol, hangisinin doğru kaynak olduğunu belirsizleştirirdi.
 
 ---
 
@@ -288,8 +289,8 @@ sınav oturumu tik'leri, autosave onayları, cohort canlı istatistiği, audit a
 | Seviye | Uygulama |
 |--------|----------|
 | **Route** | `authGuard`, `roleGuard([...])`, `permissionGuard(perm)` — `canMatch` ile lazy bundle bile yüklenmez |
-| **İşlem** | `PermissionService.can()` + `*appHasPermission` direktifi + facade içinde son kontrol |
-| **Veri kapsamı** | `DataScopeService` → `own` \| `cohort` \| `program` \| `global`; repository query'sine `scope` parametresi ekler, mock handler bunu zorunlu kılar |
+| **İşlem** | Sayfada `readonly canWrite = computed(() => permissions.can('x:write'))` + şablonda `@if (canWrite())`; facade içinde son kontrol |
+| **Veri kapsamı** | Sunucu tarafında zorunlu kılınır: `mock-auth.ts` içindeki `scopeOf()` / `isWithinScope()` ve analitik uçlarında `buildReportScope()` (ADR-057). İstemci kapsam parametresi göndermez — göndermesi, kapsamı istemcinin belirlediği anlamına gelirdi |
 
 `canMatch` kullanılması şartnamedeki *"yetkisiz feature bundle erişimi engellenmelidir"*
 maddesini karşılar (`canActivate` bundle'ı yükledikten sonra çalışır, `canMatch` yüklemeden önce).

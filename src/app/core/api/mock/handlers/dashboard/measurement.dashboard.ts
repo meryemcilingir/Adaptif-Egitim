@@ -345,15 +345,12 @@ function buildQuickActions(flaggedCount: number, questionCount: number): QuickAc
       badge: null,
       tone: 'primary',
     },
-    {
-      id: 'grading',
-      label: 'Değerlendirme kuyruğu',
-      description: 'Elle puanlanacak denemeler',
-      icon: 'clipboard-list',
-      link: '/grading',
-      badge: null,
-      tone: 'primary',
-    },
+    /*
+     * "Değerlendirme kuyruğu" ve "Cohort analitiği" kartları kaldırıldı:
+     * ölçme uzmanı artık `attempt:grade` ve `analytics:cohort` izinlerini
+     * taşımıyor, dolayısıyla bu kartlar kullanıcıyı 403'e götürüyordu.
+     * Yerlerine rolün gerçekten erişebildiği iki ekran kondu.
+     */
     {
       id: 'blueprints',
       label: 'Blueprint yönetimi',
@@ -364,11 +361,20 @@ function buildQuickActions(flaggedCount: number, questionCount: number): QuickAc
       tone: 'info',
     },
     {
-      id: 'cohort',
-      label: 'Cohort analitiği',
-      description: 'Gruplar arası karşılaştırma',
-      icon: 'users',
-      link: '/cohort-analytics',
+      id: 'difficulty',
+      label: 'Soru zorluk analizi',
+      description: 'Beyan edilen ↔ ölçülen zorluk',
+      icon: 'flask-conical',
+      link: '/analytics/difficulty',
+      badge: null,
+      tone: 'neutral',
+    },
+    {
+      id: 'mastery',
+      label: 'Kazanım ısı haritası',
+      description: 'Kazanım × ders matrisi',
+      icon: 'grid-2x2',
+      link: '/analytics/mastery',
       badge: null,
       tone: 'neutral',
     },

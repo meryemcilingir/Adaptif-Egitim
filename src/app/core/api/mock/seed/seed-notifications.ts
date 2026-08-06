@@ -65,7 +65,8 @@ export function seedNotifications(
         'exam_scheduled',
         exam.title,
         `${courseById.get(exam.courseId)?.name ?? 'Ders'} · ${exam.questions.length} soru, ${exam.durationMinutes} dakika.`,
-        '/exams',
+        // Öğrenci kendi sınav ekranına gider; `/exams` sınav YAZIM ekranıdır.
+        '/my-exams',
         ctx.pastDate(1, 8),
         ctx.rng.bool(0.4),
       );

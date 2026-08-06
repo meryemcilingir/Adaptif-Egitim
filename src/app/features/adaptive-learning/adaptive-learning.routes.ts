@@ -1,6 +1,6 @@
 import { Routes } from '@angular/router';
 
-import { permissionGuard } from '../../core/auth/guards/permission.guard';
+import { permissionGuard, roleGuard } from '../../core/auth/guards/permission.guard';
 import { unsavedChangesGuard } from '../../core/auth/guards/unsaved-changes.guard';
 
 /**
@@ -153,9 +153,27 @@ export const ADAPTIVE_LEARNING_ROUTES: Routes = [
   },
 
   {
+    /*
+     * Sınav YAZIM listesi — öğrenciye kapalıdır.
+     *
+     * `exam:read` iznini öğrenci de taşır (bekleme odası ve sınav detayı için
+     * gerekli), bu yüzden izin tek başına yetmiyor. Öğrencinin kendi sınavları
+     * `/my-exams` ve `/exam-results` ekranlarındadır; bu ekranın açıklaması
+     * "sınavları oluşturun, doğrulayın ve yayına alın" der ve hedef kitlesi
+     * personeldir.
+     */
     path: 'exams',
     title: 'Sınavlar · Adaptif Eğitim',
-    canMatch: [permissionGuard('exam:read')],
+    canMatch: [
+      permissionGuard('exam:read'),
+      roleGuard(
+        'INSTRUCTOR',
+        'ASSESSMENT_SPECIALIST',
+        'PROGRAM_MANAGER',
+        'OBSERVER',
+        'PLATFORM_ADMIN',
+      ),
+    ],
     loadComponent: () =>
       import('./pages/exams/exam-list.page').then((module) => module.ExamListPage),
   },

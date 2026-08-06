@@ -68,7 +68,7 @@
 | Domain kuralı | `*.rules.ts` / `*.calculator.ts` | saf fonksiyon | `mastery.calculator.ts` |
 | Model | `*.model.ts` | `interface` / `type` | `question.model.ts` |
 | Guard | `*.guard.ts` | `xxxGuard` (fonksiyon) | `permission.guard.ts` |
-| Direktif | `*.directive.ts` | `XxxDirective` | `has-permission.directive.ts` |
+| Direktif | `*.directive.ts` | `XxxDirective` | `shared/directives/` (şu an boş — direktif eklenirse bu adlandırma geçerlidir) |
 | Mock handler | `*.handlers.ts` | `XXX_HANDLERS` | `question.handlers.ts` |
 | Test | `*.spec.ts` | — | `mastery.calculator.spec.ts` |
 

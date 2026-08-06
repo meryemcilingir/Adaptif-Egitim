@@ -63,7 +63,7 @@ src/app/
 │   ├── auth/        → session, rol, izin, guard'lar, veri kapsamı
 │   ├── state/       → global signal store'lar (UI state, event bus, toast)
 │   ├── storage/     → localStorage / IndexedDB adapter, offline outbox kuyruğu
-│   └── observability/ → audit logger, telemetry, notification
+│   └── observability/ → audit logger, toast kuyruğu
 ├── shared/          → Domain bilmeyen, her yerde kullanılabilir parçalar
 │   ├── components/  → AppCard, AppTable, AppDialog ... (bkz. DESIGN_SYSTEM.md)
 │   ├── directives/  → *appHasPermission, appDebounce, appAutofocus

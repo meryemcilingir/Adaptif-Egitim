@@ -444,8 +444,46 @@
 
 ---
 
-## Faz 10 — Test, Performans, A11y, Teslim `[ ]`
+## Faz 10 — Production Readiness (Sprint 10) `[~]`
 
+Bu sprintte yeni özellik geliştirilmedi; mevcut sistem production seviyesine taşındı.
+
+### 10.1 Güvenlik açığı kapatıldı
+- [x] `/dev-tools` rotası korumasızdı — menüde yalnızca yöneticiye gösteriliyordu ama
+      adres çubuğundan her oturum açmış kullanıcı (öğrenci dâhil) erişip
+      **veritabanını sıfırlayabiliyordu**. `permissionGuard('admin:manage')` eklendi.
+- [x] Diğer 50 rotanın tamamında `canMatch` koruyucusu doğrulandı — eksik yok.
+
+### 10.2 Yazılmış ama bağlanmamış koruma devreye alındı
+- [x] `unsavedChangesGuard` hiçbir rotaya bağlı değildi. Sınav sihirbazı yalnızca
+      `beforeunload` ile sekme kapatmayı yakalıyordu; kenar menüden başka sayfaya
+      geçildiğinde değişiklikler sessizce kayboluyordu. Sihirbaz, soru editörü ve
+      kullanıcı editörüne `canDeactivate` olarak bağlandı.
+
+### 10.3 Alan doğrulama boşlukları
+- [x] Sistem ayarlarında "logo baş harfleri" istemcide sınırsızdı; sunucu sessizce
+      3 karaktere kırpıyordu. Sınır `SETTING_LIMITS.logoInitials`'a taşındı, iki taraf
+      da aynı sabiti kullanıyor.
+- [x] Sayacı olmayan 4 textarea'ya sert sınır eklendi — 12 textarea'nın tamamı artık
+      hem karakter sayacı hem tarayıcı sınırı taşıyor.
+
+### 10.4 Ölü kod kaldırıldı (8 dosya)
+Hiçbir yerden import edilmeyen, dokümanlarda ise "kullanımda" gibi anlatılan dosyalar:
+- [x] `query-param-sync.ts` — yerine çatının `withComponentInputBinding()` özelliği kullanılıyor
+- [x] `memoize.ts` — `computed()` zaten önbellekliyor; ağır hesap sunucuda yapılıyor
+- [x] `data-scope.service.ts` — kapsam denetimi sunucuda (`isWithinScope`, `buildReportScope`)
+- [x] `telemetry.service.ts`, `memory-async.store.ts`, `score.pipe.ts`
+- [x] `has-permission.directive.ts`, `autofocus.directive.ts` — kod tabanı `@if (canWrite())` desenini kullanıyor
+- [x] `ARCHITECTURE.md` §3.3, §3.4, §5.1 ve klasör ağacı gerçeğe göre düzeltildi
+
+### 10.5 Doğrulanan ve eksiksiz bulunan alanlar
+- [x] Sabit renk (0), `console.*` (0), `any` tipi (0)
+- [x] 49/52 sayfada yükleniyor durumu; 3 istisna gerekçeli (makbuz, giriş, geliştirici paneli)
+- [x] Sayfalama sözleşmesi: varsayılan 25, seçenekler 10/25/50/100
+- [x] `prefers-reduced-motion` genel kapatma kuralı mevcut; 77 `focus-visible` kuralı
+- [x] Geniş tablolar `.scroll-x` / `overflow-x: auto` ile sarılı — yatay taşma yok
+
+### Devam eden
 - [ ] Gerçek zamanlı akış (SSE/WebSocket simülasyonu) — Faz 9'dan ertelendi
 - [ ] `@defer` ile lazy chart rendering — Faz 8'den ertelendi
 

@@ -52,6 +52,7 @@ export type InputType =
         [disabled]="isDisabled()"
         [attr.autocomplete]="autocomplete()"
         [attr.inputmode]="inputMode()"
+        [attr.maxlength]="maxLength()"
         [attr.aria-invalid]="invalid()"
         [attr.aria-describedby]="describedBy()"
         (input)="onInput($event)"
@@ -72,6 +73,13 @@ export class AppInputComponent implements ControlValueAccessor {
   readonly autocomplete = input<string | null>(null);
   readonly inputMode = input<string | null>(null);
   readonly describedBy = input<string | null>(null);
+  /**
+   * Tarayıcı seviyesinde sert sınır; form validator'ı ile aynı değeri alır.
+   * `AppTextarea` ile aynı sözleşme — iki giriş bileşeni arasında fark olması,
+   * sınırın hangi alanda geçerli olduğunu ekran yazarına bakmadan
+   * anlaşılmaz kılıyordu.
+   */
+  readonly maxLength = input<number | null>(null);
 
   private readonly valueState = signal('');
   private readonly disabledState = signal(false);
