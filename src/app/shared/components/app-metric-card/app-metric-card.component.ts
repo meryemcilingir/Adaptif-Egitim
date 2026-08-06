@@ -39,10 +39,17 @@ import { AppStatCardComponent, TrendDirection } from '../app-stat-card/app-stat-
     :host {
       display: block;
       min-width: 0;
+      /* Grid hücresini doldur ki içteki kart da tam boy olabilsin. */
+      height: 100%;
     }
 
+    /*
+     * Sparkline karta alta yaslanır: böylece etiket/değer/trend satırları
+     * sparkline'ı olan ve olmayan kartlarda aynı hizada başlar.
+     */
     .metric__spark {
-      margin-top: var(--space-2);
+      margin-top: auto;
+      padding-top: var(--space-2);
       margin-inline: calc(var(--space-2) * -1);
     }
   `,

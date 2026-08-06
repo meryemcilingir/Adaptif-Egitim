@@ -3,6 +3,12 @@
   flex-direction: column;
   gap: var(--space-3);
   padding: var(--space-5);
+  /*
+   * KPI satırındaki kartlar aynı boyda durmalı. Grid hücresi zaten geriliyor
+   * ama görünen kutu bu bileşen; yükseklik verilmezse sparkline'ı olan kart
+   * uzun, olmayan kısa kalıyordu.
+   */
+  height: 100%;
   background: var(--color-surface);
   border: var(--border-width) solid var(--color-border);
   border-radius: var(--radius-lg);
