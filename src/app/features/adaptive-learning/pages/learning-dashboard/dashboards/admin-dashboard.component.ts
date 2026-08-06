@@ -11,7 +11,6 @@ import {
 import {
   toBarCategories,
   toBarSeries,
-  toDonutSeries,
   toTimeCategories,
   toTimeSeries,
 } from '../../../../../shared/utils/chart-adapters';
@@ -59,9 +58,6 @@ export class AdminDashboardComponent {
 
   readonly data = input.required<AdminDashboard>();
   readonly notificationRead = output<Notification>();
-
-  readonly rolesSeries = computed(() => toDonutSeries(this.data().usersByRole));
-  readonly rolesLabels = computed(() => this.data().usersByRole.map((entry) => entry.label));
 
   readonly auditActionSeries = computed(() =>
     toBarSeries('İşlem sayısı', this.data().auditByAction),

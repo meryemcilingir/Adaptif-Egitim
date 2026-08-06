@@ -374,7 +374,6 @@ export interface SystemHealthEntry {
 
 export interface AdminDashboard extends DashboardCommon {
   readonly role: 'PLATFORM_ADMIN';
-  readonly usersByRole: readonly CategoryValue[];
   readonly auditByAction: readonly CategoryValue[];
   readonly auditTrend: readonly TimeSeriesPoint[];
   readonly systemHealth: readonly SystemHealthEntry[];

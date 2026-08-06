@@ -98,7 +98,6 @@ export function buildAdminDashboard(scope: DashboardScope): AdminDashboard {
     recentActivity: buildRecentActivity(db, () => true, 6),
     statistics: buildStatistics(scope, users.length, auditEvents.length),
 
-    usersByRole: buildUsersByRole(users),
     auditByAction: buildAuditByAction(auditEvents),
     auditTrend,
     systemHealth: buildSystemHealth(scope, activeSessions.length),
@@ -107,47 +106,78 @@ export function buildAdminDashboard(scope: DashboardScope): AdminDashboard {
   };
 }
 
+/*
+ * Yöneticinin panele girer girmez yapabileceği işler.
+ *
+ * Önceki liste geliştirici paneli, madde analizi ve cohort analitiği
+ * gösteriyordu; bunlar yöneticinin günlük işi değil, teşhis ve analiz
+ * ekranlarıdır. Panelin ilk ekranı kullanıcı, rol, dönem, duyuru ve ayar
+ * yönetimini sunar — yönetim panosundaki (`/admin`) hızlı işlemlerle aynı
+ * kümedir, böylece iki ekran farklı şey önermez.
+ */
 function buildQuickActions(auditCount: number): QuickAction[] {
   return [
     {
-      id: 'audit-log',
-      label: 'Denetim kaydı',
-      description: 'Tüm kritik işlemler',
-      icon: 'scroll-text',
-      link: '/audit-log',
-      badge: auditCount > 0 ? auditCount : null,
+      id: 'users',
+      label: 'Kullanıcılar',
+      description: 'Hesap aç, rol ve program ata',
+      icon: 'user-round',
+      link: '/admin/users',
+      badge: null,
       tone: 'primary',
     },
     {
-      id: 'dev-tools',
-      label: 'Geliştirici paneli',
-      description: 'Gecikme, hata ve çevrimdışı senaryoları',
-      icon: 'database',
-      link: '/dev-tools',
+      id: 'roles',
+      label: 'Roller ve izinler',
+      description: 'Yetki matrisini düzenle',
+      icon: 'shield-check',
+      link: '/admin/roles',
+      badge: null,
+      tone: 'primary',
+    },
+    {
+      id: 'terms',
+      label: 'Akademik dönemler',
+      description: 'Dönem tanımla, tarihleri düzenle',
+      icon: 'calendar',
+      link: '/admin/terms',
       badge: null,
       tone: 'info',
     },
     {
-      id: 'cohort-analytics',
-      label: 'Cohort analitiği',
-      description: 'Program genelinde karşılaştırma',
-      icon: 'users',
-      link: '/cohort-analytics',
+      id: 'notifications',
+      label: 'Bildirim merkezi',
+      description: 'Role, gruba veya herkese duyuru ilet',
+      icon: 'bell',
+      link: '/admin/notifications',
+      badge: null,
+      tone: 'info',
+    },
+    {
+      id: 'settings',
+      label: 'Sistem ayarları',
+      description: 'Platform, sınav ve güvenlik parametreleri',
+      icon: 'settings',
+      link: '/admin/settings',
       badge: null,
       tone: 'neutral',
     },
     {
-      id: 'item-analysis',
-      label: 'Madde analizi',
-      description: 'Soru kalitesi göstergeleri',
-      icon: 'microscope',
-      link: '/item-analysis',
-      badge: null,
+      id: 'audit-log',
+      label: 'Denetim kaydı',
+      description: 'Kim, ne zaman, ne yaptı',
+      icon: 'scroll-text',
+      link: '/audit-log',
+      badge: auditCount > 0 ? auditCount : null,
       tone: 'neutral',
     },
   ];
 }
 
+/*
+ * "Rol dağılımı" grafiği panelden kaldırıldı, ancak bu dağılım "Toplam
+ * kullanıcı" kartının sparkline'ını besliyor; bu yüzden yardımcı duruyor.
+ */
 function buildUsersByRole(users: readonly { roles: readonly Role[] }[]): CategoryValue[] {
   return ROLES.map((role) => ({
     label: ROLE_LABELS[role],

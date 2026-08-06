@@ -18,16 +18,7 @@
   </app-card>
 </section>
 
-<section class="grid grid-1-2" aria-label="Kullanıcı ve denetim dağılımı">
-  <app-chart-card
-    title="Rol dağılımı"
-    description="Kullanıcıların rollere göre dağılımı"
-    type="donut"
-    [series]="rolesSeries()"
-    [labels]="rolesLabels()"
-    [height]="300"
-  />
-
+<section aria-label="Denetim kaydı trendi">
   <app-chart-card
     title="Denetim kaydı trendi"
     description="Günlük denetim kaydı sayısı"
