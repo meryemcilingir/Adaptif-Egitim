@@ -9,7 +9,7 @@ import { AppIconComponent } from '../../../../shared/components/app-icon/app-ico
 import { AppLoadingStateComponent } from '../../../../shared/components/app-loading-state/app-loading-state.component';
 import { AppStatusBadgeComponent } from '../../../../shared/components/app-status-badge/app-status-badge.component';
 import { AppButtonComponent } from '../../../../shared/components/app-button/app-button.component';
-import { statusPresentation } from '../../../../shared/utils/status-tone';
+import { StatusPresentation } from '../../../../shared/utils/status-tone';
 import { ATTEMPT_STATE_LABELS } from '../../models/attempt.model';
 import { formatDuration } from '../../domain/exam-clock';
 import { ExamHistoryRow, SessionRepository } from '../../data-access/session.repository';
@@ -145,8 +145,23 @@ export class ExamResultsPage implements OnInit {
     return formatDuration(row.durationSeconds * 1000);
   }
 
-  toneFor(state: string) {
-    return statusPresentation(state);
+  /**
+   * Değerlendirme bekleyenler için durum rozeti.
+   *
+   * `status-tone.ts`'teki paylaşılan eşleme burada BİLİNÇLİ kullanılmaz:
+   * orada `GRADED` → "Puanlandı" (yeşil, onay ikonu) döner — eğitmen için
+   * doğru ("puanlamayı bitirdim"), ama öğrenci için yanıltıcı: "bitti"
+   * izlenimi verip puanı göstermeyince ekran bozukmuş gibi görünüyordu
+   * (BR-49 puanı bilerek gizler). Öğrenci açısından otomatik puanlama,
+   * manuel değerlendirme ve puanlama tamamlandı aşamaları arasındaki fark
+   * önemsizdir — hepsi "sonucun açıklanmasını bekliyorsun" demektir.
+   * İtiraz süreci farklı bir eylemi ima ettiği için ayrı kalır.
+   */
+  pendingStatusFor(row: ExamHistoryRow): StatusPresentation {
+    if (row.state === 'UNDER_REVIEW') {
+      return { label: 'İtiraz inceleniyor', tone: 'warning', icon: 'eye' };
+    }
+    return { label: 'Sonuç açıklanacak', tone: 'warning', icon: 'clock' };
   }
 
   /** Sonuç açıklandıysa puan, açıklanmadıysa sürecin aşaması gösterilir. */
