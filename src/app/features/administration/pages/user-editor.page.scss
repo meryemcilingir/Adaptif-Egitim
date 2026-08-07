@@ -14,6 +14,14 @@
   }
 }
 
+/*
+ * Tek başına kalan alan (ör. Ünvan) iki sütunlu ızgarada yarım boş bir satır
+ * bırakıyordu. Tam genişlik alması, boşluğu ortadan kaldırır.
+ */
+.field--full {
+  grid-column: 1 / -1;
+}
+
 .note {
   display: flex;
   align-items: center;
