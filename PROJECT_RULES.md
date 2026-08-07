@@ -165,36 +165,41 @@ yazma yetkisi de eğitmende değil, yalnızca Program Yöneticisindedir. Ölçme
 Oluşturucu hattını uçtan uca (yayına kadar) tek başına yönetir. Program Yöneticisi madde
 analizi yapmaz, akademik takvimi salt okunur görür (`term:read`).
 
+**ADR-077 (2026-08-07) ile daraltıldı:** Platform Yöneticisi artık akademik kapsamın SAHİBİ
+değil — yalnızca sistemin işletim yöneticisidir. Önceki matris "`session:start` hariç tüm
+izinler" idi; bu rolü fiilen her şeyi yapabilen bir süper kullanıcıya çeviriyordu. Ders,
+kazanım, soru, sınav, değerlendirme ve tüm analitik ekranları kapsamı dışındadır.
+
 | Permission | STUDENT | INSTRUCTOR | ASSESSMENT_SPECIALIST | PROGRAM_MANAGER | OBSERVER | PLATFORM_ADMIN |
 |---|:--:|:--:|:--:|:--:|:--:|:--:|
-| `course:read` | ✔ (kendi) | ✔ (kendi dersleri) | ✔ | ✔ | ✔ | ✔ |
-| `course:write` | | | | ✔ | | ✔ |
-| `course:publish` | | | | ✔ | | ✔ |
-| `outcome:read` | ✔ | ✔ | ✔ | ✔ | ✔ | ✔ |
-| `outcome:write` | | | | ✔ | | ✔ |
-| `outcome:map` | | | | ✔ | | ✔ |
-| `content:read` | ✔ | ✔ | | ✔ | ✔ | ✔ |
-| `content:write` | | ✔ | | ✔ | | ✔ |
-| `question:read` | | | ✔ | | | ✔ |
-| `question:write` | | | ✔ | | | ✔ |
-| `question:publish` | | | ✔ | | | ✔ |
-| `blueprint:read` | | | ✔ | | | ✔ |
-| `blueprint:write` | | | ✔ | | | ✔ |
-| `exam:read` | ✔ (atanan) | ✔ (kendi dersleri) | ✔ | ✔ | ✔ | ✔ |
-| `exam:write` | | | ✔ | | | ✔ |
-| `exam:publish` | | | ✔ | ✔ | | ✔ |
+| `course:read` | ✔ (kendi) | ✔ (kendi dersleri) | ✔ | ✔ | ✔ | |
+| `course:write` | | | | ✔ | | |
+| `course:publish` | | | | ✔ | | |
+| `outcome:read` | ✔ | ✔ | ✔ | ✔ | ✔ | |
+| `outcome:write` | | | | ✔ | | |
+| `outcome:map` | | | | ✔ | | |
+| `content:read` | ✔ | ✔ | | ✔ | ✔ | |
+| `content:write` | | ✔ | | ✔ | | |
+| `question:read` | | | ✔ | | | |
+| `question:write` | | | ✔ | | | |
+| `question:publish` | | | ✔ | | | |
+| `blueprint:read` | | | ✔ | | | |
+| `blueprint:write` | | | ✔ | | | |
+| `exam:read` | ✔ (atanan) | ✔ (kendi dersleri) | ✔ | ✔ | ✔ | |
+| `exam:write` | | | ✔ | | | |
+| `exam:publish` | | | ✔ | ✔ | | |
 | `session:start` | ✔ | | | | | |
-| `session:terminate` | | | | ✔ | | ✔ |
-| `attempt:read` | ✔ (kendi) | ✔ | ✔ | ✔ | ✔ | ✔ |
-| `attempt:grade` | | ✔ | ✔ | | | ✔ |
-| `attempt:override` | | | | ✔ | | ✔ |
-| `rubric:write` | | ✔ | | | | ✔ |
-| `analytics:student` | ✔ (kendi) | ✔ | ✔ | ✔ | ✔ | ✔ |
-| `analytics:cohort` | | ✔ (kendi dersleri) | ✔ | ✔ | ✔ | ✔ |
-| `analytics:item` | | | ✔ | | | ✔ |
+| `session:terminate` | | | | ✔ | | |
+| `attempt:read` | ✔ (kendi) | ✔ | ✔ | ✔ | ✔ | |
+| `attempt:grade` | | ✔ | ✔ | | | |
+| `attempt:override` | | | | ✔ | | |
+| `rubric:write` | | ✔ | | | | |
+| `analytics:student` | ✔ (kendi) | ✔ | ✔ | ✔ | ✔ | ✔ (yalnızca Panel kapısı) |
+| `analytics:cohort` | | ✔ (kendi dersleri) | ✔ | ✔ | ✔ | |
+| `analytics:item` | | | ✔ | | | |
 | `audit:read` | | | | | | ✔ |
 | `admin:manage` | | | | | | ✔ |
-| `term:read` | | | | ✔ | | ✔ |
+| `term:read` | | | | ✔ | | |
 
 > **Not:** `session:start` yalnızca öğrencide bulunur — platform yöneticisi dâhil hiçbir rol
 > sınav oturumu başlatamaz. Bu izin aynı zamanda "öğrenciye özgü menü" filtresi olarak da
@@ -202,7 +207,13 @@ analizi yapmaz, akademik takvimi salt okunur görür (`term:read`).
 >
 > **Not:** `term:read`, Program Yöneticisine akademik takvimi (`/admin/terms`) SALT OKUNUR
 > açar — ayrı bir takvim ekranı yoktur, mevcut Akademik Dönemler sayfası paylaşılır; yazma
-> butonları yalnızca `admin:manage` sahibinde görünür (ADR-075).
+> butonları yalnızca `admin:manage` sahibinde görünür (ADR-075). Platform Yöneticisi zaten
+> `admin:manage` taşıdığı için ayrıca `term:read`'e ihtiyaç duymaz (`admin:manage` supersettir).
+>
+> **Not:** Platform Yöneticisindeki `analytics:student`, öğrenci analitiği GÖRME izni değil,
+> yalnızca `/learning/dashboard` (Panel) rotasının kapısıdır — bu izni tüm roller Panel
+> erişimi için taşır. Panelin kendi verisi (kullanıcı/denetim sayıları, sistem sağlığı)
+> akademik veriye erişim gerektirmeden sunucuda ayrıca derlenir (ADR-077).
 
 ### Veri kapsamı (data scope)
 

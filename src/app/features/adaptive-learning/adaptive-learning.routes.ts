@@ -166,13 +166,12 @@ export const ADAPTIVE_LEARNING_ROUTES: Routes = [
     title: 'Sınavlar · Adaptif Eğitim',
     canMatch: [
       permissionGuard('exam:read'),
-      roleGuard(
-        'INSTRUCTOR',
-        'ASSESSMENT_SPECIALIST',
-        'PROGRAM_MANAGER',
-        'OBSERVER',
-        'PLATFORM_ADMIN',
-      ),
+      /*
+       * PLATFORM_ADMIN burada YOK: ADR-077 ile akademik kapsamdan çıkarıldı,
+       * zaten `exam:read` iznini taşımıyor. Rol listesi yine de tutulur çünkü
+       * `exam:read`i öğrenci de taşır — asıl filtre budur.
+       */
+      roleGuard('INSTRUCTOR', 'ASSESSMENT_SPECIALIST', 'PROGRAM_MANAGER', 'OBSERVER'),
     ],
     loadComponent: () =>
       import('./pages/exams/exam-list.page').then((module) => module.ExamListPage),

@@ -316,161 +316,16 @@ export const NAV_GROUPS_BY_ROLE: Readonly<Record<Role, readonly NavGroup[]>> = {
   ],
 
   /*
-   * Platform Yöneticisi: platformun sahibi, her modülü görür. Kapsam
-   * daraltılmaz — bugünkü tam menünün gruplanmış hâlidir.
+   * Platform Yöneticisi: akademik sürecin sahibi DEĞİLDİR, sistemin işletim
+   * yöneticisidir (ADR-077). Ders/kazanım/soru/sınav kataloğu ve analitik
+   * ekranları Program Yöneticisi, Ölçme Uzmanı ve Eğitmenin işidir; bu rol
+   * yalnızca rol/izin, akademik dönem ve sistem parametrelerini yönetir.
    */
   PLATFORM_ADMIN: [
     { title: 'Genel', items: [PANEL] },
     {
-      title: 'Akademik',
-      items: [
-        {
-          label: 'Programlar',
-          link: '/programs',
-          icon: 'graduation-cap',
-          permissions: ['course:read'],
-        },
-        { label: 'Dersler', link: '/courses', icon: 'library', permissions: ['course:read'] },
-        {
-          label: 'İçerikler',
-          link: '/contents',
-          icon: 'circle-play',
-          permissions: ['content:read'],
-          exact: true,
-        },
-        {
-          label: 'Kazanımlar',
-          link: '/outcomes',
-          icon: 'target',
-          permissions: ['outcome:read'],
-          exact: true,
-        },
-        {
-          label: 'Kazanım haritası',
-          link: '/outcomes/map',
-          icon: 'workflow',
-          permissions: ['outcome:read'],
-        },
-      ],
-    },
-    {
-      title: 'Ölçme',
-      items: [
-        {
-          label: 'Soru bankası',
-          link: '/question-bank',
-          icon: 'circle-help',
-          permissions: ['question:read'],
-        },
-        {
-          label: 'Ölçme planları',
-          link: '/blueprints',
-          icon: 'file-text',
-          permissions: ['blueprint:read'],
-        },
-        { label: 'Sınavlar', link: '/exams', icon: 'file-check', permissions: ['exam:read'] },
-        {
-          label: 'Değerlendirme',
-          link: '/grading',
-          icon: 'clipboard-list',
-          permissions: ['attempt:grade'],
-        },
-        {
-          label: 'Denemeler',
-          link: '/attempts',
-          icon: 'history',
-          permissions: ['attempt:read'],
-        },
-      ],
-    },
-    {
-      title: 'Analitik',
-      items: [
-        {
-          label: 'Genel bakış',
-          link: '/analytics',
-          icon: 'chart-column',
-          permissions: ['analytics:student'],
-          exact: true,
-        },
-        {
-          label: 'Trendler',
-          link: '/analytics/trends',
-          icon: 'trending-up',
-          permissions: ['analytics:cohort'],
-        },
-        {
-          label: 'Kazanım analitiği',
-          link: '/analytics/outcomes',
-          icon: 'target',
-          permissions: ['analytics:cohort'],
-        },
-        {
-          label: 'Kazanım Isı Haritası',
-          link: '/analytics/mastery',
-          icon: 'grid-2x2',
-          permissions: ['analytics:cohort'],
-        },
-        {
-          label: 'Cohort analitiği',
-          link: '/cohort-analytics',
-          icon: 'users',
-          permissions: ['analytics:cohort'],
-        },
-        {
-          label: 'Başarı panosu',
-          link: '/analytics/performers',
-          icon: 'trophy',
-          permissions: ['analytics:cohort'],
-        },
-        {
-          label: 'Öğrenme hızı',
-          link: '/analytics/velocity',
-          icon: 'gauge',
-          permissions: ['analytics:cohort'],
-        },
-        {
-          label: 'Öneri motoru',
-          link: '/analytics/recommendations',
-          icon: 'sparkles',
-          permissions: ['analytics:cohort'],
-        },
-        {
-          label: 'Karşılaştırma',
-          link: '/analytics/compare',
-          icon: 'git-compare',
-          permissions: ['analytics:cohort'],
-        },
-        {
-          label: 'Soru zorluk analizi',
-          link: '/analytics/difficulty',
-          icon: 'flask-conical',
-          permissions: ['analytics:item'],
-        },
-        {
-          label: 'Madde analizi',
-          link: '/item-analysis',
-          icon: 'microscope',
-          permissions: ['analytics:item'],
-        },
-        {
-          label: 'Kayıtlı raporlar',
-          link: '/analytics/reports',
-          icon: 'file-text',
-          permissions: ['analytics:student'],
-        },
-      ],
-    },
-    {
       title: 'Yönetim',
       items: [
-        {
-          label: 'Yönetim panosu',
-          link: '/admin',
-          icon: 'layout-dashboard',
-          permissions: ['admin:manage'],
-          exact: true,
-        },
         {
           label: 'Kullanıcılar',
           link: '/admin/users',

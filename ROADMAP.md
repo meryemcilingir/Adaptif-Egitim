@@ -495,6 +495,18 @@ Hiçbir yerden import edilmeyen, dokümanlarda ise "kullanımda" gibi anlatılan
 - [x] Kontrast doğrulaması: sekiz metin/zemin çiftinin tamamı WCAG AA'yı geçiyor
       (en düşük 4.65:1, ana metin 14.41:1)
 
+### 10.7 Platform Yöneticisi rolü daraltıldı (ADR-077) `[x]`
+- [x] İzin matrisi "`session:start` hariç her şey"den `['analytics:student', 'audit:read',
+      'admin:manage']`e indirildi — rol artık akademik kapsamın sahibi değil, yalnızca
+      rol/izin, akademik dönem ve sistem parametrelerini yönetir
+- [x] Sidebar 21 öğeden 8 öğeye indi: Panel + Kullanıcılar/Roller/Dönemler/Bildirim
+      merkezi/Sistem ayarları/Denetim kaydı/Geliştirici paneli
+- [x] Ders, kazanım, soru, sınav, değerlendirme ve tüm analitik rotaları artık `/403`
+      döndürüyor — izin matrisinden düştüğü için `canMatch` otomatik reddediyor, elle
+      rota değişikliği yalnızca `/exams`'teki fazladan `roleGuard` referansı için gerekti
+- [x] `DB_SCHEMA_VERSION` 21'e yükseltildi (izin matrisi değişti)
+- [x] Diğer beş rol dokunulmadı; Program Yöneticisi sidebar'ı doğrulandı (değişmedi)
+
 ### Devam eden
 - [ ] Gerçek zamanlı akış (SSE/WebSocket simülasyonu) — Faz 9'dan ertelendi
 - [ ] `@defer` ile lazy chart rendering — Faz 8'den ertelendi

@@ -195,11 +195,19 @@ export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
   ],
 
   /*
-   * Platform yöneticisi tüm yönetim izinlerine sahiptir; ancak `session:start`
-   * ÖĞRENCİYE ÖZGÜ bir eylemdir (sınava girmek). İzin matrisinde de yalnızca
-   * öğrencide tanımlıdır — yönetici sınav oturumu başlatamaz.
+   * Platform yöneticisi akademik sürecin SAHİBİ değildir — yalnızca sistemin
+   * işletim yöneticisidir: rol/izin, akademik dönem ve sistem parametrelerini
+   * yönetir (ADR-077). Ders, kazanım, soru, sınav, değerlendirme ve tüm
+   * analitik ekranları kapsamı dışındadır; bunlar Program Yöneticisi, Ölçme
+   * Uzmanı ve Eğitmenin işidir.
+   *
+   * `analytics:student` yalnızca `/learning/dashboard` (Panel) rotasının
+   * kapısı olduğu için burada — panelin kendi verisi (kullanıcı/denetim
+   * sayıları) zaten sunucu tarafında ayrıca derlenir, akademik veriye erişim
+   * gerektirmez. `audit:read` ayrı tutulur çünkü `/audit-log` rotası özellikle
+   * bu izni ister, `admin:manage`'in kapsamadığı tek istisnadır.
    */
-  PLATFORM_ADMIN: PERMISSIONS.filter((permission) => permission !== 'session:start'),
+  PLATFORM_ADMIN: ['analytics:student', 'audit:read', 'admin:manage'],
 };
 
 /**
