@@ -15,7 +15,7 @@ import { KpiGridComponent } from '../../../components/dashboard/kpi-grid.compone
 import { QuickActionsComponent } from '../../../components/dashboard/quick-actions.component';
 import { RankedListComponent } from '../../../components/dashboard/ranked-list.component';
 import { UpcomingExamsComponent } from '../../../components/dashboard/upcoming-exams.component';
-import { ObserverDashboard } from '../../../models/dashboard.model';
+import { ObserverDashboard, UpcomingExamCard } from '../../../models/dashboard.model';
 import { Notification } from '../../../models/notification.model';
 
 /**
@@ -54,7 +54,12 @@ export class ObserverDashboardComponent {
   );
   readonly completionCategories = computed(() => toTimeCategories(this.data().completionTrend));
 
-  openExams(): void {
-    void this.router.navigate(['/exams']);
+  /*
+   * Gözlemci'nin sınav YÖNETİM ekranına (`/exams`) erişimi yoktur
+   * (RolesPermissions.md) — bu widget'taki tıklama tek bir sınavın salt-okunur
+   * detayını açar, listeye değil.
+   */
+  openExam(exam: UpcomingExamCard): void {
+    void this.router.navigate(['/exams', exam.id]);
   }
 }

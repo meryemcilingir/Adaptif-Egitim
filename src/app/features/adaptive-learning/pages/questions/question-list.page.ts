@@ -39,13 +39,20 @@ import {
 import { LearningOutcome } from '../../models/learning-outcome.model';
 import {
   QUESTION_LIMITS,
+  QUESTION_REVIEW_STATUSES,
+  QUESTION_REVIEW_STATUS_LABELS,
   QUESTION_TYPES,
   QUESTION_TYPE_LABELS,
   Question,
   QuestionBulkAction,
 } from '../../models/question.model';
 import { availableActions } from '../../domain/publish-workflow';
-import { canCreateNewVersion } from '../../domain/question.rules';
+import {
+  canCreateNewVersion,
+  canDecideReview,
+  canResubmitForReview,
+  canSubmitForReview,
+} from '../../domain/question.rules';
 import { QuestionBadgesComponent } from '../../components/question/question-badges.component';
 import { QuestionPreviewDialogComponent } from '../../components/question/question-preview-dialog.component';
 import { CourseRepository, OutcomeRepository } from '../../data-access/catalog.repository';
@@ -120,6 +127,21 @@ export class QuestionListPage implements OnInit {
   readonly courseOptions = this.courseOptionsState.asReadonly();
   readonly preview = this.previewState.asReadonly();
   readonly canWrite = computed(() => this.permissions.can('question:write'));
+  /** İnceleme kararı verebilen (onay/revizyon/red/yayın) tek rol Ölçme Uzmanı'dır. */
+  readonly canReview = computed(() => this.permissions.can('question:publish'));
+
+  /*
+   * Aynı ekran iki rol için farklı iş görür: Ölçme Uzmanı için "Soru bankası"
+   * (tüm derslerin incelemesi), Eğitmen için "Sorularım" (yalnızca kendi
+   * derslerinin soruları — veri kapsamı zaten `course`). Ayrı bir sayfa/route
+   * açmak yerine BAŞLIK role göre değişir; liste/filtre/tablo altyapısı ortaktır.
+   */
+  readonly pageTitle = computed(() => (this.canReview() ? 'Soru bankası' : 'Sorularım'));
+  readonly pageDescription = computed(() =>
+    this.canReview()
+      ? 'İncelemeye gönderilen soruları değerlendirin; onaylayın, revizyon isteyin veya yayına alın.'
+      : 'Derslerinizin sorularını yazın, incelemeye gönderin ve ölçme uzmanının yorumlarını görün.',
+  );
 
   /*
    * Soru bankası DERS DERS açılır (kartlı seçim), tıklanan dersin sorularını
@@ -242,6 +264,15 @@ export class QuestionListPage implements OnInit {
       options: PUBLISH_STATES.map((state) => ({
         value: state,
         label: PUBLISH_STATE_LABELS[state],
+      })),
+    },
+    {
+      key: 'reviewStatus',
+      label: 'İnceleme durumu',
+      kind: 'multi',
+      options: QUESTION_REVIEW_STATUSES.filter((status) => status !== 'NONE').map((status) => ({
+        value: status,
+        label: QUESTION_REVIEW_STATUS_LABELS[status],
       })),
     },
     {
@@ -372,8 +403,26 @@ export class QuestionListPage implements OnInit {
         items.push({ id: 'version', label: 'Yeni versiyon oluştur', icon: 'history' });
       }
 
-      for (const action of availableActions(question.state)) {
-        items.push({ id: `state:${action.target}`, label: action.label, icon: action.icon });
+      /*
+       * "İncelemeye gönder"/"Yeniden gönder" yazarın (eğitmen dâhil) işidir —
+       * bilerek `question:publish` isteyen genel geçiş uç noktasına DEĞİL,
+       * `question:write` isteyen özel uç noktalara bağlıdır (bkz. handler).
+       */
+      if (canSubmitForReview(question.state)) {
+        items.push({
+          id: 'submit-review',
+          label: 'İncelemeye gönder',
+          icon: 'arrow-right',
+          separatorBefore: true,
+        });
+      }
+      if (canResubmitForReview(question.state, question.reviewStatus)) {
+        items.push({
+          id: 'resubmit-review',
+          label: 'Yeniden incelemeye gönder',
+          icon: 'arrow-right',
+          separatorBefore: true,
+        });
       }
 
       items.push({
@@ -384,6 +433,26 @@ export class QuestionListPage implements OnInit {
         separatorBefore: true,
         disabled: question.state === 'PUBLISHED',
       });
+    }
+
+    /*
+     * Onay/revizyon/red/yayın/arşiv gibi karar niteliğindeki eylemler yalnızca
+     * `question:publish` sahibi Ölçme Uzmanı'na gösterilir — eğitmen bu
+     * butonları hiç GÖRMEZ (yalnızca gizlenmiş olmakla kalmaz, aynı zamanda
+     * sunucu da bu izni ister).
+     */
+    if (this.canReview()) {
+      if (canDecideReview(question.state, question.reviewStatus)) {
+        items.push(
+          { id: 'approve', label: 'Onayla', icon: 'circle-check-big', separatorBefore: true },
+          { id: 'request-revision', label: 'Revizyon iste', icon: 'circle-alert' },
+          { id: 'reject', label: 'Reddet', icon: 'x', tone: 'danger' },
+        );
+      }
+
+      for (const action of availableActions(question.state)) {
+        items.push({ id: `state:${action.target}`, label: action.label, icon: action.icon });
+      }
     }
 
     return items;
@@ -403,11 +472,97 @@ export class QuestionListPage implements OnInit {
         return void this.askNewVersion(question);
       case 'delete':
         return void this.confirmDelete(question);
+      case 'submit-review':
+        return void this.askReviewAction('submit', question);
+      case 'resubmit-review':
+        return void this.askReviewAction('resubmit', question);
+      case 'approve':
+        return void this.askReviewAction('approve', question);
+      case 'request-revision':
+        return void this.askReviewAction('request-revision', question);
+      case 'reject':
+        return void this.askReviewAction('reject', question);
       default:
         if (item.id.startsWith('state:')) {
           void this.runTransition(question, item.id.slice('state:'.length) as PublishState);
         }
     }
+  }
+
+  /** İnceleme akışı eylemleri — yalnızca revizyon/red için gerekçe zorunludur. */
+  private async askReviewAction(
+    kind: 'submit' | 'resubmit' | 'approve' | 'request-revision' | 'reject',
+    question: Question,
+  ): Promise<void> {
+    const config: Readonly<
+      Record<
+        typeof kind,
+        { title: string; message: string; confirmLabel: string; requireReason: boolean }
+      >
+    > = {
+      submit: {
+        title: 'İncelemeye gönder',
+        message: `"${question.title}" ölçme uzmanının incelemesine sunulacak. Onaylanana kadar düzenlenemez.`,
+        confirmLabel: 'İncelemeye gönder',
+        requireReason: false,
+      },
+      resubmit: {
+        title: 'Yeniden incelemeye gönder',
+        message: `"${question.title}" düzeltmelerle birlikte tekrar incelemeye sunulacak.`,
+        confirmLabel: 'Yeniden gönder',
+        requireReason: false,
+      },
+      approve: {
+        title: 'Soruyu onayla',
+        message: `"${question.title}" onaylanacak ve yayına hazır hâle gelecek.`,
+        confirmLabel: 'Onayla',
+        requireReason: false,
+      },
+      'request-revision': {
+        title: 'Revizyon iste',
+        message: `"${question.title}" eğitmene geri gönderilecek. Ne düzeltilmesi gerektiğini açıklayın.`,
+        confirmLabel: 'Revizyon iste',
+        requireReason: true,
+      },
+      reject: {
+        title: 'Soruyu reddet',
+        message: `"${question.title}" reddedilecek. Eğitmen gerekçeyi görüp yeniden gönderebilir.`,
+        confirmLabel: 'Reddet',
+        requireReason: true,
+      },
+    };
+
+    const { title, message, confirmLabel, requireReason } = config[kind];
+
+    const result = await this.dialogs.ask({
+      title,
+      message,
+      confirmLabel,
+      tone: kind === 'reject' ? 'danger' : kind === 'request-revision' ? 'warning' : 'primary',
+      requireReason,
+      reasonLabel: requireReason ? 'Gerekçe' : 'Not (opsiyonel)',
+      reasonHint: requireReason
+        ? `Bu açıklama eğitmene gösterilir. En az ${QUESTION_LIMITS.commentMessage.min} karakter girin.`
+        : undefined,
+      minReasonLength: requireReason ? QUESTION_LIMITS.commentMessage.min : undefined,
+      maxReasonLength: QUESTION_LIMITS.commentMessage.max,
+    });
+
+    if (!result.confirmed) return;
+
+    const message$ = result.reason;
+    const request$ =
+      kind === 'submit'
+        ? this.facade.submitForReview(question, message$)
+        : kind === 'resubmit'
+          ? this.facade.resubmitForReview(question, message$)
+          : kind === 'approve'
+            ? this.facade.approve(question, message$)
+            : kind === 'request-revision'
+              ? this.facade.requestRevision(question, message$)
+              : this.facade.reject(question, message$);
+
+    request$.subscribe({ error: () => undefined });
   }
 
   openDetail(question: Question): void {

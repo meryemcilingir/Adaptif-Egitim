@@ -33,6 +33,7 @@ function question(
     attachments: [],
     tags: [],
     state: 'PUBLISHED',
+    reviewStatus: 'NONE',
     rubricId: null,
     versionNumber: 1,
     pendingChangeNote: null,

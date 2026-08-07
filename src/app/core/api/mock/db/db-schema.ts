@@ -25,6 +25,7 @@ import { MasteryScore } from '../../../../features/adaptive-learning/models/mast
 import { Notification } from '../../../../features/adaptive-learning/models/notification.model';
 import {
   Question,
+  QuestionComment,
   QuestionVersion,
 } from '../../../../features/adaptive-learning/models/question.model';
 import { Recommendation } from '../../../../features/adaptive-learning/models/recommendation.model';
@@ -62,6 +63,7 @@ export interface DbSchema {
   contentProgress: ContentProgress[];
   questions: Question[];
   questionVersions: QuestionVersion[];
+  questionComments: QuestionComment[];
   rubrics: Rubric[];
   blueprints: ExamBlueprint[];
   exams: Exam[];
@@ -100,6 +102,7 @@ export const COLLECTION_NAMES: readonly CollectionName[] = [
   'contentProgress',
   'questions',
   'questionVersions',
+  'questionComments',
   'rubrics',
   'blueprints',
   'exams',
@@ -122,4 +125,4 @@ export const COLLECTION_NAMES: readonly CollectionName[] = [
  * Şema sürümü. Seed yapısı değişince artırılır; tarayıcıdaki eski veri
  * otomatik olarak atılıp yeniden üretilir.
  */
-export const DB_SCHEMA_VERSION = 21;
+export const DB_SCHEMA_VERSION = 23;

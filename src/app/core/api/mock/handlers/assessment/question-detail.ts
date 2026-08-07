@@ -6,6 +6,9 @@ import {
   QuestionUsage,
   QuestionVersion,
 } from '../../../../../features/adaptive-learning/models/question.model';
+import {
+  QuestionComment,
+} from '../../../../../features/adaptive-learning/models/question.model';
 import { ITEM_FLAG_LABELS } from '../../../../../features/adaptive-learning/models/item-analysis.model';
 import { isQuestionEditable } from '../../../../../features/adaptive-learning/domain/question.rules';
 import { FakeDb } from '../../db/fake-db';
@@ -48,8 +51,17 @@ export function buildQuestionDetail(
     createdByName: questionAuthorName(db, question.createdBy),
     updatedByName: questionAuthorName(db, question.updatedBy),
     isFavorite: question.favoritedBy.includes(callerId),
-    isEditable: isQuestionEditable(question.state),
+    isEditable: isQuestionEditable(question.state, question.reviewStatus),
+    comments: commentsOf(db, question.id),
   };
+}
+
+/** Bir sorunun inceleme yorumları/eylem geçmişi — eskiden yeniye. */
+export function commentsOf(db: FakeDb, questionId: string): QuestionComment[] {
+  return db
+    .collection('questionComments')
+    .filter((comment) => comment.questionId === questionId)
+    .sort((a, b) => a.createdAt.localeCompare(b.createdAt));
 }
 
 /** Madde analizi varsa gerçek değerler, yoksa `null` — uydurma sayı üretilmez. */

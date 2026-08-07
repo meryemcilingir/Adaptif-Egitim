@@ -113,16 +113,25 @@ export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
 
   /*
    * Eğitmen yalnızca KENDİ dersinin günlük işleyişinden sorumludur: içerik,
-   * değerlendirme ve kendi ders kapsamındaki analitik. Soru bankası, blueprint
-   * ve sınav oluşturma/yayınlama tamamen Ölçme Uzmanının işidir — eğitmen
-   * sınavı yalnızca GÖRÜR ve değerlendirir, oluşturmaz. Ders/program kataloğu
+   * değerlendirme ve kendi ders kapsamındaki analitik. Blueprint ve sınav
+   * oluşturma/yayınlama tamamen Ölçme Uzmanının işidir — eğitmen sınavı
+   * yalnızca GÖRÜR ve değerlendirir, oluşturmaz. Ders/program kataloğu
    * (course:write) ve kazanım tanımı (outcome:write) Program Yöneticisinindir.
+   *
+   * `question:write` BURADA VAR (RolesPermissions.md — "Sorularım" akışı):
+   * eğitmen kendi dersinin sorularını taslak olarak yazabilir ve incelemeye
+   * gönderebilir, ama `question:publish` YOK — soruyu onaylama/reddetme/
+   * yayınlama tamamen Ölçme Uzmanının işidir (bkz. `question.rules.ts`
+   * inceleme akışı: taslak/yeniden-gönder `question:write` ister, onay/
+   * red/yayın `question:publish` ister).
    */
   INSTRUCTOR: [
     'course:read',
     'outcome:read',
     'content:read',
     'content:write',
+    'question:read',
+    'question:write',
     'exam:read',
     'attempt:read',
     'attempt:grade',
@@ -132,16 +141,24 @@ export const ROLE_PERMISSIONS: Readonly<Record<Role, readonly Permission[]>> = {
   ],
 
   /*
-   * Ölçme uzmanı, soru bankası → blueprint → sınav oluşturucu hattının TEK
-   * sahibidir; bu yüzden `exam:publish` de burada — Taslak→İnceleme→Yayında
-   * geçişlerinin tamamı bu izni ister (aksi hâlde sihirbazı sonuna kadar
-   * kullanamaz).
+   * Ölçme uzmanı, blueprint → sınav oluşturucu hattının TEK sahibidir; bu
+   * yüzden `exam:publish` de burada — Taslak→İnceleme→Yayında geçişlerinin
+   * tamamı bu izni ister (aksi hâlde sihirbazı sonuna kadar kullanamaz).
+   *
+   * `question:write` BİLEREK BURADA YOK: soru YAZIMI tamamen Eğitmenindir
+   * (kendi dersinin sorularını oluşturur, taslak olarak yazar, incelemeye
+   * gönderir). Ölçme uzmanı yalnızca `question:read` (soruları görür,
+   * yorumlarını okur) ve `question:publish` (onaylar/reddeder/revizyon
+   * ister/yayınlar) taşır — inceleme kararı verir ama İÇERİĞİ YAZMAZ.
+   * `question.handlers.ts`teki inceleme uç noktaları (approve/reject/
+   * request-revision) zaten `question:publish` ister; yeni soru oluşturma,
+   * düzenleme, kopyalama ve versiyon açma uç noktaları `question:write`
+   * ister — bu izin olmadan hepsi kapanır.
    */
   ASSESSMENT_SPECIALIST: [
     'course:read',
     'outcome:read',
     'question:read',
-    'question:write',
     'question:publish',
     'blueprint:read',
     'blueprint:write',

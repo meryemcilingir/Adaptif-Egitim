@@ -38,16 +38,21 @@ export const ADAPTIVE_LEARNING_ROUTES: Routes = [
   },
 
   {
+    /*
+     * `course:read` iznini Ölçme Uzmanı da taşır (blueprint/soru ekranlarındaki
+     * ders filtreleri için) — bu yüzden izin tek başına yetmez. RolesPermissions.md
+     * "Courses" ekranını yalnızca Öğrenci, Eğitmen ve Program Yöneticisi için tanımlar.
+     */
     path: 'courses',
     title: 'Dersler · Adaptif Eğitim',
-    canMatch: [permissionGuard('course:read')],
+    canMatch: [permissionGuard('course:read'), roleGuard('STUDENT', 'INSTRUCTOR', 'PROGRAM_MANAGER')],
     loadComponent: () =>
       import('./pages/courses/course-list.page').then((module) => module.CourseListPage),
   },
   {
     path: 'courses/:id',
     title: 'Ders Detayı · Adaptif Eğitim',
-    canMatch: [permissionGuard('course:read')],
+    canMatch: [permissionGuard('course:read'), roleGuard('STUDENT', 'INSTRUCTOR', 'PROGRAM_MANAGER')],
     loadComponent: () =>
       import('./pages/courses/course-detail.page').then((module) => module.CourseDetailPage),
   },
@@ -175,10 +180,13 @@ export const ADAPTIVE_LEARNING_ROUTES: Routes = [
       permissionGuard('exam:read'),
       /*
        * PLATFORM_ADMIN burada YOK: ADR-077 ile akademik kapsamdan çıkarıldı,
-       * zaten `exam:read` iznini taşımıyor. Rol listesi yine de tutulur çünkü
-       * `exam:read`i öğrenci de taşır — asıl filtre budur.
+       * zaten `exam:read` iznini taşımıyor. PROGRAM_MANAGER ve OBSERVER da
+       * burada YOK: RolesPermissions.md sidebar'larında "Exams" ekranı yok —
+       * her ikisi de `exam:read` iznini (arama/kapsam gibi başka amaçlarla)
+       * taşıyor olsa da bu, sınav yönetim ekranına erişim vermez. Rol listesi
+       * yine de tutulur çünkü `exam:read`i öğrenci de taşır — asıl filtre budur.
        */
-      roleGuard('INSTRUCTOR', 'ASSESSMENT_SPECIALIST', 'PROGRAM_MANAGER', 'OBSERVER'),
+      roleGuard('INSTRUCTOR', 'ASSESSMENT_SPECIALIST'),
     ],
     loadComponent: () =>
       import('./pages/exams/exam-list.page').then((module) => module.ExamListPage),
@@ -239,16 +247,29 @@ export const ADAPTIVE_LEARNING_ROUTES: Routes = [
   },
 
   {
+    /*
+     * Tüm öğrencilerin denemelerini listeleyen ekran — RolesPermissions.md
+     * yalnızca Eğitmen'e "View student submissions" yetkisi tanır. `attempt:read`
+     * iznini Ölçme Uzmanı, Program Yöneticisi ve Gözlemci de (madde analizi/kapsam
+     * gibi başka amaçlarla) taşıyor olsa da bu liste ekranını hiç görmez.
+     */
     path: 'attempts',
     title: 'Denemeler · Adaptif Eğitim',
-    canMatch: [permissionGuard('attempt:read')],
+    canMatch: [permissionGuard('attempt:read'), roleGuard('INSTRUCTOR')],
     loadComponent: () =>
       import('./pages/attempts/attempt-list.page').then((module) => module.AttemptListPage),
   },
   {
+    /*
+     * Aynı ekran ikili amaçlıdır: Öğrenci KENDİ sonucunu inceler
+     * (`exam-results.page.ts` buraya yönlendirir), Eğitmen ise kendi dersindeki
+     * herhangi bir öğrencinin denemesini — veri kapsamı (`isWithinScope`,
+     * course/own) sunucu tarafında zaten sınırlıyor. Bu yüzden liste ekranından
+     * farklı olarak STUDENT de rol listesinde kalır.
+     */
     path: 'attempts/:attemptId',
     title: 'Deneme Detayı · Adaptif Eğitim',
-    canMatch: [permissionGuard('attempt:read')],
+    canMatch: [permissionGuard('attempt:read'), roleGuard('STUDENT', 'INSTRUCTOR')],
     loadComponent: () =>
       import('./pages/attempts/attempt-detail.page').then((module) => module.AttemptDetailPage),
   },
@@ -263,9 +284,14 @@ export const ADAPTIVE_LEARNING_ROUTES: Routes = [
       ),
   },
   {
+    /*
+     * `analytics:cohort` iznini Eğitmen, Ölçme Uzmanı ve Gözlemci de taşır,
+     * ama RolesPermissions.md "Trends"i yalnızca Program Yöneticisi'nin
+     * analitik listesinde tanımlar.
+     */
     path: 'analytics/trends',
     title: 'Trend Analizi · Adaptif Eğitim',
-    canMatch: [permissionGuard('analytics:cohort')],
+    canMatch: [permissionGuard('analytics:cohort'), roleGuard('PROGRAM_MANAGER')],
     loadComponent: () =>
       import('./pages/analytics/trend-analytics.page').then(
         (module) => module.TrendAnalyticsPage,
@@ -299,27 +325,30 @@ export const ADAPTIVE_LEARNING_ROUTES: Routes = [
       ),
   },
   {
+    // Aynı gerekçe: RolesPermissions.md "Recommendation Analytics"i yalnızca Program Yöneticisi'ne verir.
     path: 'analytics/recommendations',
     title: 'Öneri Motoru Analizi · Adaptif Eğitim',
-    canMatch: [permissionGuard('analytics:cohort')],
+    canMatch: [permissionGuard('analytics:cohort'), roleGuard('PROGRAM_MANAGER')],
     loadComponent: () =>
       import('./pages/analytics/recommendation-analytics.page').then(
         (module) => module.RecommendationAnalyticsPage,
       ),
   },
   {
+    // Aynı gerekçe: RolesPermissions.md "Learning Velocity"yi yalnızca Program Yöneticisi'ne verir.
     path: 'analytics/velocity',
     title: 'Öğrenme Hızı · Adaptif Eğitim',
-    canMatch: [permissionGuard('analytics:cohort')],
+    canMatch: [permissionGuard('analytics:cohort'), roleGuard('PROGRAM_MANAGER')],
     loadComponent: () =>
       import('./pages/analytics/velocity-analytics.page').then(
         (module) => module.VelocityAnalyticsPage,
       ),
   },
   {
+    // Aynı gerekçe: RolesPermissions.md "Success Dashboard"ı yalnızca Program Yöneticisi'ne verir.
     path: 'analytics/performers',
     title: 'Başarı Panosu · Adaptif Eğitim',
-    canMatch: [permissionGuard('analytics:cohort')],
+    canMatch: [permissionGuard('analytics:cohort'), roleGuard('PROGRAM_MANAGER')],
     loadComponent: () =>
       import('./pages/analytics/performers.page').then((module) => module.PerformersPage),
   },
@@ -350,9 +379,14 @@ export const ADAPTIVE_LEARNING_ROUTES: Routes = [
       ),
   },
   {
+    /*
+     * `analytics:cohort` iznini Eğitmen ve Ölçme Uzmanı da taşır, ama
+     * RolesPermissions.md "Cohorts"u yalnızca Program Yöneticisi ve
+     * Gözlemci'nin sidebar'ında tanımlar.
+     */
     path: 'cohort-analytics',
     title: 'Cohort Analitiği · Adaptif Eğitim',
-    canMatch: [permissionGuard('analytics:cohort')],
+    canMatch: [permissionGuard('analytics:cohort'), roleGuard('PROGRAM_MANAGER', 'OBSERVER')],
     loadComponent: () =>
       import('./pages/analytics/cohort-analytics.page').then(
         (module) => module.CohortAnalyticsPage,

@@ -102,8 +102,15 @@ export class BlueprintDetailPage implements OnInit, OnDestroy {
   readonly blueprint = computed(() => this.detail()?.blueprint ?? null);
 
   readonly canWrite = computed(() => this.permissions.can('exam:write'));
-  /** Yayınlanmış plan, ona bağlı sınavların anlamını değiştirmemek için kilitlenir. */
-  readonly canEdit = computed(() => this.canWrite() && this.blueprint()?.state === 'DRAFT');
+  /*
+   * Sorunun/sınavın aksine blueprint'in yayındaki içeriği hiçbir yerde donmuş
+   * bir referans (snapshot) olarak KULLANILMAZ — sınavlar auto-select
+   * sırasında satırları okuyup kendi soru listesini saklar; blueprint sonradan
+   * değişse bile geçmiş sınavlar etkilenmez. Bu yüzden "yayındaki kayıt
+   * donar" kuralı burada uygulanmaz; Ölçme Uzmanı hedef sayıları istediği
+   * zaman güncelleyebilir. Yalnızca arşivlenmiş bir plan kilitli kalır.
+   */
+  readonly canEdit = computed(() => this.canWrite() && this.blueprint()?.state !== 'ARCHIVED');
 
   readonly form = this.fb.nonNullable.group({
     name: [

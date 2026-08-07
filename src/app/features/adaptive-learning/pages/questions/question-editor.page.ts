@@ -566,6 +566,7 @@ export class QuestionEditorPage implements OnInit {
       ...payload,
       id: editing?.id ?? 'preview',
       state: editing?.state ?? 'DRAFT',
+      reviewStatus: editing?.reviewStatus ?? 'NONE',
       rubricId: editing?.rubricId ?? null,
       versionNumber: editing?.versionNumber ?? 1,
       pendingChangeNote: editing?.pendingChangeNote ?? null,

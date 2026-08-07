@@ -101,6 +101,7 @@ export function buildSeed(): DbSchema {
     contentProgress: catalog.contentProgress,
     questions: assessment.questions,
     questionVersions: assessment.questionVersions,
+    questionComments: [],
     rubrics: assessment.rubrics,
     blueprints: assessment.blueprints,
     exams,

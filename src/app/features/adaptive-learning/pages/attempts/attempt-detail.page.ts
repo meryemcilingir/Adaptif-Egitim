@@ -72,6 +72,9 @@ export class AttemptDetailPage implements OnInit, OnDestroy {
 
   readonly canGrade = computed(() => this.permissions.can('attempt:grade'));
 
+  /** Deneme listesi ekranı yalnızca Eğitmen'e açıktır (RolesPermissions.md). */
+  private readonly canViewList = computed(() => this.permissions.hasRole('INSTRUCTOR'));
+
   readonly tabs: readonly TabItem[] = [
     { id: 'answers', label: 'Cevaplar', icon: 'list-checks' },
     { id: 'timeline', label: 'Zaman çizelgesi', icon: 'history' },
@@ -83,8 +86,13 @@ export class AttemptDetailPage implements OnInit, OnDestroy {
     statusPresentation(this.detail()?.attempt.state ?? 'SUBMITTED'),
   );
 
+  /*
+   * "Denemeler" bağlantısı yalnızca Eğitmen'e verilir — bu ekrana bir öğrenci
+   * de kendi sonucundan (exam-results.page) gelebilir ve `/attempts` listesi
+   * onun için erişilebilir değildir; bağlantı olmadan yalnızca etiket görünür.
+   */
   readonly breadcrumbs = computed(() => [
-    { label: 'Denemeler', link: '/attempts' },
+    this.canViewList() ? { label: 'Denemeler', link: '/attempts' } : { label: 'Denemeler' },
     { label: this.detail()?.attempt.studentName ?? 'Deneme' },
   ]);
 

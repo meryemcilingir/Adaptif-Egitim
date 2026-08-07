@@ -28,6 +28,10 @@ export interface ExamValidationInput {
   /** Sınavdaki sorular; zenginleştirilmiş hâliyle (zorluk ve kazanım gerekli). */
   readonly questions: readonly ExamQuestionFacts[];
   readonly blueprintRows: readonly BlueprintOutcomeRow[];
+  /** Sınava bir blueprint bağlanmış mı — bağlanmadıysa yayına alınamaz. */
+  readonly hasBlueprint: boolean;
+  /** Bağlı blueprint YAYINDA mı — yalnızca yayındaki plan "uygun" sayılır. */
+  readonly isBlueprintPublished: boolean;
   readonly targetTotalPoints: number;
   /** Aynı ders içindeki diğer sınav adları — benzersizlik kontrolü. */
   readonly siblingTitles: readonly string[];
@@ -58,6 +62,27 @@ export function validateExam(input: ExamValidationInput): ValidationResult {
       severity: 'error',
       message: 'Sınavda hiç soru yok. Otomatik seçim yapın veya elle soru ekleyin.',
       step: 'questions',
+    });
+  }
+
+  /*
+   * 1b) Sınav uygun bir blueprint'e bağlı olmalı — bu proje sözleşmesi
+   * gereği sınavlar yalnızca Ölçme Uzmanı'nın YAYINDAKİ (onaylanmış) bir
+   * planıyla oluşturulabilir; taslak hâlde bırakılabilir ama yayına alınamaz.
+   */
+  if (!input.hasBlueprint) {
+    issues.push({
+      rule: 'blueprint_required',
+      severity: 'error',
+      message: 'Sınav bir blueprint’e bağlı olmalıdır. Yayındaki bir blueprint seçin.',
+      step: 'information',
+    });
+  } else if (!input.isBlueprintPublished) {
+    issues.push({
+      rule: 'blueprint_required',
+      severity: 'error',
+      message: 'Bağlı blueprint henüz yayında değil. Sınav yalnızca yayındaki (uygun) bir blueprint ile yayına alınabilir.',
+      step: 'information',
     });
   }
 

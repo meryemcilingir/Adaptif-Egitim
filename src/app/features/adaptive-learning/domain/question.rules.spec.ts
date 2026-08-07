@@ -130,11 +130,16 @@ describe('validateAnswerShape · diğer türler', () => {
 });
 
 describe('düzenlenebilirlik (BR-02)', () => {
-  it('yalnızca taslak ve incelemedeki soru düzenlenebilir', () => {
+  it('yalnızca taslak ve revizyon istenen soru düzenlenebilir', () => {
     expect(isQuestionEditable('DRAFT')).toBe(true);
-    expect(isQuestionEditable('REVIEW')).toBe(true);
+    expect(isQuestionEditable('REVIEW', 'REVISION_REQUESTED')).toBe(true);
     expect(isQuestionEditable('PUBLISHED')).toBe(false);
     expect(isQuestionEditable('ARCHIVED')).toBe(false);
+  });
+
+  it('incelemedeki ve onaylanmış soru kilitlidir — ölçme uzmanı karar verene kadar düzenlenemez', () => {
+    expect(isQuestionEditable('REVIEW', 'UNDER_REVIEW')).toBe(false);
+    expect(isQuestionEditable('REVIEW', 'APPROVED')).toBe(false);
   });
 
   it('yeni versiyon yalnızca yayındaki sorudan açılır', () => {
@@ -167,6 +172,7 @@ function question(overrides: Partial<Question> = {}): Question {
     attachments: [],
     tags: ['temel'],
     state: 'PUBLISHED',
+    reviewStatus: 'NONE',
     rubricId: null,
     versionNumber: 1,
     pendingChangeNote: null,

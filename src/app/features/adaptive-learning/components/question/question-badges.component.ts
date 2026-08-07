@@ -1,9 +1,9 @@
 import { ChangeDetectionStrategy, Component, computed, input } from '@angular/core';
 
 import { AppStatusBadgeComponent } from '../../../../shared/components/app-status-badge/app-status-badge.component';
-import { statusPresentation } from '../../../../shared/utils/status-tone';
 import { COGNITIVE_LEVEL_LABELS, DIFFICULTY_LABELS } from '../../models/common.model';
 import { QUESTION_TYPE_META, Question } from '../../models/question.model';
+import { questionStatusPresentation } from '../../domain/question.rules';
 
 /**
  * Soru bilgi rozetleri: tür · zorluk · durum · Bloom · kazanım · versiyon.
@@ -50,5 +50,7 @@ export class QuestionBadgesComponent {
   readonly typeShort = computed(() => QUESTION_TYPE_META[this.question().type].shortLabel);
   readonly difficultyLabel = computed(() => DIFFICULTY_LABELS[this.question().difficulty]);
   readonly levelLabel = computed(() => COGNITIVE_LEVEL_LABELS[this.question().level]);
-  readonly status = computed(() => statusPresentation(this.question().state));
+  readonly status = computed(() =>
+    questionStatusPresentation(this.question().state, this.question().reviewStatus),
+  );
 }

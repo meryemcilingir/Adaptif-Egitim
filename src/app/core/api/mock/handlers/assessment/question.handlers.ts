@@ -10,13 +10,20 @@ import {
   QUESTION_TYPE_META,
   Question,
   QuestionAttachment,
+  QuestionComment,
+  QuestionCommentAction,
   QuestionMatchPair,
   QuestionOption,
+  QuestionReviewStatus,
   QuestionSequenceItem,
   QuestionVersion,
 } from '../../../../../features/adaptive-learning/models/question.model';
 import {
   canCreateNewVersion,
+  canDecideReview,
+  canPublishQuestion,
+  canResubmitForReview,
+  canSubmitForReview,
   isQuestionEditable,
   questionEditBlockedReason,
   validateAnswerShape,
@@ -31,6 +38,7 @@ import { writeAudit } from '../audit-writer';
 import { createCrudHandlers, diffFields } from '../crud/crud-handlers';
 import { FieldValidator, readNumber, readStringArray, readText } from '../crud/field-validator';
 import { buildQuestionDetail, questionAuthorName } from './question-detail';
+// (Yorumlar `buildQuestionDetail` içinden `commentsOf` ile okunur — bkz. question-detail.ts.)
 
 const TRANSITION_ACTIONS: Readonly<Record<PublishState, AuditAction>> = {
   DRAFT: 'question.restored',
@@ -226,6 +234,7 @@ export const QUESTION_HANDLERS: readonly MockHandler[] = [
           difficulty: inList<Question>((question) => question.difficulty),
           level: inList<Question>((question) => question.level),
           state: inList<Question>((question) => question.state),
+          reviewStatus: inList<Question>((question) => question.reviewStatus),
           tags: includesId<Question>((question) => question.tags),
           favoriteOnly: (question, value) =>
             isTrue(value) ? question.favoritedBy.includes(callerId) : true,
@@ -255,6 +264,7 @@ export const QUESTION_HANDLERS: readonly MockHandler[] = [
         id: `qst_${context.now.toString(36)}`,
         ...writableFields(context),
         state: 'DRAFT',
+        reviewStatus: 'NONE',
         rubricId: null,
         versionNumber: 1,
         pendingChangeNote: null,
@@ -273,10 +283,14 @@ export const QUESTION_HANDLERS: readonly MockHandler[] = [
     },
 
     update: (existing, context, caller) => {
-      // Yayındaki soru düzenlenemez (BR-02) — fabrika bunu zaten engeller,
-      // burada soruya özgü mesajla tekrar doğrulanır.
-      if (!isQuestionEditable(existing.state)) {
-        throw businessRule(questionEditBlockedReason(existing.state));
+      /*
+       * Yayındaki/incelemedeki/onaylanmış soru düzenlenemez (BR-02) — fabrika
+       * yalnızca genel `isEditable` (DRAFT/REVIEW) kontrolünü yapar; soruya
+       * özgü kural (yalnızca DRAFT ve REVISION_REQUESTED) burada tekrar
+       * doğrulanır çünkü `REVIEW` durumunun çoğu alt hâli artık kilitlidir.
+       */
+      if (!isQuestionEditable(existing.state, existing.reviewStatus)) {
+        throw businessRule(questionEditBlockedReason(existing.state, existing.reviewStatus));
       }
       validate(context, existing.id);
 
@@ -314,6 +328,14 @@ export const QUESTION_HANDLERS: readonly MockHandler[] = [
     },
 
     assertPublishable: (question, context) => {
+      /*
+       * Ölçme uzmanı onayı ŞARTTIR (Approved → Published) — bu kontrol
+       * olmadan bir soru incelemeden geçmeden doğrudan yayına alınabilirdi.
+       */
+      if (!canPublishQuestion(question.state, question.reviewStatus)) {
+        throw businessRule('Soru yayına alınmadan önce ölçme uzmanı tarafından onaylanmalıdır.');
+      }
+
       const issues = validateAnswerShape(question);
       if (issues.length > 0) {
         throw businessRule(`Soru yayına alınamaz: ${issues[0]!.message}`, { issues });
@@ -333,8 +355,13 @@ export const QUESTION_HANDLERS: readonly MockHandler[] = [
       transition: (target) => TRANSITION_ACTIONS[target],
     },
 
-    /* Yayına alınan her soru için değişmez bir snapshot yazılır (BR-03). */
-    afterChange: (context) => snapshotNewlyPublished(context),
+    afterChange: (context) => {
+      // Yayına alınan her soru için değişmez bir snapshot yazılır (BR-03).
+      snapshotNewlyPublished(context);
+      // İncelemeden çıkan (yayınlanan, taslağa çekilen, arşivlenen) sorunun
+      // inceleme alt durumu artık anlamsızdır — sıfırlanır.
+      reconcileReviewStatus(context);
+    },
   }),
 
   /* ── Soruya özgü uç noktalar ────────────────────────────────────────── */
@@ -465,6 +492,7 @@ export const QUESTION_HANDLERS: readonly MockHandler[] = [
         code: uniqueCode(context, source.code),
         title: `${source.title} (kopya)`,
         state: 'DRAFT',
+        reviewStatus: 'NONE',
         versionNumber: 1,
         pendingChangeNote: null,
         publishedVersion: null,
@@ -550,6 +578,7 @@ export const QUESTION_HANDLERS: readonly MockHandler[] = [
       const updated = questions.update(question.id, {
         deletedAt: null,
         state: 'DRAFT',
+        reviewStatus: 'NONE',
         archivedAt: null,
         updatedAt: nowIso,
         updatedBy: caller.userId,
@@ -557,6 +586,158 @@ export const QUESTION_HANDLERS: readonly MockHandler[] = [
 
       writeAudit(context, caller, 'question.restored', questionTarget(updated), null);
       return ok(updated);
+    },
+  },
+
+  /* ── İnceleme akışı (Draft → Under Review → Revision Requested → Approved → Published) ── */
+  {
+    /**
+     * Eğitmen taslak soruyu incelemeye gönderir.
+     *
+     * Genel yayın geçiş uç noktası (`/transition`) BİLEREK kullanılmaz: o uç
+     * `question:publish` ister ve bu izin yalnızca Ölçme Uzmanı'ndadır — bir
+     * eğitmenin KENDİ taslağını incelemeye göndermesi "yayınlama" değildir,
+     * `question:write` yeterli olmalıdır.
+     */
+    method: 'POST',
+    path: '/api/questions/:id/submit-review',
+    handle: (context) => {
+      const caller = requirePermission(context, 'question:write');
+      const question = findQuestion(context);
+      assertScope(caller, question);
+
+      if (!canSubmitForReview(question.state)) {
+        throw businessRule('Yalnızca taslak durumdaki bir soru incelemeye gönderilebilir.', {
+          state: question.state,
+        });
+      }
+
+      const updated = transitionToReview(context, caller, question, 'UNDER_REVIEW');
+      writeComment(context, caller, updated, 'submitted', optionalComment(context));
+      writeAudit(context, caller, 'question.submitted_review', questionTarget(updated), null);
+
+      return ok(updated);
+    },
+  },
+
+  {
+    /** Revizyon istenen soru düzeltildikten sonra eğitmen tarafından yeniden gönderilir. */
+    method: 'POST',
+    path: '/api/questions/:id/resubmit-review',
+    handle: (context) => {
+      const caller = requirePermission(context, 'question:write');
+      const question = findQuestion(context);
+      assertScope(caller, question);
+
+      if (!canResubmitForReview(question.state, question.reviewStatus)) {
+        throw businessRule('Yalnızca revizyon istenen bir soru yeniden incelemeye gönderilebilir.', {
+          state: question.state,
+          reviewStatus: question.reviewStatus,
+        });
+      }
+
+      const updated = transitionToReview(context, caller, question, 'UNDER_REVIEW');
+      writeComment(context, caller, updated, 'resubmitted', optionalComment(context));
+      writeAudit(context, caller, 'question.resubmitted', questionTarget(updated), null);
+
+      return ok(updated);
+    },
+  },
+
+  {
+    /** Ölçme uzmanı incelemedeki soruyu onaylar — yayına almak için ayrı bir adımdır. */
+    method: 'POST',
+    path: '/api/questions/:id/approve',
+    handle: (context) => {
+      const caller = requirePermission(context, 'question:publish');
+      const question = findQuestion(context);
+      assertScope(caller, question);
+
+      if (!canDecideReview(question.state, question.reviewStatus)) {
+        throw businessRule('Yalnızca incelemedeki bir soru onaylanabilir.', {
+          state: question.state,
+          reviewStatus: question.reviewStatus,
+        });
+      }
+
+      const updated = setReviewStatus(context, caller, question, 'APPROVED');
+      writeComment(context, caller, updated, 'approved', optionalComment(context));
+      writeAudit(context, caller, 'question.approved', questionTarget(updated), null);
+
+      return ok(updated);
+    },
+  },
+
+  {
+    /** Ölçme uzmanı düzeltme ister — gerekçe ZORUNLUDUR, eğitmen ne yapacağını bilmelidir. */
+    method: 'POST',
+    path: '/api/questions/:id/request-revision',
+    handle: (context) => {
+      const caller = requirePermission(context, 'question:publish');
+      const question = findQuestion(context);
+      assertScope(caller, question);
+
+      if (!canDecideReview(question.state, question.reviewStatus)) {
+        throw businessRule('Yalnızca incelemedeki bir soru için revizyon istenebilir.', {
+          state: question.state,
+          reviewStatus: question.reviewStatus,
+        });
+      }
+
+      const message = requiredComment(context, 'Revizyon gerekçesi');
+      const updated = setReviewStatus(context, caller, question, 'REVISION_REQUESTED');
+      writeComment(context, caller, updated, 'revision_requested', message);
+      writeAudit(context, caller, 'question.revision_requested', questionTarget(updated), message);
+
+      return ok(updated);
+    },
+  },
+
+  {
+    /**
+     * Ölçme uzmanı soruyu reddeder.
+     *
+     * Sonuç durumu "revizyon istendi" ile AYNIDIR (RolesPermissions.md altı
+     * durumlu modelde ayrı bir "Reddedildi" durumu yoktur) — fark yalnızca
+     * yorum akışındaki eylem etiketinde görünür, eğitmen soruyu yine
+     * düzeltip yeniden gönderebilir.
+     */
+    method: 'POST',
+    path: '/api/questions/:id/reject',
+    handle: (context) => {
+      const caller = requirePermission(context, 'question:publish');
+      const question = findQuestion(context);
+      assertScope(caller, question);
+
+      if (!canDecideReview(question.state, question.reviewStatus)) {
+        throw businessRule('Yalnızca incelemedeki bir soru reddedilebilir.', {
+          state: question.state,
+          reviewStatus: question.reviewStatus,
+        });
+      }
+
+      const message = requiredComment(context, 'Red gerekçesi');
+      const updated = setReviewStatus(context, caller, question, 'REVISION_REQUESTED');
+      writeComment(context, caller, updated, 'rejected', message);
+      writeAudit(context, caller, 'question.rejected', questionTarget(updated), message);
+
+      return ok(updated);
+    },
+  },
+
+  {
+    /** Yazar veya inceleyen — kapsamı içindeyse — soruya serbest yorum bırakabilir. */
+    method: 'POST',
+    path: '/api/questions/:id/comments',
+    handle: (context) => {
+      const caller = requirePermission(context, 'question:read');
+      const question = findQuestion(context);
+      assertScope(caller, question);
+
+      const message = requiredComment(context, 'Yorum');
+      const comment = writeComment(context, caller, question, 'comment', message);
+
+      return created(comment);
     },
   },
 ];
@@ -576,6 +757,91 @@ function findQuestion(context: MockContext): Question {
 function assertScope(caller: MockCaller, question: Question): void {
   if (!isWithinScope(caller, { courseId: question.courseId })) {
     throw businessRule('Bu soru kapsamınız dışında.');
+  }
+}
+
+/* ── İnceleme akışı yardımcıları ─────────────────────────────────────────── */
+
+/** DRAFT/REVISION_REQUESTED → REVIEW geçişi; state DEĞİŞİR (submit/resubmit). */
+function transitionToReview(
+  context: MockContext,
+  caller: MockCaller,
+  question: Question,
+  reviewStatus: QuestionReviewStatus,
+): Question {
+  return context.db.collection('questions').update(question.id, {
+    state: 'REVIEW',
+    reviewStatus,
+    version: question.version + 1,
+    updatedAt: new Date(context.now).toISOString(),
+    updatedBy: caller.userId,
+  })!;
+}
+
+/** REVIEW içindeki alt durum değişikliği (approve/revision-request/reject) — state SABİT kalır. */
+function setReviewStatus(
+  context: MockContext,
+  caller: MockCaller,
+  question: Question,
+  reviewStatus: QuestionReviewStatus,
+): Question {
+  return context.db.collection('questions').update(question.id, {
+    reviewStatus,
+    version: question.version + 1,
+    updatedAt: new Date(context.now).toISOString(),
+    updatedBy: caller.userId,
+  })!;
+}
+
+function optionalComment(context: MockContext): string {
+  return readText(context.body, 'message');
+}
+
+/** Gerekçe zorunlu eylemlerde (revizyon/red/yorum) çağrılır — boşsa 400 döner. */
+function requiredComment(context: MockContext, label: string): string {
+  const message = readText(context.body, 'message');
+  new FieldValidator(context.body as Record<string, unknown> | null)
+    .text('message', label, QUESTION_LIMITS.commentMessage)
+    .assert();
+  return message;
+}
+
+function writeComment(
+  context: MockContext,
+  caller: MockCaller,
+  question: Question,
+  action: QuestionCommentAction,
+  message: string,
+): QuestionComment {
+  const comment: QuestionComment = {
+    id: `qcm_${context.now.toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
+    questionId: question.id,
+    action,
+    message,
+    authorId: caller.userId,
+    authorName: questionAuthorName(context.db, caller.userId),
+    authorRole: caller.role,
+    createdAt: new Date(context.now).toISOString(),
+  };
+
+  context.db.collection('questionComments').insert(comment);
+  return comment;
+}
+
+/**
+ * `REVIEW`den çıkan (yayınlanan, taslağa çekilen, arşivlenen) sorunun inceleme
+ * alt durumu artık anlamsızdır. Genel yayın geçiş uç noktası (`/transition`,
+ * `crud-handlers.ts`) bu alanı bilmediği için ekstra alan güncellemesi
+ * yapamaz; bu yüzden her değişiklikten sonra tarama ile düzeltilir — aynı
+ * desen `snapshotNewlyPublished` için de kullanılır.
+ */
+function reconcileReviewStatus(context: MockContext): void {
+  const questions = context.db.collection('questions');
+
+  for (const question of questions.filter(
+    (item) => item.state !== 'REVIEW' && item.reviewStatus !== 'NONE',
+  )) {
+    questions.update(question.id, { reviewStatus: 'NONE' });
   }
 }
 
@@ -783,19 +1049,23 @@ function applyTransition(
     return { ok: false, reason: `Soru zaten "${stateLabel(target)}" durumunda.` };
   }
   if (target === 'PUBLISHED') {
+    if (question.state === 'ARCHIVED') {
+      return { ok: false, reason: 'Arşivdeki soru doğrudan yayına alınamaz; önce taslağa alın.' };
+    }
+    if (!canPublishQuestion(question.state, question.reviewStatus)) {
+      return { ok: false, reason: 'Soru yayına alınmadan önce ölçme uzmanı tarafından onaylanmalıdır.' };
+    }
     const issues = validateAnswerShape(question);
     if (issues.length > 0) return { ok: false, reason: issues[0]!.message };
     if (question.outcomeIds.length === 0) {
       return { ok: false, reason: 'Soru bir kazanıma bağlı değil.' };
-    }
-    if (question.state === 'ARCHIVED') {
-      return { ok: false, reason: 'Arşivdeki soru doğrudan yayına alınamaz; önce taslağa alın.' };
     }
   }
 
   const nowIso = new Date(context.now).toISOString();
   const updated = questions.update(question.id, {
     state: target,
+    reviewStatus: target === 'REVIEW' ? question.reviewStatus : 'NONE',
     versionNumber: question.versionNumber,
     publishedVersion: target === 'PUBLISHED' ? question.versionNumber : question.publishedVersion,
     archivedAt: target === 'ARCHIVED' ? nowIso : null,

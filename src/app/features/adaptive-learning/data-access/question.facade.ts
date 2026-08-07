@@ -240,6 +240,80 @@ export class QuestionFacade extends CatalogFacade<Question, QuestionCreateReques
     );
   }
 
+  /* ── İnceleme akışı ──────────────────────────────────────────────────── */
+
+  private reviewAction(
+    request: Observable<Question>,
+    successTitle: string,
+    successMessage: (question: Question) => string,
+    errorTitle: string,
+  ): Observable<Question> {
+    return request.pipe(
+      tap({
+        next: (updated) => {
+          this.loadQuestionDetail(updated.id);
+          this.load();
+          this.toastStore.success(successTitle, successMessage(updated));
+        },
+        error: (error: ApiError) => this.toastStore.fromApiError(error, errorTitle),
+      }),
+    );
+  }
+
+  submitForReview(question: Question, message = ''): Observable<Question> {
+    return this.reviewAction(
+      this.repository.submitForReview(question.id, message),
+      'İncelemeye gönderildi',
+      (updated) => `"${updated.title}" ölçme uzmanının incelemesine sunuldu.`,
+      'Soru incelemeye gönderilemedi',
+    );
+  }
+
+  resubmitForReview(question: Question, message = ''): Observable<Question> {
+    return this.reviewAction(
+      this.repository.resubmitForReview(question.id, message),
+      'Yeniden incelemeye gönderildi',
+      (updated) => `"${updated.title}" düzeltmelerle birlikte tekrar incelemeye sunuldu.`,
+      'Soru yeniden gönderilemedi',
+    );
+  }
+
+  approve(question: Question, message = ''): Observable<Question> {
+    return this.reviewAction(
+      this.repository.approve(question.id, message),
+      'Soru onaylandı',
+      (updated) => `"${updated.title}" yayına hazır.`,
+      'Soru onaylanamadı',
+    );
+  }
+
+  requestRevision(question: Question, message: string): Observable<Question> {
+    return this.reviewAction(
+      this.repository.requestRevision(question.id, message),
+      'Revizyon istendi',
+      (updated) => `"${updated.title}" için eğitmenden düzeltme istendi.`,
+      'Revizyon istenemedi',
+    );
+  }
+
+  reject(question: Question, message: string): Observable<Question> {
+    return this.reviewAction(
+      this.repository.reject(question.id, message),
+      'Soru reddedildi',
+      (updated) => `"${updated.title}" reddedildi; eğitmen düzeltip yeniden gönderebilir.`,
+      'Soru reddedilemedi',
+    );
+  }
+
+  addComment(question: Question, message: string): Observable<unknown> {
+    return this.repository.addComment(question.id, message).pipe(
+      tap({
+        next: () => this.loadQuestionDetail(question.id),
+        error: (error: ApiError) => this.toastStore.fromApiError(error, 'Yorum eklenemedi'),
+      }),
+    );
+  }
+
   /** Seçili soruları JSON dosyası olarak indirir. */
   exportSelected(): void {
     const ids = this.selectedIds();

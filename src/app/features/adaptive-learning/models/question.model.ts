@@ -181,6 +181,53 @@ export type QuestionState = PublishState;
 export const QUESTION_STATES = PUBLISH_STATES;
 export const QUESTION_STATE_LABELS = PUBLISH_STATE_LABELS;
 
+/**
+ * İnceleme alt durumu — yalnızca `state === 'REVIEW'` iken anlamlıdır.
+ *
+ * Ayrı bir durum makinesi olarak `PublishState`in ÜZERİNE eklenir, onun
+ * yerine geçmez: `publish-workflow.ts` altı varlık arasında paylaşılır
+ * (program, ders, kazanım, içerik, blueprint, sınav) ve yalnızca dört durum
+ * bilir. Soru incelemesinin "Revizyon istendi", "Onaylandı" gibi ek adımları
+ * bu paylaşılan motoru değiştirmeden, `REVIEW` durumunun İÇİNDE bir alt
+ * durum olarak modellenir — böylece diğer beş varlık etkilenmez.
+ */
+export const QUESTION_REVIEW_STATUSES = [
+  'NONE',
+  'UNDER_REVIEW',
+  'REVISION_REQUESTED',
+  'APPROVED',
+] as const;
+export type QuestionReviewStatus = (typeof QUESTION_REVIEW_STATUSES)[number];
+
+export const QUESTION_REVIEW_STATUS_LABELS: Readonly<Record<QuestionReviewStatus, string>> = {
+  NONE: '—',
+  UNDER_REVIEW: 'İncelemede',
+  REVISION_REQUESTED: 'Revizyon istendi',
+  APPROVED: 'Onaylandı',
+};
+
+/** İnceleme yorumu/işlem geçmişi girdisi — soru detayında zaman çizelgesi olarak gösterilir. */
+export const QUESTION_COMMENT_ACTIONS = [
+  'comment',
+  'submitted',
+  'resubmitted',
+  'approved',
+  'revision_requested',
+  'rejected',
+] as const;
+export type QuestionCommentAction = (typeof QUESTION_COMMENT_ACTIONS)[number];
+
+export interface QuestionComment {
+  readonly id: string;
+  readonly questionId: string;
+  readonly action: QuestionCommentAction;
+  readonly message: string;
+  readonly authorId: string;
+  readonly authorName: string;
+  readonly authorRole: string;
+  readonly createdAt: string;
+}
+
 /* ── Cevap yapıları ──────────────────────────────────────────────────────── */
 
 export interface QuestionOption {
@@ -255,6 +302,8 @@ export interface Question extends AuditableEntity {
   readonly attachments: readonly QuestionAttachment[];
   readonly tags: readonly string[];
   readonly state: QuestionState;
+  /** Yalnızca `state === 'REVIEW'` iken anlamlıdır; diğer durumlarda `'NONE'`. */
+  readonly reviewStatus: QuestionReviewStatus;
   readonly rubricId: string | null;
   /** İçerik versiyonu ("v3" rozeti). Yeni versiyon açıldıkça artar. */
   readonly versionNumber: number;
@@ -385,6 +434,8 @@ export interface QuestionDetail {
   readonly isFavorite: boolean;
   /** Yayındaki soru doğrudan düzenlenemez (BR-02). */
   readonly isEditable: boolean;
+  /** İnceleme yorumları ve durum geçişleri — eskiden yeniye. */
+  readonly comments: readonly QuestionComment[];
 }
 
 /* ── Liste, filtre ve toplu işlem ────────────────────────────────────────── */
@@ -445,4 +496,5 @@ export const QUESTION_LIMITS = {
   attachmentCount: { max: 5 },
   url: { max: 500 },
   changeNote: { max: 200 },
+  commentMessage: { min: 10, max: 500 },
 } as const;

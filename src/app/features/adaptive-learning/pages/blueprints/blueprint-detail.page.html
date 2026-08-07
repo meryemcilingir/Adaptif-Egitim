@@ -65,8 +65,7 @@
     @if (!canEdit() && canWrite()) {
       <p class="notice text-sm" role="note">
         <app-icon name="lock" [size]="15" />
-        Yayınlanmış plan düzenlenemez. Bu plana bağlı sınavların ölçme anlamı değişmesin diye
-        tablo kilitlidir; değişiklik için planı taslağa geri alın.
+        Arşivlenmiş plan düzenlenemez; değişiklik için önce taslağa geri alın.
       </p>
     } @else if (isDirty()) {
       <p class="notice is-info text-sm" role="status">

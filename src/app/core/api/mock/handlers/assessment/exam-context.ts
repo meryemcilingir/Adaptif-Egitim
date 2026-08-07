@@ -68,6 +68,8 @@ export function buildValidationInput(
     cohortIds: exam.cohortIds,
     questions: facts,
     blueprintRows: (blueprint?.rows ?? []) as readonly BlueprintOutcomeRow[],
+    hasBlueprint: blueprint !== null,
+    isBlueprintPublished: blueprint?.state === 'PUBLISHED',
     targetTotalPoints: blueprint?.targetTotalPoints ?? totalOf(exam.questions),
     siblingTitles,
   };

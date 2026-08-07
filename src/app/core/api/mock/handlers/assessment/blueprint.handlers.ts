@@ -12,9 +12,10 @@ import {
   summarizeBlueprint,
 } from '../../../../../features/adaptive-learning/domain/blueprint.rules';
 import { equals, inList } from '../../db/query-engine';
-import { businessRule, notFound } from '../../mock-errors';
+import { businessRule, conflict, notFound } from '../../mock-errors';
 import { isWithinScope, requirePermission } from '../../mock-auth';
 import { MockContext, MockHandler, ok } from '../../mock-router';
+import { writeAudit } from '../audit-writer';
 import { createCrudHandlers, diffFields } from '../crud/crud-handlers';
 import { FieldValidator, readNumber, readText } from '../crud/field-validator';
 
@@ -46,6 +47,72 @@ export const BLUEPRINT_HANDLERS: readonly MockHandler[] = [
       }
 
       return ok(buildDetail(context, blueprint));
+    },
+  },
+
+  {
+    /**
+     * Blueprint güncelleme — BİLEREK genel `createCrudHandlers` yayın
+     * kilidini (`isEditable`: yalnızca DRAFT/REVIEW) KULLANMAZ.
+     *
+     * Program/ders/soru/sınav gibi diğer yayın akışlı varlıklardan farklı
+     * olarak blueprint'in PUBLISHED içeriği hiçbir yerde donmuş bir
+     * "snapshot" olarak referans alınmaz — sınavlar auto-select sırasında
+     * blueprint satırlarını OKUYUP kendi soru referanslarını saklar; blueprint
+     * sonradan değişse bile zaten oluşturulmuş sınavlar etkilenmez. Bu yüzden
+     * "yayındaki kayıt donar" kuralı burada uygulanmaz — Ölçme Uzmanı hedef
+     * sayıları istediği zaman güncelleyebilir; yalnızca ARŞİVLENMİŞ bir
+     * blueprint kilitli kalır (arşiv = kullanımdan kaldırıldı demektir).
+     *
+     * Bu handler dizinin BAŞINDA olmalıdır: `MockRouter` ilk eşleşen
+     * handler'ı kullanır, bu yüzden aşağıdaki `createCrudHandlers`'ın ürettiği
+     * genel `PUT /api/blueprints/:id` hiç çalışmaz.
+     */
+    method: 'PUT',
+    path: '/api/blueprints/:id',
+    handle: (context) => {
+      const caller = requirePermission(context, 'blueprint:write');
+      const blueprints = context.db.collection('blueprints');
+      const existing = blueprints.findById(context.params['id'] ?? '');
+      if (!existing) throw notFound('Blueprint');
+
+      if (!isWithinScope(caller, { courseId: existing.courseId })) {
+        throw businessRule('Bu blueprint kapsamınız dışında.');
+      }
+      if (existing.state === 'ARCHIVED') {
+        throw businessRule('Arşivlenmiş bir blueprint düzenlenemez. Önce taslağa alın.');
+      }
+
+      const expectedVersion = (context.body as { expectedVersion?: number } | null)
+        ?.expectedVersion;
+      if (typeof expectedVersion === 'number' && expectedVersion !== existing.version) {
+        throw conflict(
+          'Bu blueprint siz düzenlerken başka bir yerde değiştirildi. Sayfayı yenileyip değişikliklerinizi tekrar uygulayın.',
+        );
+      }
+
+      validate(context, existing.id);
+
+      const updated = blueprints.update(existing.id, {
+        ...writableFields(context),
+        version: existing.version + 1,
+        updatedAt: new Date(context.now).toISOString(),
+        updatedBy: caller.userId,
+      })!;
+
+      const changes = diffFields(existing, updated, [
+        { key: 'name', label: 'Ad' },
+        { key: 'description', label: 'Açıklama' },
+        { key: 'cohortId', label: 'Grup' },
+        { key: 'targetTotalPoints', label: 'Hedef puan' },
+        { key: 'targetDurationMinutes', label: 'Hedef süre (dk)' },
+      ]);
+
+      if (changes.length > 0) {
+        writeAudit(context, caller, 'blueprint.updated', blueprintTarget(updated), null, changes);
+      }
+
+      return ok(updated);
     },
   },
 
@@ -151,6 +218,10 @@ export const BLUEPRINT_HANDLERS: readonly MockHandler[] = [
 ];
 
 /* ── Yardımcılar ─────────────────────────────────────────────────────────── */
+
+function blueprintTarget(blueprint: ExamBlueprint) {
+  return { type: 'ExamBlueprint', id: blueprint.id, label: blueprint.name };
+}
 
 function writableFields(context: MockContext) {
   const body = context.body as Record<string, unknown> | null;

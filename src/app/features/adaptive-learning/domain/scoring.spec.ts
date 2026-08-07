@@ -27,6 +27,7 @@ function question(type: QuestionType, overrides: Partial<Question> = {}): Questi
     attachments: [],
     tags: [],
     state: 'PUBLISHED',
+    reviewStatus: 'NONE',
     rubricId: null,
     versionNumber: 1,
     pendingChangeNote: null,

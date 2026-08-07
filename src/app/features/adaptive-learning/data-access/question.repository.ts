@@ -7,6 +7,7 @@ import { BulkActionResult } from '../models/content-item.model';
 import {
   Question,
   QuestionBulkAction,
+  QuestionComment,
   QuestionCreateRequest,
   QuestionDetail,
   QuestionImportPreview,
@@ -90,6 +91,44 @@ export class QuestionRepository extends CrudRepository<Question, QuestionCreateR
     return this.api.post<QuestionImportPreview>(
       API.questions.importPreview,
       { rows },
+      { skipRetry: true },
+    );
+  }
+
+  /* ── İnceleme akışı ────────────────────────────────────────────────────── */
+
+  submitForReview(id: string, message: string): Observable<Question> {
+    return this.api.post<Question>(API.questions.submitReview(id), { message }, { skipRetry: true });
+  }
+
+  resubmitForReview(id: string, message: string): Observable<Question> {
+    return this.api.post<Question>(
+      API.questions.resubmitReview(id),
+      { message },
+      { skipRetry: true },
+    );
+  }
+
+  approve(id: string, message: string): Observable<Question> {
+    return this.api.post<Question>(API.questions.approve(id), { message }, { skipRetry: true });
+  }
+
+  requestRevision(id: string, message: string): Observable<Question> {
+    return this.api.post<Question>(
+      API.questions.requestRevision(id),
+      { message },
+      { skipRetry: true },
+    );
+  }
+
+  reject(id: string, message: string): Observable<Question> {
+    return this.api.post<Question>(API.questions.reject(id), { message }, { skipRetry: true });
+  }
+
+  addComment(id: string, message: string): Observable<QuestionComment> {
+    return this.api.post<QuestionComment>(
+      API.questions.comments(id),
+      { message },
       { skipRetry: true },
     );
   }

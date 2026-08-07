@@ -124,6 +124,7 @@ export interface ExamCreateRequest {
 /* ── Doğrulama motoru ────────────────────────────────────────────────────── */
 
 export const VALIDATION_RULES = [
+  'blueprint_required',
   'total_points',
   'blueprint_match',
   'outcome_coverage',

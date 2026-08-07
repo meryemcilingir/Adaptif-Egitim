@@ -38,6 +38,8 @@ function input(overrides: Partial<ExamValidationInput> = {}): ExamValidationInpu
     cohortIds: ['coh1'],
     questions: [fact({ questionId: 'q1' }), fact({ questionId: 'q2' })],
     blueprintRows: [row({ medium: 2 })],
+    hasBlueprint: true,
+    isBlueprintPublished: true,
     targetTotalPoints: 20,
     siblingTitles: [],
     ...overrides,
@@ -54,6 +56,22 @@ describe('validateExam · geçerli sınav', () => {
 
     expect(result.issues).toHaveLength(0);
     expect(result.publishReady).toBe(true);
+  });
+});
+
+describe('validateExam · blueprint zorunluluğu', () => {
+  it('blueprint bağlı değilse yayına alınamaz', () => {
+    const result = validateExam(input({ hasBlueprint: false }));
+
+    expect(rules(result)).toContain('blueprint_required');
+    expect(result.publishReady).toBe(false);
+  });
+
+  it('bağlı blueprint yayında değilse yayına alınamaz', () => {
+    const result = validateExam(input({ isBlueprintPublished: false }));
+
+    expect(rules(result)).toContain('blueprint_required');
+    expect(result.publishReady).toBe(false);
   });
 });
 

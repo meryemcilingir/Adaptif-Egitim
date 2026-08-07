@@ -70,6 +70,12 @@ export const API = {
     bulk: `${API_PREFIX}/questions/bulk`,
     export: `${API_PREFIX}/questions/export`,
     importPreview: `${API_PREFIX}/questions/import/preview`,
+    submitReview: (id: string) => `${API_PREFIX}/questions/${id}/submit-review`,
+    resubmitReview: (id: string) => `${API_PREFIX}/questions/${id}/resubmit-review`,
+    approve: (id: string) => `${API_PREFIX}/questions/${id}/approve`,
+    requestRevision: (id: string) => `${API_PREFIX}/questions/${id}/request-revision`,
+    reject: (id: string) => `${API_PREFIX}/questions/${id}/reject`,
+    comments: (id: string) => `${API_PREFIX}/questions/${id}/comments`,
   },
 
   blueprints: {

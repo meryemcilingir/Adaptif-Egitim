@@ -1,8 +1,12 @@
 import { COGNITIVE_LEVEL_LABELS, DIFFICULTY_LABELS } from '../models/common.model';
+import { BadgeTone } from '../../../shared/components/app-status-badge/app-status-badge.component';
+import { AppIconName } from '../../../shared/icons/app-icons';
 import {
   QUESTION_LIMITS,
   QUESTION_TYPE_META,
   Question,
+  QuestionReviewStatus,
+  QuestionState,
   QuestionType,
   QuestionVersion,
   VersionComparison,
@@ -155,11 +159,25 @@ function isFiniteNumber(value: string | null): boolean {
 /* ── Düzenlenebilirlik ───────────────────────────────────────────────────── */
 
 /**
- * Yayındaki ve arşivdeki soru doğrudan düzenlenemez (BR-02).
- * Değiştirmek için `POST /questions/:id/versions` ile yeni versiyon açılır.
+ * Yalnızca Taslak ve Revizyon İstendi durumundaki soru eğitmen tarafından
+ * düzenlenebilir. İncelemede/Onaylandı durumları KİLİTLİDİR — eğitmen soruyu
+ * incelemeye gönderdikten sonra ölçme uzmanı karar verene kadar değiştiremez
+ * (aksi hâlde inceleyen kişi güncel olmayan bir hâli değerlendirmiş olurdu).
+ * Yayındaki ve arşivdeki soru da doğrudan düzenlenemez (BR-02); değiştirmek
+ * için `POST /questions/:id/versions` ile yeni versiyon açılır.
  */
-export function isQuestionEditable(state: Question['state']): boolean {
-  return state === 'DRAFT' || state === 'REVIEW';
+export function isQuestionEditable(
+  state: QuestionState,
+  reviewStatus: QuestionReviewStatus = 'NONE',
+): boolean {
+  if (state === 'DRAFT') return true;
+  if (state !== 'REVIEW') return false;
+  return reviewStatus === 'REVISION_REQUESTED';
+}
+
+/** Onaylanmış bir soru, yayınlanana kadar kilitlidir — ne eğitmen ne ölçme uzmanı düzenleyebilir. */
+export function isQuestionLocked(state: QuestionState, reviewStatus: QuestionReviewStatus): boolean {
+  return state === 'REVIEW' && (reviewStatus === 'UNDER_REVIEW' || reviewStatus === 'APPROVED');
 }
 
 /** Yeni versiyon yalnızca yayınlanmış bir soru için anlamlıdır. */
@@ -167,8 +185,80 @@ export function canCreateNewVersion(state: Question['state']): boolean {
   return state === 'PUBLISHED';
 }
 
-export function questionEditBlockedReason(state: Question['state']): string {
+export function questionEditBlockedReason(
+  state: QuestionState,
+  reviewStatus: QuestionReviewStatus = 'NONE',
+): string {
+  if (state === 'REVIEW' && reviewStatus === 'UNDER_REVIEW') {
+    return 'Bu soru şu anda incelemede; ölçme uzmanı karar verene kadar düzenlenemez.';
+  }
+  if (state === 'REVIEW' && reviewStatus === 'APPROVED') {
+    return 'Bu soru onaylandı ve yayına hazır; değişiklik için önce yayınlanıp yeni versiyon açılmalıdır.';
+  }
   return `"${stateLabel(state)}" durumundaki bir soru doğrudan düzenlenemez. Değişiklik için yeni bir versiyon oluşturun.`;
+}
+
+/* ── İnceleme durumu görünümü ────────────────────────────────────────────── */
+
+export interface QuestionStatusPresentation {
+  readonly label: string;
+  readonly tone: BadgeTone;
+  readonly icon: AppIconName;
+}
+
+/**
+ * Sorunun altı görünür durumu (Draft/Under Review/Revision Requested/Approved/
+ * Published/Archived) burada `state` + `reviewStatus` çiftinden türetilir.
+ * Bu ikisi TEK bir görünür rozete indirgenir — ekranlar ham enum çifti görmez.
+ */
+export function questionStatusPresentation(
+  state: QuestionState,
+  reviewStatus: QuestionReviewStatus,
+): QuestionStatusPresentation {
+  if (state === 'REVIEW') {
+    switch (reviewStatus) {
+      case 'REVISION_REQUESTED':
+        return { label: 'Revizyon istendi', tone: 'warning', icon: 'circle-alert' };
+      case 'APPROVED':
+        return { label: 'Onaylandı', tone: 'primary', icon: 'circle-check' };
+      case 'UNDER_REVIEW':
+      case 'NONE':
+      default:
+        return { label: 'İncelemede', tone: 'info', icon: 'eye' };
+    }
+  }
+
+  switch (state) {
+    case 'DRAFT':
+      return { label: 'Taslak', tone: 'neutral', icon: 'pencil-line' };
+    case 'PUBLISHED':
+      return { label: 'Yayında', tone: 'success', icon: 'circle-check-big' };
+    case 'ARCHIVED':
+      return { label: 'Arşiv', tone: 'neutral', icon: 'archive' };
+  }
+}
+
+/** Eğitmen soruyu incelemeye gönderebilir mi — yalnızca taslakken. */
+export function canSubmitForReview(state: QuestionState): boolean {
+  return state === 'DRAFT';
+}
+
+/** Revizyon istenmiş bir soru, düzeltildikten sonra yeniden incelemeye gönderilebilir. */
+export function canResubmitForReview(
+  state: QuestionState,
+  reviewStatus: QuestionReviewStatus,
+): boolean {
+  return state === 'REVIEW' && reviewStatus === 'REVISION_REQUESTED';
+}
+
+/** Ölçme uzmanı yalnızca fiilen incelemedeki bir soru için karar verebilir. */
+export function canDecideReview(state: QuestionState, reviewStatus: QuestionReviewStatus): boolean {
+  return state === 'REVIEW' && reviewStatus === 'UNDER_REVIEW';
+}
+
+/** Yayına almadan önce soru onaylanmış olmalıdır (Approved → Published). */
+export function canPublishQuestion(state: QuestionState, reviewStatus: QuestionReviewStatus): boolean {
+  return state === 'REVIEW' && reviewStatus === 'APPROVED';
 }
 
 /* ── Versiyon karşılaştırma ──────────────────────────────────────────────── */

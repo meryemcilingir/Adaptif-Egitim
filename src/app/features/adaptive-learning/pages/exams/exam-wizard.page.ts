@@ -322,7 +322,14 @@ export class ExamWizardPage implements OnInit, OnDestroy {
 
   private loadReferences(courseId: string): void {
     forkJoin({
-      blueprints: this.blueprints.list(createPageRequest({ size: 100, filters: { courseId } })),
+      /*
+       * Yalnızca YAYINDAKİ (Ölçme Uzmanı tarafından onaylanmış/uygun)
+       * blueprint'ler seçilebilir — taslak/incelemedeki bir plan henüz
+       * hedef sayıları netleşmemiş olabilir; sınav ona bağlanamaz.
+       */
+      blueprints: this.blueprints.list(
+        createPageRequest({ size: 100, filters: { courseId, state: ['PUBLISHED'] } }),
+      ),
       questions: this.questions.list(
         createPageRequest({ size: 300, filters: { courseId, state: ['PUBLISHED'] } }),
       ),

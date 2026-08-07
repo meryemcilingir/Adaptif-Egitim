@@ -125,6 +125,12 @@ export const NAV_GROUPS_BY_ROLE: Readonly<Record<Role, readonly NavGroup[]>> = {
     {
       title: 'Sınavlar ve Değerlendirme',
       items: [
+        {
+          label: 'Sorularım',
+          link: '/question-bank',
+          icon: 'circle-help',
+          permissions: ['question:read'],
+        },
         { label: 'Sınavlar', link: '/exams', icon: 'file-check', permissions: ['exam:read'] },
         {
           label: 'Değerlendirme',
@@ -214,12 +220,6 @@ export const NAV_GROUPS_BY_ROLE: Readonly<Record<Role, readonly NavGroup[]>> = {
           permissions: ['analytics:cohort'],
         },
         {
-          label: 'Öneri motoru',
-          link: '/analytics/recommendations',
-          icon: 'sparkles',
-          permissions: ['analytics:cohort'],
-        },
-        {
           label: 'Kayıtlı raporlar',
           link: '/analytics/reports',
           icon: 'file-text',
@@ -283,33 +283,81 @@ export const NAV_GROUPS_BY_ROLE: Readonly<Record<Role, readonly NavGroup[]>> = {
           permissions: ['analytics:student'],
           exact: true,
         },
+        {
+          label: 'Trend analizi',
+          link: '/analytics/trends',
+          icon: 'chart-line',
+          permissions: ['analytics:cohort'],
+        },
+        {
+          label: 'Kazanım analitiği',
+          link: '/analytics/outcomes',
+          icon: 'target',
+          permissions: ['analytics:cohort'],
+        },
+        {
+          label: 'Kazanım Isı Haritası',
+          link: '/analytics/mastery',
+          icon: 'grid-2x2',
+          permissions: ['analytics:cohort'],
+        },
+        {
+          label: 'Başarı panosu',
+          link: '/analytics/performers',
+          icon: 'trophy',
+          permissions: ['analytics:cohort'],
+        },
+        {
+          label: 'Öğrenme hızı',
+          link: '/analytics/velocity',
+          icon: 'gauge',
+          permissions: ['analytics:cohort'],
+        },
+        {
+          label: 'Öneri motoru',
+          link: '/analytics/recommendations',
+          icon: 'sparkles',
+          permissions: ['analytics:cohort'],
+        },
+        {
+          label: 'Kayıtlı raporlar',
+          link: '/analytics/reports',
+          icon: 'file-text',
+          permissions: ['analytics:student'],
+        },
       ],
     },
   ],
 
   /*
    * Gözlemci: her şey salt okunur. Yazma izni hiç yok, bu yüzden buton
-   * gizleme ayrıca kodlanmaz — izin matrisi zaten sağlıyor.
+   * gizleme ayrıca kodlanmaz — izin matrisi zaten sağlıyor. Dersler ve
+   * sınavlar RolesPermissions.md'de Gözlemci kapsamında DEĞİLDİR — bu rolün
+   * sidebar'ı yalnızca Panel, Cohort'lar, Analitik ve Raporlar'dan oluşur.
    */
   OBSERVER: [
     { title: 'Panel', items: [PANEL] },
     {
       title: 'Görüntüleme',
       items: [
-        { label: 'Dersler', link: '/courses', icon: 'library', permissions: ['course:read'] },
         {
           label: "Cohort'lar",
           link: '/cohort-analytics',
           icon: 'users',
           permissions: ['analytics:cohort'],
         },
-        { label: 'Sınavlar', link: '/exams', icon: 'file-check', permissions: ['exam:read'] },
         {
           label: 'Analitik',
           link: '/analytics',
           icon: 'chart-column',
           permissions: ['analytics:student'],
           exact: true,
+        },
+        {
+          label: 'Kayıtlı raporlar',
+          link: '/analytics/reports',
+          icon: 'file-text',
+          permissions: ['analytics:student'],
         },
       ],
     },

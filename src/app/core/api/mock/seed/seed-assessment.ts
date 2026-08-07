@@ -310,6 +310,8 @@ function buildQuestion(
     attachments: [],
     tags: ctx.rng.sample(TAG_POOL, ctx.rng.int(1, 3)),
     state,
+    // İncelemedeki sorular varsayılan olarak "İncelemede" başlar (BR mock verisi).
+    reviewStatus: state === 'REVIEW' ? 'UNDER_REVIEW' : 'NONE',
     rubricId: meta.manuallyGraded ? rubricId : null,
     versionNumber,
     pendingChangeNote: null,

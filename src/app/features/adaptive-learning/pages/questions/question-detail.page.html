@@ -32,7 +32,28 @@
           {{ view.isFavorite ? 'Favoride' : 'Favorile' }}
         </app-button>
 
-        @if (canWrite()) {
+        @if (canSubmit()) {
+          <app-button variant="primary" icon="arrow-right" (pressed)="submitReview()">
+            İncelemeye gönder
+          </app-button>
+        }
+        @if (canResubmit()) {
+          <app-button variant="primary" icon="arrow-right" (pressed)="resubmitReview()">
+            Yeniden incelemeye gönder
+          </app-button>
+        }
+
+        @if (canDecide()) {
+          <app-button variant="primary" icon="circle-check-big" (pressed)="approveQuestion()">
+            Onayla
+          </app-button>
+          <app-button variant="secondary" icon="circle-alert" (pressed)="requestRevisionAction()">
+            Revizyon iste
+          </app-button>
+          <app-button variant="ghost" icon="x" (pressed)="rejectQuestion()">Reddet</app-button>
+        }
+
+        @if (canReview()) {
           @if (hasWorkflowActions(view.question.state)) {
             <app-publish-actions
               [state]="view.question.state"
@@ -40,7 +61,9 @@
               (transitionRequested)="onTransition($event)"
             />
           }
+        }
 
+        @if (canWrite()) {
           @if (canEdit()) {
             <app-button variant="secondary" icon="square-pen" (pressed)="openEditor()">
               Düzenle
@@ -58,10 +81,34 @@
             <app-button variant="ghost" icon="trash-2" (pressed)="confirmDelete()">Sil</app-button>
           }
         }
+
+        @if (canWrite() || canReview()) {
+          <app-button variant="ghost" icon="send" (pressed)="addComment()">Yorum ekle</app-button>
+        }
       </div>
     </header>
 
-    @if (!view.isEditable) {
+    @if (reviewBadge(); as badge) {
+      @if (view.question.state === 'REVIEW' && view.question.reviewStatus === 'REVISION_REQUESTED') {
+        <div class="notice" role="alert">
+          <app-icon name="circle-alert" [size]="16" />
+          <p class="text-sm">
+            Ölçme uzmanı bu soru için revizyon istedi. Yorumlar bölümünden gerekçeyi inceleyip
+            düzelttikten sonra yeniden incelemeye gönderin.
+          </p>
+        </div>
+      } @else if (isLocked()) {
+        <div class="notice" role="note">
+          <app-icon name="lock" [size]="16" />
+          <p class="text-sm">
+            Bu soru "{{ badge.label }}" durumunda ve kilitli — ölçme uzmanı karar verene kadar
+            düzenlenemez.
+          </p>
+        </div>
+      }
+    }
+
+    @if (!view.isEditable && !isLocked()) {
       <div class="notice" role="note">
         <app-icon name="lock" [size]="16" />
         <p class="text-sm">
@@ -86,6 +133,16 @@
           </app-button>
 
           <app-question-preview [question]="view.question" [showAnswers]="showAnswers()" />
+        </app-card>
+
+        <app-card
+          title="İnceleme geçmişi"
+          description="Ölçme uzmanının yorumları ve durum geçişleri — en yeniden en eskiye."
+        >
+          <app-timeline
+            [items]="commentTimeline()"
+            emptyMessage="Bu soru için henüz inceleme kaydı yok."
+          />
         </app-card>
 
         <app-card

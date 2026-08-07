@@ -20,7 +20,7 @@ import { KpiGridComponent } from '../../../components/dashboard/kpi-grid.compone
 import { ProgressGroupComponent } from '../../../components/dashboard/progress-group.component';
 import { QuickActionsComponent } from '../../../components/dashboard/quick-actions.component';
 import { UpcomingExamsComponent } from '../../../components/dashboard/upcoming-exams.component';
-import { ProgramManagerDashboard } from '../../../models/dashboard.model';
+import { ProgramManagerDashboard, UpcomingExamCard } from '../../../models/dashboard.model';
 import { Notification } from '../../../models/notification.model';
 
 /**
@@ -89,7 +89,12 @@ export class ProgramManagerDashboardComponent {
     void this.router.navigate(['/courses']);
   }
 
-  openExams(): void {
-    void this.router.navigate(['/exams']);
+  /*
+   * Program Yöneticisi'nin sınav YÖNETİM ekranına (`/exams`) erişimi yoktur
+   * (RolesPermissions.md) — bu widget'taki tıklama tek bir sınavın salt-okunur
+   * detayını açar, listeye değil.
+   */
+  openExam(exam: UpcomingExamCard): void {
+    void this.router.navigate(['/exams', exam.id]);
   }
 }

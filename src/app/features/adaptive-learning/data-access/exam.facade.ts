@@ -56,6 +56,8 @@ export class ExamFacade extends CatalogFacade<Exam, ExamCreateRequest> {
   private readonly draftState = signal<ExamDraft>(emptyDraft());
   private readonly questionsState = signal<readonly ExamQuestionView[]>([]);
   private readonly blueprintRowsState = signal<readonly BlueprintOutcomeRow[]>([]);
+  /** Bağlı blueprint YAYINDA mı — yalnızca yayındaki plan "uygun" sayılır. */
+  private readonly blueprintPublishedState = signal(false);
   private readonly targetPointsState = signal(0);
   private readonly siblingTitlesState = signal<readonly string[]>([]);
   private readonly stepState = signal<ExamWizardStep>('information');
@@ -138,6 +140,8 @@ export class ExamFacade extends CatalogFacade<Exam, ExamCreateRequest> {
         isLatestVersion: question.isLatestVersion,
       })),
       blueprintRows: this.blueprintRowsState(),
+      hasBlueprint: draft.blueprintId !== null,
+      isBlueprintPublished: this.blueprintPublishedState(),
       targetTotalPoints: this.targetPointsState(),
       siblingTitles: this.siblingTitlesState(),
     });
@@ -247,10 +251,12 @@ export class ExamFacade extends CatalogFacade<Exam, ExamCreateRequest> {
     this.blueprints.detail(blueprintId).subscribe({
       next: (detail) => {
         this.blueprintRowsState.set(detail.blueprint.rows);
+        this.blueprintPublishedState.set(detail.blueprint.state === 'PUBLISHED');
         this.targetPointsState.set(detail.blueprint.targetTotalPoints);
       },
       error: () => {
         this.blueprintRowsState.set([]);
+        this.blueprintPublishedState.set(false);
         this.targetPointsState.set(0);
       },
     });
@@ -426,6 +432,7 @@ export class ExamFacade extends CatalogFacade<Exam, ExamCreateRequest> {
     this.draftState.set(emptyDraft());
     this.questionsState.set([]);
     this.blueprintRowsState.set([]);
+    this.blueprintPublishedState.set(false);
     this.targetPointsState.set(0);
     this.siblingTitlesState.set([]);
     this.stepState.set('information');
