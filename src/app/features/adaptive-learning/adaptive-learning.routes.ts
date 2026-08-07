@@ -161,8 +161,15 @@ export const ADAPTIVE_LEARNING_ROUTES: Routes = [
      * `/my-exams` ve `/exam-results` ekranlarındadır; bu ekranın açıklaması
      * "sınavları oluşturun, doğrulayın ve yayına alın" der ve hedef kitlesi
      * personeldir.
+     *
+     * `pathMatch: 'full'` ZORUNLU (ADR-076): aksi hâlde Router, varsayılan
+     * `prefix` eşleşmesiyle bu adayı `/exams/:id/waiting-room` gibi daha
+     * özgül alt rotalardan ÖNCE dener. `canMatch` reddi bir UrlTree (yönlendirme)
+     * döndürdüğü için Router bunu koşulsuz uygular ve öğrenci — `exam:read`e
+     * sahip olsa bile — sınava girerken/detayına bakarken 403'e düşer.
      */
     path: 'exams',
+    pathMatch: 'full',
     title: 'Sınavlar · Adaptif Eğitim',
     canMatch: [
       permissionGuard('exam:read'),
