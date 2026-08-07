@@ -420,7 +420,15 @@ function validate(context: MockContext, currentId: string | null): void {
     .text('instructions', 'Yönerge', EXAM_LIMITS.instructions, { required: false })
     .reference('courseId', 'Ders', () => course !== undefined)
     .integer('durationMinutes', 'Sınav süresi', EXAM_LIMITS.durationMinutes)
-    .custom('cohortIds', 'Sınav en az bir gruba atanmalıdır.', cohortIds.length > 0)
+    /*
+     * "En az bir gruba atanmalı" burada ZORUNLU TUTULMAZ.
+     *
+     * Sınav taslak (`DRAFT`) olarak boş bir kayıtla başlar — sihirbaz açılmadan
+     * önce hangi cohort'a gideceği henüz belli değildir. Bu kural yayına almadan
+     * önce `assertPublishable`'da (BR-04, `buildConstraintSnapshot`) zaten
+     * uygulanıyor; burada da zorunlu tutmak "Yeni sınav" butonunu daha ilk
+     * adımda, her rol için, HER ZAMAN 400 ile düşürüyordu.
+     */
     .custom(
       'cohortIds',
       'Seçilen gruplardan bazıları bu derse atanmamış.',
