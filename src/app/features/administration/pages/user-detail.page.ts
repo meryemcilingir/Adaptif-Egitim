@@ -142,6 +142,25 @@ export class UserDetailPage implements OnInit {
     this.facade.lifecycle(this.id(), 'unlock');
   }
 
+  async delete(): Promise<void> {
+    const detail = this.detail();
+    if (!detail) return;
+
+    const confirmed = await this.dialog.confirm({
+      title: 'Kullanıcı kalıcı olarak silinsin mi?',
+      message: `“${detail.user.fullName}” kalıcı olarak silinecek. Bu işlem GERİ ALINAMAZ — kayıt geri getirilemez. Geri alınabilir bir devre dışı bırakma istiyorsanız bunun yerine "Arşivle"yi kullanın.`,
+      confirmLabel: 'Kalıcı olarak sil',
+      tone: 'danger',
+    });
+
+    if (!confirmed) return;
+
+    this.facade.delete(this.id()).subscribe({
+      next: () => void this.router.navigate(['/admin/users']),
+      error: () => undefined,
+    });
+  }
+
   async toggleState(): Promise<void> {
     const detail = this.detail();
     if (!detail) return;

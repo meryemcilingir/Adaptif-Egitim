@@ -53,6 +53,10 @@
           >
             {{ data.user.state === 'SUSPENDED' ? 'Etkinleştir' : 'Askıya al' }}
           </app-button>
+
+          <app-button variant="danger" icon="trash-2" (pressed)="delete()">
+            Sil
+          </app-button>
         </div>
       }
     </header>

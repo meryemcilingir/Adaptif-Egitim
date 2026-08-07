@@ -79,6 +79,11 @@ export class AdminRepository {
     return this.api.put<User>(API.users.byId(id), draft);
   }
 
+  /** Kaydı kalıcı olarak siler (arşivlemenin aksine geri alınamaz). */
+  deleteUser(id: string): Observable<void> {
+    return this.api.delete<void>(API.users.byId(id));
+  }
+
   /**
    * Yaşam döngüsü işlemleri tek bir çağrıda toplanır.
    *

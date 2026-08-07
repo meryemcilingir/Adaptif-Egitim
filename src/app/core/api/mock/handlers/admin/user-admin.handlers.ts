@@ -11,7 +11,7 @@ import { MockUser } from '../../db/db-schema';
 import { equals, inList, includesId } from '../../db/query-engine';
 import { requirePermission } from '../../mock-auth';
 import { businessRule, conflict, notFound, validation } from '../../mock-errors';
-import { MockContext, MockHandler, created, ok } from '../../mock-router';
+import { MockContext, MockHandler, created, noContent, ok } from '../../mock-router';
 import { writeAudit } from '../audit-writer';
 import { readSettings } from '../auth.handlers';
 
@@ -169,6 +169,33 @@ export const USER_ADMIN_HANDLERS: readonly MockHandler[] = [
       }
 
       return ok(toPublicUser(updated));
+    },
+  },
+
+  {
+    /**
+     * Kalıcı silme.
+     *
+     * Arşivlemenin aksine kayıt veritabanından tamamen kaldırılır ve geri
+     * alınamaz — denetim izinde iz bırakır ama kullanıcı kaydı bir daha
+     * listelenmez/aranamaz. Kendi hesabını veya son platform yöneticisini
+     * silme kısıtları askıya almayla aynıdır (aksi hâlde kimse yönetim
+     * ekranına giremez kalırdı).
+     */
+    method: 'DELETE',
+    path: '/api/users/:id',
+    handle: (context) => {
+      const caller = requirePermission(context, 'admin:manage');
+      const user = findUser(context);
+
+      assertNotSelf(caller.userId, user, 'Kendi hesabınızı silemezsiniz.');
+      assertNotLastAdmin(context, user);
+
+      context.db.collection('users').remove(user.id);
+
+      writeAudit(context, caller, 'user.deleted', target(user), reasonOf(context));
+
+      return noContent();
     },
   },
 

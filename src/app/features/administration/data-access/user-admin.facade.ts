@@ -180,6 +180,30 @@ export class UserAdminFacade {
   }
 
   /**
+   * Kalıcı silme — arşivlemenin aksine kayıt geri getirilemez.
+   *
+   * Çağıran (liste/detay ekranı) önce onay diyaloğu göstermelidir; facade
+   * burada yalnızca isteği yapar ve başarıyı çağırana bildirir, çünkü detay
+   * ekranı silme sonrası listeye dönmelidir — bu gezinme kararı ekranın işi.
+   */
+  delete(id: string): Observable<void> {
+    const request = this.repository.deleteUser(id).pipe(
+      tap({
+        next: () => {
+          this.toast.success('Kullanıcı silindi.');
+          this.load();
+          if (this.detailState()?.user.id === id) this.detailState.set(null);
+        },
+        error: (error: ApiError) => this.toast.error(error.message),
+      }),
+      shareReplay({ bufferSize: 1, refCount: false }),
+    );
+
+    request.subscribe({ error: () => undefined });
+    return request;
+  }
+
+  /**
    * Parola sıfırlama.
    *
    * Geçici parola çağırana DÖNER: bu projede e-posta gönderimi yoktur, parola

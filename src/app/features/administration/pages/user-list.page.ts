@@ -188,6 +188,8 @@ export class UserListPage implements OnInit {
       items.push({ id: 'archive', label: 'Arşivle', icon: 'archive', tone: 'danger' });
     }
 
+    items.push({ id: 'delete', label: 'Sil', icon: 'trash-2', tone: 'danger' });
+
     return items;
   }
 
@@ -199,6 +201,20 @@ export class UserListPage implements OnInit {
 
     if (item.id === 'edit') {
       void this.router.navigate(['/admin/users', user.id, 'edit']);
+      return;
+    }
+
+    if (item.id === 'delete') {
+      const confirmed = await this.dialog.confirm({
+        title: 'Kullanıcı kalıcı olarak silinsin mi?',
+        message: `“${user.fullName}” kalıcı olarak silinecek. Bu işlem GERİ ALINAMAZ — kayıt geri getirilemez. Geri alınabilir bir devre dışı bırakma istiyorsanız bunun yerine "Arşivle"yi kullanın.`,
+        confirmLabel: 'Kalıcı olarak sil',
+        tone: 'danger',
+      });
+
+      if (!confirmed) return;
+
+      this.facade.delete(user.id).subscribe({ error: () => undefined });
       return;
     }
 
