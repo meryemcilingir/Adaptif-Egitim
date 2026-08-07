@@ -1,59 +1,335 @@
-# AdaptifEgitim
+# 🎓 Adaptif Eğitim Platformu
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 21.2.19.
+Kurumsal eğitim kurumları için geliştirilen, **Outcome-Based Education (OBE)** ve **Adaptive Learning** yaklaşımını temel alan kapsamlı bir Öğrenme Yönetim Sistemi (LMS).
 
-## Development server
+Platform; program yönetimi, ders yönetimi, içerik yönetimi, ölçme-değerlendirme süreçleri, adaptif öğrenme, gelişmiş analitikler ve rol tabanlı yetkilendirme (RBAC) gibi modern eğitim platformlarında bulunan temel modülleri tek bir sistem altında sunmaktadır.
 
-To start a local development server, run:
+---
 
-```bash
-ng serve
+# 🚀 Özellikler
+
+## 👥 Rol Tabanlı Yetkilendirme (RBAC)
+
+Platform 6 farklı kullanıcı rolünü desteklemektedir.
+
+- Platform Yöneticisi
+- Program Yöneticisi
+- Eğitmen
+- Ölçme Uzmanı
+- Öğrenci
+- Gözlemci
+
+Her rol yalnızca kendi sorumluluğuna ait ekranlara erişebilir.
+
+---
+
+# 📚 Program Yönetimi
+
+- Program oluşturma
+- Ders yönetimi
+- Learning Outcome (Kazanım) yönetimi
+- Outcome Map
+- Prerequisite ilişkileri
+- Publish Workflow
+
+---
+
+# 📄 İçerik Yönetimi
+
+Desteklenen içerik tipleri:
+
+- Video
+- PDF
+- Quiz
+- Assignment
+
+Özellikler:
+
+- İçerik CRUD
+- Ders bazlı içerik yönetimi
+- İçerik filtreleme
+- Arama
+- Sayfalama (Pagination)
+
+---
+
+# ❓ Soru Bankası
+
+Merkezi soru yönetim sistemi.
+
+Desteklenen özellikler:
+
+- Question CRUD
+- Question Versioning
+- Question Preview
+- Filtreleme
+- Arama
+- Pagination
+- Bulk Operations
+- Version History
+
+---
+
+# ✅ Question Review Workflow
+
+Platformda sorular doğrudan sınavlarda kullanılmaz.
+
+Her soru aşağıdaki kalite kontrol sürecinden geçer.
+
+```text
+Instructor
+
+↓
+
+Draft
+
+↓
+
+Under Review
+
+↓
+
+Revision Requested
+
+↓
+
+Under Review
+
+↓
+
+Approved
+
+↓
+
+Published
+
+↓
+
+Archived
 ```
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+### Eğitmen
 
-## Code scaffolding
+- Soru oluşturur
+- Soruyu günceller
+- İncelemeye gönderir
+- Revizyonları uygular
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+### Ölçme Uzmanı
 
-```bash
-ng generate component component-name
+- Soruyu inceler
+- Revizyon ister
+- Yorum bırakır
+- Onaylar
+- Kalite analizi yapar
+
+---
+
+# 📝 Exam Blueprint
+
+Sınavlar rastgele oluşturulmaz.
+
+Önce bir Blueprint hazırlanır.
+
+Blueprint;
+
+- Learning Outcome dağılımını
+- Zorluk seviyelerini
+- Soru sayılarını
+- Outcome Coverage oranını
+
+belirler.
+
+Blueprint tamamlandıktan sonra sistem uygun soruları otomatik seçer.
+
+---
+
+# 🧪 Sınav Sistemi
+
+- Exam Builder
+- Blueprint Validation
+- Auto Question Selection
+- Preview
+- Publish Workflow
+- Timer
+- Autosave
+- Offline Support
+- Reconnect
+- Question Navigation
+- Flag Question
+- Attempt Management
+
+---
+
+# 📊 Analitik
+
+Platform farklı kullanıcılar için farklı analiz ekranları sunmaktadır.
+
+## Program Yöneticisi
+
+- Overview
+- Trends
+- Cohort Analytics
+- Learning Velocity
+- Success Dashboard
+- Recommendation Analytics
+
+## Ölçme Uzmanı
+
+- Outcome Analytics
+- Mastery Heatmap
+- Question Difficulty Analysis
+- Item Analysis
+- Assessment Quality Reports
+
+## Eğitmen
+
+- Student Progress
+- Course Analytics
+- Exam Results
+
+## Öğrenci
+
+- Weekly Progress
+- Learning Streak
+- Personal Analytics
+- Learning Path
+
+---
+
+# 🤖 Adaptif Öğrenme
+
+Öğrenci panelinde;
+
+- Continue Learning
+- Today's Goal
+- Learning Streak
+- Recommended For You
+- Weekly Progress
+
+kartları bulunmaktadır.
+
+Sistem öğrencinin ilerlemesine göre içerik önerilerinde bulunur.
+
+---
+
+# 🔐 Güvenlik
+
+- Role Based Access Control
+- Route Guards
+- Permission Based Navigation
+- Yetkisiz URL erişim engelleme
+- Yetkisiz butonların gizlenmesi
+
+---
+
+# 🎨 Arayüz
+
+- Responsive Design
+- Modern Dashboard
+- Angular Material Components
+- Reusable Components
+- Professional Admin UI
+
+---
+
+# 🏗️ Proje Mimarisi
+
+Proje **Feature-Based Architecture** kullanılarak geliştirilmiştir.
+
+```
+src/
+│
+├── core/
+├── shared/
+├── layouts/
+├── features/
+│
+│── dashboard/
+│── programs/
+│── courses/
+│── contents/
+│── learning-outcomes/
+│── question-bank/
+│── assessments/
+│── exams/
+│── analytics/
+│── admin/
+│── student/
+│── observer/
 ```
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+---
 
-```bash
-ng generate --help
+# 🛠️ Kullanılan Teknolojiler
+
+- Angular
+- TypeScript
+- Angular Material
+- RxJS
+- SCSS
+- Mock Data
+- Feature Based Architecture
+
+---
+
+# 👨‍💻 Geliştirme İlkeleri
+
+- Clean Code
+- Single Responsibility Principle
+- Reusable Components
+- Lazy Loading
+- Responsive First
+- Modular Architecture
+- Pagination
+- Search
+- Filtering
+- Input Validation
+- Character Limits
+
+---
+
+# 📌 Temel İş Akışı
+
+```text
+Program Manager
+        │
+        ▼
+Program & Course Management
+        │
+        ▼
+Instructor
+        │
+        ▼
+Question Draft
+        │
+        ▼
+Measurement Expert Review
+        │
+        ▼
+Approved Question Bank
+        │
+        ▼
+Exam Blueprint
+        │
+        ▼
+Auto Question Selection
+        │
+        ▼
+Published Exam
+        │
+        ▼
+Student
+        │
+        ▼
+Automatic / Manual Grading
+        │
+        ▼
+Analytics
 ```
 
-## Building
 
-To build the project run:
 
-```bash
-ng build
-```
+# 📄 Lisans
 
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:
-
-```bash
-ng test
-```
-
-## Running end-to-end tests
-
-For end-to-end (e2e) testing, run:
-
-```bash
-ng e2e
-```
-
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
-
-## Additional Resources
-
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+Bu proje eğitim ve geliştirme amacıyla hazırlanmıştır.
