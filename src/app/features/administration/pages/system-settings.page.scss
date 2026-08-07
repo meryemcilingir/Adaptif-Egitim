@@ -4,10 +4,26 @@
   gap: var(--space-4);
 }
 
+/*
+ * `auto-fill` genişlikten bağımsız olarak sığdığı kadar sütun açıyordu; bu
+ * bölümdeki 2 ve 3 alanlık gruplar dar viewport'ta beklendiği gibi durup
+ * masaüstünde (930px'te 3 sütun sığıyor) alanları küçültüp sağda ya da bir
+ * sonraki satırda boşluk bırakıyordu. Diğer yönetim formlarıyla (kullanıcı,
+ * dönem, bildirim) aynı sabit 2 sütuna geçildi.
+ */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(230px, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: var(--space-3);
+
+  /* Tek başına kalan son alan (ör. 3'lü "Güvenlik" grubunda) tam satırı alır. */
+  > *:last-child:nth-child(odd) {
+    grid-column: 1 / -1;
+  }
+
+  @media (max-width: 720px) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .switch {
