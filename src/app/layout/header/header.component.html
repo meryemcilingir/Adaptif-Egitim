@@ -30,7 +30,13 @@
   </form>
 
   @if (isSearchOpen()) {
-    <div class="header__search-panel">
+    <div
+      class="header__search-panel"
+      [style.top.px]="searchPlacement()?.top"
+      [style.left.px]="searchPlacement()?.left"
+      [style.width.px]="searchPanelWidth()"
+      [style.max-height.px]="searchPlacement()?.maxHeight"
+    >
       <app-global-search-panel
         [result]="searchResult()"
         [loading]="isSearching()"
@@ -90,7 +96,13 @@
     </button>
 
     @if (isPanelOpen()) {
-      <div class="header__panel" role="dialog" aria-label="Bildirimler">
+      <div
+        class="header__panel"
+        role="dialog"
+        aria-label="Bildirimler"
+        [style.top.px]="notificationPlacement()?.top"
+        [style.left.px]="notificationPlacement()?.left"
+      >
         <header class="header__panel-head">
           <span class="text-body-strong">Bildirimler</span>
           @if (notifications.hasUnread()) {

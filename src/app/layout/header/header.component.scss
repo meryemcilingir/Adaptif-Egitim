@@ -3,7 +3,13 @@
 :host {
   position: sticky;
   top: 0;
-  z-index: var(--z-sticky);
+  /*
+   * `--z-header` (>`--z-dropdown`), `--z-sticky` DEĞİL: kabuk kendi yığılma
+   * bağlamını kurduğu için içindeki panellerin (bildirim, arama, rol/kullanıcı
+   * menüsü) sayfa içindeki bir filtre menüsünün altında kalmaması bunu
+   * gerektirir (bkz. `_tokens.scss` açıklaması).
+   */
+  z-index: var(--z-header);
   display: flex;
   align-items: center;
   gap: var(--space-4);
@@ -41,11 +47,13 @@
   margin-inline: auto;
 }
 
-/* Panel arama kutusunun altına, kutunun genişliğinde açılır. */
+/*
+ * Panel `fixed`: kabuk kendi yığılma bağlamını kurduğu için `absolute`
+ * kullanılırsa sayfadaki `fixed` panellerin (filtre menüsü vb.) HER ZAMAN
+ * altında kalırdı. Konum bileşende hesaplanır (ADR-074 ile aynı ilke).
+ */
 .header__search-panel {
-  position: absolute;
-  inset-inline: 0;
-  top: calc(100% + var(--space-2));
+  position: fixed;
   z-index: var(--z-dropdown, 40);
 }
 
@@ -148,10 +156,14 @@
   text-align: center;
 }
 
+/*
+ * Panel `fixed`: kabuk kendi yığılma bağlamını kurduğu için `absolute`
+ * kullanılırsa sayfadaki `fixed` panellerin (filtre menüsü, tablo aksiyon
+ * menüsü) HER ZAMAN altında kalırdı — aynı `--z-dropdown` değerini
+ * taşısalar bile. Konum bileşende hesaplanır (ADR-074 ile aynı ilke).
+ */
 .header__panel {
-  position: absolute;
-  top: calc(100% + 8px);
-  inset-inline-end: 0;
+  position: fixed;
   z-index: var(--z-dropdown);
   width: min(360px, calc(100vw - var(--space-6)));
   background: var(--color-surface);

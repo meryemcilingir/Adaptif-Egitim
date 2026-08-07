@@ -139,9 +139,20 @@
    * Açılır menüler YAPIŞKAN öğelerin ÜSTÜNDEDİR. Ters sırada, tablo başlığı ve
    * uygulama kabuğu filtre/aksiyon menülerinin üzerine boyanıyor ve menünün
    * ortası görünmez oluyordu.
+   *
+   * `--z-header`, uygulama kabuğu (`app-header`) için AYRI bir katmandır.
+   * Kabuk `position: sticky` + `z-index` taşıdığı için kendi yığılma bağlamını
+   * (stacking context) kurar; içindeki paneller (bildirim, arama) `fixed`
+   * konumlansa BİLE bu bağlamın dışına çıkamaz — `position: fixed` yalnızca
+   * KONUMLAMA için viewport'a göre hesaplanır, YIĞILMA sırası hâlâ DOM
+   * atasının bağlamına göre belirlenir. Kabuk `--z-sticky` kullanırken sayfa
+   * içindeki bir filtre menüsü (`--z-dropdown`, kabuğun DIŞINDaki bir bağlamda)
+   * her zaman üstte kalıyordu. Kabuğun kendisini `--z-dropdown`'ın üzerine
+   * çıkarmak, İÇİNDEKİ tüm panelleri de otomatik olarak üste taşır.
    */
   --z-sticky: 1000;
   --z-dropdown: 1010;
+  --z-header: 1015;
   --z-drawer: 1020;
   --z-overlay: 1030;
   --z-dialog: 1040;

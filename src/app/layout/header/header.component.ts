@@ -3,6 +3,8 @@ import {
   Component,
   DestroyRef,
   ElementRef,
+  Injector,
+  afterNextRender,
   computed,
   inject,
   signal,
@@ -35,6 +37,7 @@ import { AppStatusBadgeComponent } from '../../shared/components/app-status-badg
 import { AdminFacade } from '../../features/administration/data-access/admin.facade';
 import { GlobalSearchPanelComponent } from '../../features/administration/components/global-search-panel.component';
 import { ALL_NAV_ITEMS } from '../nav.config';
+import { PanelPlacement, placePanel } from '../../shared/utils/panel-position';
 
 /**
  * Üst çubuk: kırılım, arama, rol değiştirici, bildirim merkezi ve kullanıcı menüsü.
@@ -58,9 +61,19 @@ import { ALL_NAV_ITEMS } from '../nav.config';
   ],
   templateUrl: './header.component.html',
   styleUrl: './header.component.scss',
+  host: {
+    /*
+     * Paneller `fixed` konumlandığı için sayfa kaydıkça/pencere boyutu
+     * değişince yeniden hesaplanır (ADR-074 ile aynı ilke, app-dropdown'da
+     * kurulan desen).
+     */
+    '(window:scroll)': 'repositionOpenPanels()',
+    '(window:resize)': 'repositionOpenPanels()',
+  },
 })
 export class HeaderComponent {
   private readonly host = inject<ElementRef<HTMLElement>>(ElementRef);
+  private readonly injector = inject(Injector);
   private readonly adminSearch = inject(AdminFacade);
   private readonly mockConfig = inject(MockConfig);
   private readonly permissions = inject(PermissionService);
@@ -105,6 +118,27 @@ export class HeaderComponent {
   private readonly panelOpen = signal(false);
   readonly isPanelOpen = this.panelOpen.asReadonly();
 
+  /*
+   * Bildirim ve arama panelleri `position: fixed` ile açılır (ADR-074).
+   *
+   * Kabuğun kendisi `position: sticky` + `z-index` taşıdığı için KENDİ
+   * yığılma bağlamını (stacking context) kurar. Paneller `absolute` olarak
+   * bu bağlamın İÇİNDE kalsaydı, sayfa gövdesinde `fixed` konumlanan başka
+   * bir panel (ör. filtre menüsü, tablo aksiyon menüsü — ikisi de aynı
+   * `--z-dropdown` değerini kullanıyor ama kabuğun yığılma bağlamına hiç
+   * girmiyor) her zaman ÜSTTE görünürdü: sayısal z-index'in yüksek olması
+   * yetmiyor, üst bağlamın kendisi zaten daha alçakta boyanıyordu. Konum
+   * burada elle hesaplanıp `fixed` uygulanınca panel de kabuğun dışına
+   * çıkıp aynı düzlemde yarışıyor.
+   */
+  private readonly notificationPlacementState = signal<PanelPlacement | null>(null);
+  private readonly searchPlacementState = signal<PanelPlacement | null>(null);
+  private readonly searchPanelWidthState = signal(0);
+
+  readonly notificationPlacement = this.notificationPlacementState.asReadonly();
+  readonly searchPlacement = this.searchPlacementState.asReadonly();
+  readonly searchPanelWidth = this.searchPanelWidthState.asReadonly();
+
   /** Menü tanımından türetilen kırılım — ayrı bir eşleme tablosu tutulmaz. */
   readonly breadcrumb = computed<readonly BreadcrumbItem[]>(() => {
     const path = this.url().split('?')[0] ?? '';
@@ -144,11 +178,68 @@ export class HeaderComponent {
   togglePanel(): void {
     const next = !this.panelOpen();
     this.panelOpen.set(next);
-    if (next) this.notifications.load();
+
+    if (next) {
+      this.notifications.load();
+      // Konum, panel DOM'a girdikten SONRA hesaplanır (bkz. app-dropdown).
+      afterNextRender(() => this.repositionNotifications(), { injector: this.injector });
+    } else {
+      this.notificationPlacementState.set(null);
+    }
   }
 
   closePanel(): void {
     this.panelOpen.set(false);
+    this.notificationPlacementState.set(null);
+  }
+
+  private repositionNotifications(): void {
+    if (!this.panelOpen()) return;
+
+    const panel = this.host.nativeElement.querySelector<HTMLElement>('.header__panel');
+    const trigger = this.host.nativeElement.querySelector<HTMLElement>('.header__bell');
+    if (!panel || !trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    const width = panel.offsetWidth;
+    // Panel her zaman sağa yaslanır: zil, üst çubuğun sağ tarafındadır.
+    const left = rect.right - width;
+
+    this.notificationPlacementState.set(
+      placePanel({
+        trigger: { top: rect.top, bottom: rect.bottom, left, right: rect.right },
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+        panelWidth: width,
+        panelHeight: panel.scrollHeight,
+      }),
+    );
+  }
+
+  private repositionSearch(): void {
+    if (!this.searchOpenState()) return;
+
+    const panel = this.host.nativeElement.querySelector<HTMLElement>('.header__search-panel');
+    const trigger = this.host.nativeElement.querySelector<HTMLElement>('.header__search-wrap');
+    if (!panel || !trigger) return;
+
+    const rect = trigger.getBoundingClientRect();
+    // Panel arama kutusuyla aynı genişlikte açılır (önceki `inset-inline: 0` ile aynı davranış).
+    this.searchPanelWidthState.set(rect.width);
+
+    this.searchPlacementState.set(
+      placePanel({
+        trigger: { top: rect.top, bottom: rect.bottom, left: rect.left, right: rect.right },
+        viewport: { width: window.innerWidth, height: window.innerHeight },
+        panelWidth: rect.width,
+        panelHeight: panel.scrollHeight,
+      }),
+    );
+  }
+
+  /** Açık panel varsa konumunu tazeler; kapalıysa dokunmaz. */
+  protected repositionOpenPanels(): void {
+    if (this.panelOpen()) this.repositionNotifications();
+    if (this.searchOpenState()) this.repositionSearch();
   }
 
   onNotificationRead(notification: Notification): void {
@@ -187,16 +278,29 @@ export class HeaderComponent {
   onSearchInput(event: Event): void {
     const term = (event.target as HTMLInputElement).value;
     this.searchState.set(term);
-    this.searchOpenState.set(term.trim().length > 0);
+    this.openOrCloseSearch(term.trim().length > 0);
     this.adminSearch.search(term);
   }
 
   onSearchFocus(): void {
-    if (this.searchState().trim().length > 0) this.searchOpenState.set(true);
+    if (this.searchState().trim().length > 0) this.openOrCloseSearch(true);
   }
 
   closeSearch(): void {
     this.searchOpenState.set(false);
+    this.searchPlacementState.set(null);
+  }
+
+  /** Kapalıdan açığa geçişte konum hesaplanır; her tuş vuruşunda değil. */
+  private openOrCloseSearch(shouldOpen: boolean): void {
+    const wasOpen = this.searchOpenState();
+    this.searchOpenState.set(shouldOpen);
+
+    if (shouldOpen && !wasOpen) {
+      afterNextRender(() => this.repositionSearch(), { injector: this.injector });
+    } else if (!shouldOpen) {
+      this.searchPlacementState.set(null);
+    }
   }
 
   /** Sonuca gidilince panel kapanır ve kutu temizlenir; arama tamamlanmıştır. */
