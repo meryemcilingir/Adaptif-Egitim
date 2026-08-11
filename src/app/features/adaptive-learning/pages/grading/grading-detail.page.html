@@ -60,6 +60,8 @@
                   [conflict]="conflict"
                   [maxPoints]="maxPointsOf(conflict.questionId)"
                   [canResolve]="canOverride() && view.isGradable"
+                  [hasPermission]="canOverride()"
+                  [locked]="!view.isGradable"
                   [busy]="facade.isSaving()"
                   (resolve)="onResolveConflict($event)"
                 />

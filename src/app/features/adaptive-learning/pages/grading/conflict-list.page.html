@@ -1,0 +1,66 @@
+<div class="page">
+  <header class="page-header">
+    <div>
+      <h1 class="text-h1">Çakışmalar</h1>
+      <p class="text-sm text-muted">
+        İki değerlendiricinin aynı cevaba farklı puan verdiği denemeler. Nihai puana siz karar
+        verirsiniz; karar gerekçesiyle birlikte puan geçmişine ve denetim kaydına yazılır.
+      </p>
+    </div>
+  </header>
+
+  <app-filter-bar
+    [query]="facade.conflictsQuery()"
+    [filters]="[]"
+    searchPlaceholder="Öğrenci, sınav veya ders kodunda ara…"
+    (searchChange)="facade.setConflictsSearch($event)"
+  />
+
+  <app-table
+    [columns]="columns()"
+    [rows]="facade.conflicts()"
+    [query]="facade.conflictsQuery()"
+    [total]="facade.conflictsTotal()"
+    [status]="facade.conflictsStatus()"
+    [error]="facade.conflictsError()"
+    [filtered]="facade.conflictsFiltered()"
+    [rowClickable]="true"
+    emptyTitle="Bekleyen çakışma yok"
+    emptyDescription="Değerlendiriciler arasında karara bağlanmamış bir puan farkı bulunmuyor."
+    (sortChange)="facade.toggleConflictsSort($event)"
+    (pageChange)="facade.goToConflictsPage($event)"
+    (sizeChange)="facade.setConflictsPageSize($event)"
+    (rowClick)="open($event)"
+    (retry)="facade.loadConflicts()"
+  />
+</div>
+
+<ng-template #studentCell let-item>
+  <div class="cell-stack">
+    <span class="text-body-strong truncate">{{ item.studentName }}</span>
+    <span class="text-xs text-subtle truncate">{{ item.cohortName }}</span>
+  </div>
+</ng-template>
+
+<ng-template #conflictCell let-item>
+  <app-status-badge
+    [label]="item.conflictCount + ' soru'"
+    tone="danger"
+    icon="triangle-alert"
+  />
+</ng-template>
+
+<ng-template #stateCell let-item>
+  @if (isLocked(item)) {
+    <app-status-badge label="Kilitli · sonuç açıklandı" tone="neutral" icon="lock" />
+  } @else {
+    <app-status-badge label="Karar bekliyor" tone="warning" icon="clipboard-list" />
+  }
+</ng-template>
+
+<ng-template #waitingCell let-item>
+  <app-status-badge
+    [label]="formatWaiting(item.waitingHours)"
+    [tone]="waitingTone(item.waitingHours)"
+  />
+</ng-template>

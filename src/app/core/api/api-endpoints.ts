@@ -120,6 +120,7 @@ export const API = {
 
   grading: {
     queue: `${API_PREFIX}/grading/queue`,
+    conflicts: `${API_PREFIX}/grading/conflicts`,
   },
 
   rubrics: {

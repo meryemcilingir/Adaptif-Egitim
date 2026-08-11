@@ -209,9 +209,45 @@
     border-color var(--motion-fast),
     background var(--motion-fast);
 
-  &:hover {
+  &:hover:not(:disabled) {
     border-color: var(--color-border-strong);
     background: var(--color-surface-subtle);
+  }
+
+  /* Tamamlanan içerik yeşil tikle ve soluk başlıkla ayrışır. */
+  &.is-completed {
+    app-icon {
+      color: var(--color-success);
+    }
+
+    .related-item__title {
+      color: var(--color-text-secondary);
+    }
+  }
+
+  /* Kilitli içerik tıklanamaz; neden kilitli olduğu kazanım kartında yazar. */
+  &.is-locked {
+    opacity: 0.6;
+    cursor: not-allowed;
+
+    app-icon {
+      color: var(--color-warning);
+    }
+  }
+
+  /* Sıradaki adım listede de öne çıkar — göz onu arar. */
+  &.is-next {
+    border-color: var(--color-primary-border);
+    background: var(--color-primary-subtle);
+
+    app-icon {
+      color: var(--color-primary);
+    }
+
+    .related-item__state {
+      background: var(--color-primary);
+      color: var(--color-text-inverse);
+    }
   }
 }
 
@@ -221,4 +257,41 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.related-item__state {
+  flex-shrink: 0;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
+/* ── Tamamlandıktan sonraki yönlendirme ──────────────────────────────────── */
+
+.next-up {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  margin-top: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border: var(--border-width) solid var(--color-primary-border);
+  border-radius: var(--radius-md);
+  background: var(--color-primary-subtle);
+}
+
+.next-up__body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  min-width: 0;
+
+  span {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--space-1);
+  }
 }

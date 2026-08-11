@@ -69,6 +69,43 @@ export const GRADING_HANDLERS: readonly MockHandler[] = [
   },
 
   {
+    /**
+     * Çakışma listesi — hakemlik bekleyen denemeler.
+     *
+     * Değerlendirme kuyruğundan AYRI bir uçtur ve `attempt:override` ister,
+     * `attempt:grade` DEĞİL. Çakışmayı çözmek puanlamak değildir: iki
+     * değerlendirici anlaşamadığında karar veren kişi (Program Yöneticisi)
+     * öğrencilerin açık uçlu cevaplarını baştan puanlamaz, yalnızca hakemlik
+     * yapar. Bu yüzden puanlama kuyruğunu hiç görmez.
+     */
+    method: 'GET',
+    path: '/api/grading/conflicts',
+    handle: (context) => {
+      const caller = requirePermission(context, 'attempt:override');
+
+      const items: GradingQueueItem[] = context.db
+        .collection('attempts')
+        .filter((attempt) =>
+          isWithinScope(caller, {
+            ownerId: attempt.studentId,
+            courseId: attempt.courseId,
+            cohortId: attempt.cohortId,
+          }),
+        )
+        .map((attempt) => toQueueItem(context, attempt))
+        // Yalnızca ÇÖZÜLMEMİŞ çakışması olanlar; puanlama bekleyenler burada değil.
+        .filter((item) => item.conflictCount > 0);
+      /*
+       * Sıralama `paginate` içinde yapılır (istemcinin seçtiği sütuna göre).
+       * Varsayılan sütun `state`: karar verilebilenler önce, sonra en uzun
+       * bekleyen — bkz. `compare()`.
+       */
+
+      return ok(paginate(items, context));
+    },
+  },
+
+  {
     /** Deneme detayı: cevaplar, rubrikler, çakışmalar, çizelge, bütünlük. */
     method: 'GET',
     path: '/api/attempts/:id/detail',
@@ -290,6 +327,25 @@ export const GRADING_HANDLERS: readonly MockHandler[] = [
       }
       if (pendingCount(context, attempt) > 0) {
         throw businessRule('Elle puanlanmayı bekleyen cevaplar var; sonuç açıklanamaz.');
+      }
+
+      /*
+       * Çözülmemiş çakışma varken sonuç AÇIKLANAMAZ.
+       *
+       * Aksi hâlde öğrenciye, iki değerlendiricinin üzerinde anlaşamadığı bir
+       * puan bildirilmiş olur; üstelik açıklandıktan sonra deneme kilitlenir
+       * (`isGradable = state !== 'RELEASED'`) ve hakem artık düzeltemez —
+       * yani hata kalıcılaşır. Bekleyen manuel cevap kontrolüyle aynı gerekçe.
+       */
+      const openConflicts = conflictsOf(context.db, attempt).filter(
+        (item) => item.resolvedPoints === null,
+      ).length;
+
+      if (openConflicts > 0) {
+        throw businessRule(
+          `Değerlendiriciler arasında karara bağlanmamış ${openConflicts} soru var; sonuç açıklanamaz. Önce çakışmalar sonuçlandırılmalıdır.`,
+          { openConflicts },
+        );
       }
 
       const nowIso = new Date(context.now).toISOString();
@@ -524,6 +580,16 @@ function compare(a: GradingQueueItem, b: GradingQueueItem, field: string): numbe
       return a.submittedAt.localeCompare(b.submittedAt);
     case 'pendingManualCount':
       return a.pendingManualCount - b.pendingManualCount;
+    /*
+     * Durum sıralaması "işlem yapılabilirlik" sıralamasıdır, alfabetik değil:
+     * sonucu açıklanmış deneme kilitlidir ve hakem onu düzeltemez. Eşitlikte
+     * en uzun bekleyen öne alınır. Çakışma listesinin varsayılan sıralaması.
+     */
+    case 'state': {
+      const rank = (item: GradingQueueItem) => (item.state === 'RELEASED' ? 0 : 1);
+      const byRank = rank(a) - rank(b);
+      return byRank !== 0 ? byRank : a.waitingHours - b.waitingHours;
+    }
     default:
       return a.waitingHours - b.waitingHours;
   }

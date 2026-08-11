@@ -271,6 +271,17 @@ export const NAV_GROUPS_BY_ROLE: Readonly<Record<Role, readonly NavGroup[]>> = {
           icon: 'calendar',
           permissions: ['term:read'],
         },
+        {
+          /*
+           * Hakemlik: iki değerlendiricinin anlaşamadığı cevaplarda nihai puan
+           * kararı. Puanlama kuyruğu (`/grading`) BİLEREK yok — program
+           * yöneticisi puanlamaz, yalnızca anlaşmazlığı çözer.
+           */
+          label: 'Çakışmalar',
+          link: '/grading/conflicts',
+          icon: 'triangle-alert',
+          permissions: ['attempt:override'],
+        },
       ],
     },
     {

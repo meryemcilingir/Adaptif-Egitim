@@ -164,6 +164,42 @@
                     </span>
                   }
                 </div>
+
+                <!--
+                  Tamamlandıktan sonra öğrenci çıkmaz sokakta kalmamalı: aynı
+                  kazanımdaki sıradaki içerik varsa doğrudan oraya, yoksa
+                  öğrenme yoluna yönlendirilir.
+                -->
+                @if (view.progress.state === 'completed') {
+                  <div class="next-up">
+                    @if (view.nextContent; as next) {
+                      <div class="next-up__body">
+                        <span class="text-overline text-muted">SIRADAKİ ADIM</span>
+                        <span class="text-sm text-body-strong clamp-2">{{ next.title }}</span>
+                        <span class="text-xs text-subtle">
+                          {{ relatedTypeLabel(next.type) }} ·
+                          {{ next.estimatedDurationMinutes }} dk
+                        </span>
+                      </div>
+                      <app-button variant="primary" icon="arrow-right" (pressed)="continueNext()">
+                        Sıradakine geç
+                      </app-button>
+                    } @else {
+                      <div class="next-up__body">
+                        <span class="text-sm text-body-strong">
+                          <app-icon name="award" [size]="15" />
+                          Bu kazanımdaki tüm içerikleri bitirdin.
+                        </span>
+                        <span class="text-xs text-subtle">
+                          Öğrenme yolundan bir sonraki kazanıma geçebilirsin.
+                        </span>
+                      </div>
+                      <app-button variant="secondary" icon="list-checks" (pressed)="backToPath()">
+                        Öğrenme yoluma dön
+                      </app-button>
+                    }
+                  </div>
+                }
               </div>
             }
           </app-card>
@@ -180,12 +216,25 @@
             <ul class="related-list">
               @for (item of view.relatedContents; track item.id) {
                 <li>
-                  <button type="button" class="related-item" (click)="open(item.id)">
-                    <app-icon [name]="relatedIcon(item.type)" [size]="16" />
+                  <button
+                    type="button"
+                    class="related-item"
+                    [class]="'is-' + item.state"
+                    [class.is-next]="isNext(item)"
+                    [disabled]="item.state === 'locked'"
+                    (click)="open(item.id)"
+                  >
+                    <app-icon [name]="markerIcon(item)" [size]="16" />
                     <span class="related-item__title text-sm">{{ item.title }}</span>
                     <span class="text-xs text-subtle">
                       {{ relatedTypeLabel(item.type) }} · {{ item.estimatedDurationMinutes }} dk
                     </span>
+
+                    @if (isStudent()) {
+                      <span class="related-item__state text-xs">
+                        {{ isNext(item) ? 'Sıradaki' : progressStateLabel(item.state) }}
+                      </span>
+                    }
                   </button>
                 </li>
               }

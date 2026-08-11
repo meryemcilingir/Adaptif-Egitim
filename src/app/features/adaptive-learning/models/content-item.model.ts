@@ -155,6 +155,24 @@ export interface OutcomeRefSummary {
   readonly title: string;
 }
 
+/**
+ * Aynı kazanımdaki bir "kardeş" içerik + öğrencinin oradaki durumu.
+ *
+ * Ham `ContentItem` yetmiyordu: öğrenci listede hangisini bitirdiğini (tik) ve
+ * hangisinin sıradaki adım olduğunu göremiyordu. İlerleme sunucuda zaten
+ * biliniyor, bu yüzden istemcinin ayrıca ilerleme sorgusu atmasına gerek
+ * kalmadan aynı yanıta iliştirilir.
+ */
+export interface RelatedContent {
+  readonly id: string;
+  readonly title: string;
+  readonly type: ContentType;
+  readonly estimatedDurationMinutes: number;
+  readonly state: ContentProgressState;
+  /** Kazanımın önkoşulu tamamlanmadığı için açılmadıysa `true` (BR-20). */
+  readonly locked: boolean;
+}
+
 /** İçerik detay ekranının tek çağrıda ihtiyaç duyduğu her şey. */
 export interface ContentDetail {
   readonly content: ContentItem;
@@ -166,8 +184,16 @@ export interface ContentDetail {
   /** Önkoşulu tamamlanmadığı için erişim kapalı mı (BR-20). */
   readonly locked: boolean;
   readonly lockedByLabel: string | null;
-  /** Aynı kazanımdaki diğer içerikler — pedagojik sırayla. */
-  readonly relatedContents: readonly ContentItem[];
+  /** Aynı kazanımdaki diğer içerikler — pedagojik sırayla, ilerleme durumlarıyla. */
+  readonly relatedContents: readonly RelatedContent[];
+  /**
+   * Bu içerik bitince çalışılacak SIRADAKİ içerik (aynı kazanım içinde).
+   *
+   * Sunucuda hesaplanır: pedagojik sırada, henüz tamamlanmamış ve kilitli
+   * olmayan ilk kardeş. Kazanımdaki her şey bitmişse `null` — ekran o zaman
+   * kullanıcıyı öğrenme yoluna geri gönderir.
+   */
+  readonly nextContent: RelatedContent | null;
 }
 
 export const CONTENT_BULK_ACTIONS = ['publish', 'archive', 'draft', 'delete'] as const;

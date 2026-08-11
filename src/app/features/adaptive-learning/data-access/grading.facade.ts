@@ -35,6 +35,18 @@ export class GradingFacade {
     initialQuery: { sort: { field: 'submittedAt', direction: 'desc' } },
   });
 
+  /*
+   * Çakışma listesi kuyruktan AYRI bir store'da tutulur.
+   *
+   * Aynı satır tipini (`GradingQueueItem`) paylaşsalar da farklı kullanıcılar
+   * tarafından, farklı yetkiyle ve farklı filtrelerle gezilirler; tek store'a
+   * sıkıştırmak birinin filtresini diğerine sızdırırdı.
+   */
+  private readonly conflictStore = new EntityStore<GradingQueueItem>({
+    // `state` sıralaması = karar verilebilenler önce (bkz. grading.handlers `compare`).
+    initialQuery: { sort: { field: 'state', direction: 'desc' } },
+  });
+
   private readonly detailState = signal<AttemptDetail | null>(null);
   private readonly detailStatusState = signal<'idle' | 'loading' | 'success' | 'error'>('idle');
   private readonly detailErrorState = signal<ApiError | null>(null);
@@ -86,6 +98,44 @@ export class GradingFacade {
   setQueuePageSize(size: number): void {
     this.queueStore.patchQuery({ size });
     this.loadQueue();
+  }
+
+  /* ── Çakışmalar (hakemlik) ─────────────────────────────────────────────── */
+
+  readonly conflicts = this.conflictStore.items;
+  readonly conflictsTotal = this.conflictStore.total;
+  readonly conflictsStatus = this.conflictStore.status;
+  readonly conflictsError = this.conflictStore.error;
+  readonly conflictsQuery = this.conflictStore.query;
+  readonly conflictsFiltered = this.conflictStore.isFiltered;
+
+  loadConflicts(): void {
+    this.conflictStore.setLoading();
+
+    this.repository.conflicts(this.conflictStore.query()).subscribe({
+      next: (page) => this.conflictStore.setPage(page),
+      error: (error: ApiError) => this.conflictStore.setError(error),
+    });
+  }
+
+  setConflictsSearch(search: string): void {
+    this.conflictStore.patchQuery({ search });
+    this.loadConflicts();
+  }
+
+  toggleConflictsSort(field: string): void {
+    this.conflictStore.toggleSort(field);
+    this.loadConflicts();
+  }
+
+  goToConflictsPage(page: number): void {
+    this.conflictStore.goToPage(page);
+    this.loadConflicts();
+  }
+
+  setConflictsPageSize(size: number): void {
+    this.conflictStore.patchQuery({ size });
+    this.loadConflicts();
   }
 
   /* ── Deneme listesi ────────────────────────────────────────────────────── */

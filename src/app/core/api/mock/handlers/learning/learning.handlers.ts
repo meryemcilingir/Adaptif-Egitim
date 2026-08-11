@@ -3,8 +3,11 @@ import {
   CONTENT_BULK_ACTIONS,
   ContentBulkAction,
   ContentDetail,
+  ContentItem,
   ContentProgress,
+  ContentProgressState,
   OutcomeRefSummary,
+  RelatedContent,
   defaultProgress,
 } from '../../../../../features/adaptive-learning/models/content-item.model';
 import { LearningPathOverview } from '../../../../../features/adaptive-learning/models/learning-path.model';
@@ -102,6 +105,41 @@ export const LEARNING_HANDLERS: readonly MockHandler[] = [
           )
         : { unlocked: true, missingOutcomeIds: [] as readonly string[] };
 
+      /*
+       * Kardeş içerikler öğrencinin İLERLEMESİYLE birlikte döner: liste
+       * tamamlananları tikle gösterebilsin ve "sıradaki" hesaplanabilsin.
+       * Kilit kazanım düzeyindedir — aynı kazanımın tüm içerikleri aynı anda
+       * açılır/kapanır, bu yüzden her kardeş bu içerikle aynı kilidi taşır.
+       */
+      const siblings = contents
+        .filter(
+          (item) =>
+            item.outcomeId === content.outcomeId &&
+            item.id !== content.id &&
+            item.state === 'PUBLISHED',
+        )
+        .sort(byTypeOrder);
+
+      const progressByContentId = new Map(
+        (isStudent
+          ? context.db
+              .collection('contentProgress')
+              .filter((item) => item.studentId === caller.userId)
+          : []
+        ).map((item) => [item.contentId, item] as const),
+      );
+
+      const toRelated = (item: ContentItem): RelatedContent => ({
+        id: item.id,
+        title: item.title,
+        type: item.type,
+        estimatedDurationMinutes: item.estimatedDurationMinutes,
+        state: relatedState(progressByContentId.get(item.id)?.state, !unlock.unlocked),
+        locked: !unlock.unlocked,
+      });
+
+      const relatedContents = siblings.map(toRelated);
+
       const detail: ContentDetail = {
         content,
         courseCode: course?.code ?? '',
@@ -116,14 +154,14 @@ export const LEARNING_HANDLERS: readonly MockHandler[] = [
         lockedByLabel: unlock.unlocked
           ? null
           : unlock.missingOutcomeIds.map((id) => outcomes.findById(id)?.code ?? id).join(', '),
-        relatedContents: contents
-          .filter(
-            (item) =>
-              item.outcomeId === content.outcomeId &&
-              item.id !== content.id &&
-              item.state === 'PUBLISHED',
-          )
-          .sort(byTypeOrder),
+        relatedContents,
+        /*
+         * "Sıradaki" yalnızca ÖĞRENCİ için anlamlıdır; eğitmen/uzman içeriği
+         * çalışmak için değil yönetmek için açar, onlara yönlendirme sunulmaz.
+         */
+        nextContent: isStudent
+          ? (relatedContents.find((item) => !item.locked && item.state !== 'completed') ?? null)
+          : null,
       };
 
       return ok(detail);
@@ -309,6 +347,21 @@ function resolveStudentId(context: MockContext): string {
 
 function toOutcomeRef(outcome: { id: string; code: string; title: string }): OutcomeRefSummary {
   return { id: outcome.id, code: outcome.code, title: outcome.title };
+}
+
+/**
+ * Kardeş içeriğin listede görünecek durumu.
+ *
+ * Kilit, kayıtlı ilerlemeyi EZER: kazanım henüz açılmadıysa öğrencinin o
+ * içerikte eski bir kaydı olsa bile "kilitli" gösterilir, aksi hâlde
+ * tıklanabilirmiş gibi görünürdü.
+ */
+function relatedState(
+  recorded: ContentProgressState | undefined,
+  locked: boolean,
+): ContentProgressState {
+  if (locked) return 'locked';
+  return recorded ?? 'not_started';
 }
 
 function clamp(value: number, min: number, max: number): number {

@@ -27,6 +27,11 @@ export class GradingRepository {
     return this.api.getPage<GradingQueueItem>(API.grading.queue, request);
   }
 
+  /** Hakemlik bekleyen denemeler — kuyrukla aynı satır şekli, farklı yetki. */
+  conflicts(request: PageRequest): Observable<PageResponse<GradingQueueItem>> {
+    return this.api.getPage<GradingQueueItem>(API.grading.conflicts, request);
+  }
+
   attempts(request: PageRequest): Observable<PageResponse<Attempt>> {
     return this.api.getPage<Attempt>(API.attempts.list, request);
   }

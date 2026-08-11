@@ -74,10 +74,29 @@ export class LearningPathTimelineComponent {
     }
   }
 
+  /**
+   * Yolun TEK "şu an buradasın" adımı.
+   *
+   * `recommended` durumundaki adım birden fazla kazanımda bulunabilir (her
+   * açık kazanımın ilk adımı önerilir); öğrencinin gerçekten devam edeceği
+   * adım sunucunun seçtiği `currentStep`tir, vurgu yalnızca ona verilir.
+   */
+  readonly currentStepId = computed(() => this.path().currentStep?.contentId ?? null);
+
   stepIcon(step: LearningPathStep): AppIconName {
     if (step.state === 'completed') return 'circle-check-big';
     if (step.state === 'locked') return 'lock';
     return CONTENT_TYPE_ICONS[step.type] as AppIconName;
+  }
+
+  isCurrent(step: LearningPathStep): boolean {
+    return this.currentStepId() === step.contentId;
+  }
+
+  /** Adım rozetindeki metin — "sıradaki" etiketi durum etiketinin önüne geçer. */
+  stepStateLabel(step: LearningPathStep): string {
+    if (this.isCurrent(step)) return 'Sıradaki';
+    return CONTENT_PROGRESS_LABELS[step.state];
   }
 
   typeLabel(step: LearningPathStep): string {

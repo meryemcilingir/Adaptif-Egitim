@@ -110,21 +110,27 @@ function buildQuickActions(): QuickAction[] {
       badge: null,
       tone: 'primary',
     },
+    /*
+     * Kısayollar Gözlemci'nin ERİŞEBİLDİĞİ ekranlarla sınırlıdır: ders kataloğu
+     * (`/courses`) ve sınav yönetimi (`/exams`) bu rolün kapsamı dışındadır
+     * (RolesPermissions.md — Gözlemci: Panel, Cohort'lar, Analitik, Raporlar),
+     * o rotalara giden kartlar 403 sayfasına düşerdi.
+     */
     {
-      id: 'courses',
-      label: 'Dersler',
-      description: 'İzlenen ders listesi',
-      icon: 'library',
-      link: '/courses',
+      id: 'analytics',
+      label: 'Analitik',
+      description: 'Başarı ve ustalık özeti',
+      icon: 'chart-column',
+      link: '/analytics',
       badge: null,
       tone: 'info',
     },
     {
-      id: 'exams',
-      label: 'Sınav takvimi',
-      description: 'Yaklaşan sınavlar',
-      icon: 'calendar',
-      link: '/exams',
+      id: 'reports',
+      label: 'Kayıtlı raporlar',
+      description: 'Paylaşılan rapor görünümleri',
+      icon: 'file-text',
+      link: '/analytics/reports',
       badge: null,
       tone: 'neutral',
     },

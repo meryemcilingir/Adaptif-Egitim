@@ -232,16 +232,45 @@ export const ADAPTIVE_LEARNING_ROUTES: Routes = [
   },
 
   {
+    /*
+     * `pathMatch: 'full'` ZORUNLU (ADR-076): varsayılan `prefix` eşleşmesiyle
+     * bu aday `/grading/conflicts` gibi alt yolları da yakalar. `canMatch`
+     * reddi bir UrlTree (yönlendirme) döndürdüğü için Router bunu koşulsuz
+     * uygular ve program yöneticisi — çakışma ekranına yetkisi olmasına
+     * rağmen — 403'e düşerdi.
+     */
     path: 'grading',
+    pathMatch: 'full',
     title: 'Değerlendirme · Adaptif Eğitim',
     canMatch: [permissionGuard('attempt:grade')],
     loadComponent: () =>
       import('./pages/grading/grading-queue.page').then((module) => module.GradingQueuePage),
   },
   {
+    /*
+     * Çakışma hakemliği — puanlama kuyruğundan AYRI, `attempt:override` ile.
+     * `grading/:attemptId` kalıbından ÖNCE gelmelidir, aksi hâlde "conflicts"
+     * bir deneme kimliği sanılırdı.
+     */
+    path: 'grading/conflicts',
+    title: 'Çakışmalar · Adaptif Eğitim',
+    canMatch: [permissionGuard('attempt:override')],
+    loadComponent: () =>
+      import('./pages/grading/conflict-list.page').then((module) => module.ConflictListPage),
+  },
+  {
+    /*
+     * Deneme puanlama/hakemlik ekranı.
+     *
+     * İki farklı iş için iki farklı izin kabul edilir (`canAny`): puanlayan
+     * eğitmen `attempt:grade`, çakışmayı karara bağlayan program yöneticisi
+     * `attempt:override` ile girer. Ekran içindeki kontroller zaten ayrı ayrı
+     * gated: puanlama alanları `canGrade()`, çakışma paneli `canOverride()` —
+     * yani hakem puanlama araçlarını görmez.
+     */
     path: 'grading/:attemptId',
     title: 'Puanlama · Adaptif Eğitim',
-    canMatch: [permissionGuard('attempt:grade')],
+    canMatch: [permissionGuard('attempt:grade', 'attempt:override')],
     loadComponent: () =>
       import('./pages/grading/grading-detail.page').then((module) => module.GradingDetailPage),
   },

@@ -122,6 +122,24 @@
   min-width: 0;
 }
 
+.path__card-title {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-2);
+  min-width: 0;
+}
+
+/* Adım durumu her kartta YAZIYLA da görünür — renk tek başına erişilebilir değildir. */
+.path__state {
+  flex-shrink: 0;
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  background: var(--color-surface-muted);
+  color: var(--color-text-secondary);
+  white-space: nowrap;
+}
+
 .path__reason {
   display: flex;
   align-items: flex-start;
@@ -135,6 +153,16 @@
 .path__step.is-completed {
   .path__marker {
     border-color: var(--color-success-border);
+    background: var(--color-success-subtle);
+    color: var(--color-success-text);
+  }
+
+  /* Biten adım geri plana çekilir; göz sıradakini arar, biteni değil. */
+  .path__card-title span:first-child {
+    color: var(--color-text-secondary);
+  }
+
+  .path__state {
     background: var(--color-success-subtle);
     color: var(--color-success-text);
   }
@@ -169,6 +197,36 @@
 
   .path__card {
     opacity: 0.75;
+  }
+
+  .path__state {
+    background: var(--color-warning-subtle);
+    color: var(--color-warning-text);
+  }
+}
+
+/*
+ * "Sıradaki" adım — yolun tek odak noktası.
+ *
+ * Durum kurallarının HEPSİNDEN SONRA gelir: `is-current` aynı anda
+ * `is-recommended` ya da `is-in_progress` de olabilir ve aynı özgüllükteki
+ * kenarlık/zemin renklerini ezmesi gerekir.
+ */
+.path__step.is-current {
+  .path__card {
+    border-color: var(--color-primary);
+    background: var(--color-primary-subtle);
+  }
+
+  .path__marker {
+    border-color: var(--color-primary);
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
+  }
+
+  .path__state {
+    background: var(--color-primary);
+    color: var(--color-text-inverse);
   }
 }
 

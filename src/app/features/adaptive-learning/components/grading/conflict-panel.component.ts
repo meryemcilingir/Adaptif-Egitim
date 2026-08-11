@@ -28,6 +28,9 @@ export class ConflictPanelComponent {
   readonly maxPoints = input.required<number>();
   readonly canResolve = input(false);
   readonly busy = input(false);
+  /** Yetki var ama deneme kilitliyse (sonuç açıklandı) `false` gelir. */
+  readonly hasPermission = input(false);
+  readonly locked = input(false);
 
   readonly resolve = output<ResolveConflictRequest>();
 
@@ -38,6 +41,17 @@ export class ConflictPanelComponent {
   readonly reason = this.reasonState.asReadonly();
 
   readonly isResolved = computed(() => this.conflict().resolvedPoints !== null);
+
+  /** Karar verilemiyorsa GERÇEK sebebi söyler — kullanıcı hatayı kendinde aramasın. */
+  readonly lockReason = computed(() => {
+    if (this.locked()) {
+      return 'Sonuç öğrenciye açıklandığı için deneme kilitli; puan yalnızca itiraz akışıyla değiştirilebilir.';
+    }
+    if (!this.hasPermission()) {
+      return 'Çakışmayı sonuçlandırma yetkisi rolünüzde yok. Program yöneticisi karar verebilir.';
+    }
+    return 'Bu çakışma şu anda sonuçlandırılamıyor.';
+  });
 
   /** Seçili puan; henüz seçilmediyse ortada bir değer önerilir. */
   readonly points = computed(() => {

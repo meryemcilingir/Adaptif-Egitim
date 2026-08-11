@@ -4,6 +4,7 @@ import {
   OnDestroy,
   OnInit,
   computed,
+  effect,
   inject,
   input,
   signal,
@@ -36,6 +37,8 @@ import {
   CONTENT_TYPE_LABELS,
   ContentCreateRequest,
   ContentItem,
+  ContentProgressState,
+  RelatedContent,
 } from '../../models/content-item.model';
 import {
   PublishActionsComponent,
@@ -151,9 +154,43 @@ export class ContentDetailPage implements OnInit, OnDestroy {
   readonly relatedTypeLabel = (type: string): string =>
     CONTENT_TYPE_LABELS[type as keyof typeof CONTENT_TYPE_LABELS] ?? type;
 
+  /* ── Kardeş içerik listesi görünümü ──────────────────────────────────── */
+
+  /** Tamamlanan içerik tik, kilitli olan kilit, diğerleri kendi tür ikonunu taşır. */
+  markerIcon(item: RelatedContent): AppIconName {
+    if (item.state === 'completed') return 'circle-check-big';
+    if (item.state === 'locked') return 'lock';
+    return this.relatedIcon(item.type);
+  }
+
+  progressStateLabel(state: ContentProgressState): string {
+    return CONTENT_PROGRESS_LABELS[state];
+  }
+
+  /** Sıradaki içerik listede de vurgulanır — öğrenci nereden devam edeceğini arar. */
+  isNext(item: RelatedContent): boolean {
+    return this.detail()?.nextContent?.id === item.id;
+  }
+
+  /*
+   * İçerik yüklemesi `ngOnInit`te DEĞİL, `id` girdisini izleyen bir effect'te
+   * yapılır.
+   *
+   * Bu ekrandan yine bu ekrana geçiliyor ("Sıradakine geç", kardeş içerik
+   * listesi): Angular aynı rotada bileşeni yeniden oluşturmaz, yalnızca `id`
+   * girdisini günceller. `ngOnInit` tek sefer çalıştığı için ekran eski
+   * içeriği göstermeye devam ederdi.
+   */
+  constructor() {
+    effect(() => {
+      const id = this.id();
+      this.facade.loadRichDetail(id);
+      this.facade.loadDetail(id);
+    });
+  }
+
   ngOnInit(): void {
-    this.facade.loadRichDetail(this.id());
-    this.facade.loadDetail(this.id());
+    // Ders/kazanım listeleri içerikten bağımsızdır; yalnızca bir kez yüklenir.
     this.loadReferences();
   }
 
@@ -199,6 +236,26 @@ export class ContentDetailPage implements OnInit, OnDestroy {
     if (confirmed) this.saveProgress(100);
   }
 
+  /**
+   * Tamamlandıktan sonra sıradaki içeriğe geçiş.
+   *
+   * Sıradaki içerik SUNUCUDA hesaplanır (`ContentDetail.nextContent`) — istemci
+   * "hangisi sırada" kuralını yeniden yazmaz; kilit ve tamamlanma bilgisi zaten
+   * orada. Kazanımda çalışılacak başka içerik kalmadıysa öğrenci yoluna döner.
+   */
+  continueNext(): void {
+    const next = this.detail()?.nextContent;
+    if (next) {
+      void this.router.navigate(['/contents', next.id]);
+      return;
+    }
+    void this.router.navigate(['/learning/path']);
+  }
+
+  backToPath(): void {
+    void this.router.navigate(['/learning/path']);
+  }
+
   private saveProgress(completionPercent: number): void {
     const detail = this.detail();
     if (!detail) return;
@@ -214,7 +271,15 @@ export class ContentDetailPage implements OnInit, OnDestroy {
             : 0,
       })
       .subscribe({
-        next: () => this.savingProgressState.set(false),
+        next: () => {
+          this.savingProgressState.set(false);
+          /*
+           * Detay yeniden çekilir: "sıradaki" ve kardeş listesindeki tikler
+           * ilerlemeye bağlı olduğu için, tamamlandıktan sonra kullanıcı
+           * sayfayı yenilemeden doğru yönlendirmeyi görmelidir.
+           */
+          if (completionPercent >= 100) this.reload();
+        },
         error: () => this.savingProgressState.set(false),
       });
   }

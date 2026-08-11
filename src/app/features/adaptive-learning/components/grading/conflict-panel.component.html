@@ -101,9 +101,14 @@
       </app-button>
     </div>
   } @else {
+    <!--
+      İki farklı sebep aynı mesajla açıklanamaz: "yetkin yok" ile "deneme
+      kilitli" bambaşka durumlardır. Program yöneticisi yetkiye SAHİPken
+      "yetkiniz yok" yazması, hatayı kendisinde arattırırdı.
+    -->
     <p class="conflict__note text-xs">
       <app-icon name="lock" [size]="14" />
-      Çakışmayı sonuçlandırma yetkisi rolünüzde yok. Program yöneticisi karar verebilir.
+      {{ lockReason() }}
     </p>
   }
 </section>

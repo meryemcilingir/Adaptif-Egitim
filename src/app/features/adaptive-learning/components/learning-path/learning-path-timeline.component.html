@@ -26,7 +26,7 @@
       } @else {
         <ol class="path__steps">
           @for (step of section.steps; track step.contentId) {
-            <li class="path__step" [class]="'is-' + step.state">
+            <li class="path__step" [class]="'is-' + step.state" [class.is-current]="isCurrent(step)">
               <span class="path__marker" aria-hidden="true">
                 <app-icon [name]="stepIcon(step)" [size]="14" />
               </span>
@@ -38,7 +38,10 @@
                 (click)="onSelect(step)"
               >
                 <div class="path__card-head">
-                  <span class="text-sm text-body-strong clamp-2">{{ step.title }}</span>
+                  <div class="path__card-title">
+                    <span class="text-sm text-body-strong clamp-2">{{ step.title }}</span>
+                    <span class="path__state text-xs">{{ stepStateLabel(step) }}</span>
+                  </div>
                   <span class="text-xs text-subtle">
                     {{ typeLabel(step) }} · {{ step.estimatedDurationMinutes }} dk
                   </span>
