@@ -164,11 +164,28 @@
   }
 }
 
+/*
+ * Yerleşim AÇIKÇA tanımlanır, otomatik yerleştirmeye bırakılmaz.
+ *
+ * Açıklama `grid-column: 1 / -1` ile iki sütunu birden kapladığında ok
+ * işaretine ikinci sütunda yer kalmıyor ve üçüncü bir satıra düşüyordu:
+ * ok, metnin sağında değil altında duruyordu. Rol ve açıklama artık ilk
+ * sütunda alt alta, ok ise ikinci sütunda ikisinin hizasında ortalanır.
+ */
+.login__account-role {
+  grid-column: 1;
+  grid-row: 1;
+}
+
 .login__account-desc {
-  grid-column: 1 / -1;
+  grid-column: 1;
+  grid-row: 2;
 }
 
 .login__account-arrow {
+  grid-column: 2;
+  grid-row: 1 / span 2;
+  align-self: center;
   color: var(--color-text-tertiary);
 }
 
