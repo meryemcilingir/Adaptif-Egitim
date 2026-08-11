@@ -1,4 +1,5 @@
-import { ChangeDetectionStrategy, Component, input } from '@angular/core';
+import { Location } from '@angular/common';
+import { ChangeDetectionStrategy, Component, inject, input } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { PERMISSION_LABELS, Permission } from '../../../core/auth/permission.model';
@@ -24,7 +25,18 @@ import { AppIconComponent } from '../app-icon/app-icon.component';
       <p class="text-xs text-subtle">Gerekli izin: {{ requiredLabels() }}</p>
     }
 
-    <a class="unauthorized__link text-body-strong" routerLink="/learning/dashboard"> Panele dön </a>
+    <!--
+      Geri, panele dönmekten ÖNCE gelir: kullanıcı buraya bir yerden tıklayarak
+      düştü ve büyük ihtimalle o ekrana dönmek istiyor. Panele dönmek onu
+      yaptığı işten koparıyordu.
+    -->
+    <div class="unauthorized__actions">
+      <button type="button" class="unauthorized__link text-body-strong" (click)="goBack()">
+        <app-icon name="arrow-left" [size]="15" />
+        Geri dön
+      </button>
+      <a class="unauthorized__link text-body-strong" routerLink="/learning/dashboard">Panele dön</a>
+    </div>
   `,
   styleUrl: './app-unauthorized-state.component.scss',
   host: { role: 'alert' },
@@ -35,6 +47,12 @@ export class AppUnauthorizedStateComponent {
     'Sayfayı görüntülemek için gerekli izne sahip değilsiniz. Yetki talebi için program yöneticinizle iletişime geçin.',
   );
   readonly requiredPermissions = input<readonly Permission[]>([]);
+
+  private readonly location = inject(Location);
+
+  goBack(): void {
+    this.location.back();
+  }
 
   requiredLabels(): string {
     return this.requiredPermissions()

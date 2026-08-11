@@ -40,17 +40,31 @@
 }
 
 .shares {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
+  /* Üç zorluk eşit genişlikte — biri diğerinden büyük görünmesin. */
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-3);
+
+  @media (max-width: t.$bp-sm) {
+    grid-template-columns: minmax(0, 1fr);
+  }
 }
 
 .share {
-  padding: 3px var(--space-3);
-  border-radius: var(--radius-full);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
   border: var(--border-width) solid var(--color-border);
-  font-size: var(--fs-xs);
   color: var(--color-text-secondary);
+}
+
+.share__value {
+  /* Özet kartlarıyla aynı ölçek — iki blok birbirini dengeler. */
+  font-size: var(--fs-h2);
+  font-weight: 600;
+  line-height: 1.1;
 }
 
 .share--easy {

@@ -122,7 +122,8 @@ export function buildOverview(scope: ReportScope): AnalyticsOverview {
       'target',
       'Kazanım bazlı ortalama',
       null,
-      '/analytics/heatmap',
+      /* Isı haritasının rotası `analytics/mastery`; `heatmap` diye bir rota yok. */
+      '/analytics/mastery',
       peers.mastery,
     ),
     metric(

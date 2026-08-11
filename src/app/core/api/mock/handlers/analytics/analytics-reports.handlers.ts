@@ -5,6 +5,7 @@ import {
   SavedReport,
 } from '../../../../../features/adaptive-learning/models/analytics.model';
 import { validateRange } from '../../../../../features/adaptive-learning/domain/analytics-range';
+import { filterValues } from '../../db/query-engine';
 import { requirePermission } from '../../mock-auth';
 import { businessRule, notFound, validation } from '../../mock-errors';
 import { MockContext, MockHandler, created, noContent, ok } from '../../mock-router';
@@ -342,8 +343,8 @@ function paginate(rows: readonly OutcomeAnalytics[], context: MockContext) {
     );
   }
 
-  const status = filters['status'];
-  if (Array.isArray(status) && status.length > 0) {
+  const status = filterValues(filters['status']);
+  if (status.length > 0) {
     result = result.filter((row) => status.includes(row.status));
   }
 

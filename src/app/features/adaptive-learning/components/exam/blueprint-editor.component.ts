@@ -2,7 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, input, output } from '@an
 
 import { AppIconComponent } from '../../../../shared/components/app-icon/app-icon.component';
 import { AppProgressBarComponent } from '../../../../shared/components/app-progress-bar/app-progress-bar.component';
-import { Difficulty } from '../../models/common.model';
+import { DIFFICULTY_LABELS, Difficulty } from '../../models/common.model';
 import { BLUEPRINT_LIMITS, BlueprintOutcomeRow } from '../../models/blueprint.model';
 import { rowTotal, summarizeBlueprint } from '../../domain/blueprint.rules';
 
@@ -79,6 +79,10 @@ export class BlueprintEditorComponent {
       : 0;
 
     this.cellChange.emit({ outcomeId, difficulty, value });
+  }
+
+  difficultyLabel(difficulty: Difficulty): string {
+    return DIFFICULTY_LABELS[difficulty];
   }
 
   /** Soru istenmeyen kazanım — editörde soluk gösterilir. */

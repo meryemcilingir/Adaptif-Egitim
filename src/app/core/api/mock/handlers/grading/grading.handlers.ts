@@ -16,6 +16,7 @@ import {
   validateGrading,
 } from '../../../../../features/adaptive-learning/domain/grading.rules';
 import { evaluateRubric, normalizeScores } from '../../../../../features/adaptive-learning/domain/rubric.calculator';
+import { filterValues } from '../../db/query-engine';
 import { assertWithinScope, isWithinScope, requirePermission } from '../../mock-auth';
 import { businessRule, conflict, notFound } from '../../mock-errors';
 import { MockCaller, MockContext, MockHandler, created, ok } from '../../mock-router';
@@ -551,8 +552,8 @@ function paginate(items: readonly GradingQueueItem[], context: MockContext) {
     rows = rows.filter((item) => item.courseCode === courseId);
   }
 
-  const states = filters['state'];
-  if (Array.isArray(states) && states.length > 0) {
+  const states = filterValues(filters['state']);
+  if (states.length > 0) {
     rows = rows.filter((item) => states.includes(item.state));
   }
 

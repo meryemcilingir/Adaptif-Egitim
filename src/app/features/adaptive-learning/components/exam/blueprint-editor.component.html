@@ -28,11 +28,19 @@
     </div>
   </section>
 
+  <!--
+    Zorluk dağılımı, özet kartlarıyla AYNI ölçüde okunur olmalıdır: hangi
+    kutunun kolay, hangisinin zor olduğu etiketten anlaşılır ve üç kutu eşit
+    genişliktedir. Önceki hâlde etiket yoktu ve kutular metin uzunluğuna göre
+    büyüyüp küçülüyordu; %8 ile %100 aynı boyda görünmüyordu.
+  -->
   <section class="shares" aria-label="Zorluk dağılımı">
     @for (share of data.difficultyShares; track share.difficulty) {
-      <span class="share" [class]="'share--' + share.difficulty">
-        {{ share.count }} soru · %{{ share.percent }}
-      </span>
+      <div class="share" [class]="'share--' + share.difficulty">
+        <span class="share__label text-overline">{{ difficultyLabel(share.difficulty) }}</span>
+        <span class="share__value tabular">%{{ share.percent }}</span>
+        <span class="share__count text-xs tabular">{{ share.count }} soru</span>
+      </div>
     }
   </section>
 

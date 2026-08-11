@@ -3,7 +3,8 @@
     <div>
       <h1 class="text-h1">Denemeler</h1>
       <p class="text-sm text-muted">
-        Tamamlanan tüm sınav denemeleri. Puan, değerlendirme bittikten sonra görünür.
+        Tamamlanan sınav denemeleri. Sonucu henüz açıklanmamış denemeler
+        "değerlendirme bekleyenler" altındadır.
       </p>
     </div>
   </header>
@@ -30,11 +31,11 @@
     <button
       type="button"
       class="bucket-toggle__button"
-      [class.is-active]="bucket() === 'graded'"
-      [attr.aria-pressed]="bucket() === 'graded'"
-      (click)="setBucket('graded')"
+      [class.is-active]="bucket() === 'released'"
+      [attr.aria-pressed]="bucket() === 'released'"
+      (click)="setBucket('released')"
     >
-      Puanlananlar
+      Sonucu açıklananlar
     </button>
   </div>
 
@@ -44,7 +45,7 @@
     searchPlaceholder="Öğrenci veya sınav adında ara…"
     (searchChange)="facade.setAttemptSearch($event)"
     (filterChange)="facade.setAttemptFilter($event.key, $event.value)"
-    (clearAll)="facade.clearAttemptFilters()"
+    (clearAll)="clearFilters()"
   />
 
   <app-table
@@ -63,7 +64,7 @@
     (sizeChange)="facade.setAttemptPageSize($event)"
     (rowClick)="open($event)"
     (retry)="facade.loadAttempts()"
-    (clearFilters)="facade.clearAttemptFilters()"
+    (clearFilters)="clearFilters()"
   />
 </div>
 

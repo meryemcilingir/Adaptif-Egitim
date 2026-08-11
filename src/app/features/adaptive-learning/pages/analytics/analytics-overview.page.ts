@@ -9,6 +9,7 @@ import {
 import { Router } from '@angular/router';
 
 import { ApiError } from '../../../../core/api/api-error';
+import { Permission } from '../../../../core/auth/permission.model';
 import { PermissionService } from '../../../../core/auth/permission.service';
 import { AppCardComponent } from '../../../../shared/components/app-card/app-card.component';
 import { AppChartCardComponent } from '../../../../shared/components/app-chart-card/app-chart-card.component';
@@ -26,6 +27,7 @@ import { ExportTable } from '../../../../shared/components/app-export-menu/app-e
 import { InsightListComponent } from '../../components/analytics/insight-list.component';
 import { ReportHeaderComponent } from '../../components/analytics/report-header.component';
 import { AnalyticsInsight, AnalyticsOverview, PerformerRow } from '../../models/analytics.model';
+import { drilldownLink } from '../../domain/drilldown-access';
 import { AnalyticsFacade, ReportStatus } from '../../data-access/analytics.facade';
 
 /**
@@ -73,7 +75,31 @@ export class AnalyticsOverviewPage implements OnInit {
   private readonly status = signal<ReportStatus>('idle');
   private readonly errorState = signal<ApiError | null>(null);
 
-  readonly report = this.data.asReadonly();
+  /*
+   * Rapor sunucuda çağırandan bağımsız üretilir; içindeki "detaya git"
+   * bağlantıları her rol için geçerli değildir. Yetkisi olmayan kullanıcıya
+   * tıklanabilir bir ok göstermek onu /403'e düşürdüğü için, açılamayan
+   * bağlantılar burada `null`'a çevrilir — şablon zaten `null` bağlantıyı
+   * tıklanamaz çiziyor.
+   */
+  readonly report = computed<AnalyticsOverview | null>(() => {
+    const report = this.data();
+    if (!report) return null;
+
+    const access = { can: (permission: Permission) => this.permissions.can(permission), role: this.permissions.role() };
+
+    return {
+      ...report,
+      metrics: report.metrics.map((metric) => ({
+        ...metric,
+        link: drilldownLink(metric.link, access),
+      })),
+      insights: report.insights.map((insight) => ({
+        ...insight,
+        link: drilldownLink(insight.link, access),
+      })),
+    };
+  });
   readonly error = this.errorState.asReadonly();
   readonly isLoading = computed(() => this.status() === 'loading' && this.data() === null);
   readonly isRefreshing = computed(() => this.status() === 'loading' && this.data() !== null);

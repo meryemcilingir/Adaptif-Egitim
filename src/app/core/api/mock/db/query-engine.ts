@@ -112,6 +112,21 @@ function isMeaningful(value: FilterValue): boolean {
 
 /* ── Sık kullanılan yüklem üreticileri (tekrarı önler) ───────────────────── */
 
+/**
+ * Çoklu seçim filtresini HER ZAMAN listeye çevirir.
+ *
+ * `toHttpParams` bir diziyi virgülle birleştirir; tek elemanlı seçim virgül
+ * içermediği için `parsePageRequest` onu DÜZ METİN olarak geri okur. Bu yüzden
+ * `Array.isArray(value)` kontrolüne dayanan filtreler tek seçimde sessizce
+ * devre dışı kalıyordu — kullanıcıya filtre çalışmıyor gibi görünüyordu.
+ * Türetilmiş satırları elde sayfalayan uçlar bu yardımcıyı kullanır;
+ * koleksiyonlar `inList` üzerinden zaten iki biçimi de karşılar.
+ */
+export function filterValues(value: FilterValue): readonly string[] {
+  if (value === null || value === undefined || value === '') return [];
+  return Array.isArray(value) ? [...value] : [String(value)];
+}
+
 /** Çoklu seçim filtresi: değerlerden herhangi biri eşleşirse geçer. */
 export function inList<T>(select: (item: T) => string | null): FilterPredicate<T> {
   return (item, value) => {

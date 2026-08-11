@@ -18,7 +18,7 @@ import { AppStatusBadgeComponent } from '../../../../shared/components/app-statu
 import { AppTableComponent } from '../../../../shared/components/app-table/app-table.component';
 import { ColumnDef } from '../../../../shared/components/app-table/column-def';
 import { statusPresentation } from '../../../../shared/utils/status-tone';
-import { ATTEMPT_STATES, ATTEMPT_STATE_LABELS, Attempt } from '../../models/attempt.model';
+import { Attempt } from '../../models/attempt.model';
 import { FilterValue } from '../../../../core/api/page-request';
 import { formatDuration } from '../../domain/exam-clock';
 import { CourseRepository } from '../../data-access/catalog.repository';
@@ -59,34 +59,47 @@ export class AttemptListPage implements OnInit {
   private readonly examOptionsState = signal<readonly { value: string; label: string }[]>([]);
 
   /*
-   * Değerlendirme bekleyen ve puanlanan denemeler AYRI kovalarda gösterilir.
+   * Liste iki kovaya ayrılır: ELİNİZDE İŞ OLANLAR ve BİTENLER.
    *
-   * Tek karışık tabloda "sonucum çıktı mı?" sorusunu yanıtlamak için tüm
-   * listeyi taramak gerekiyordu; hızlı seçim butonları `state` filtresini bu
-   * iki kovadan birine sabitler.
+   * Ayrım eğitmenin sorusuna göre yapılır: "hâlâ ne yapmam gerekiyor?".
+   * `GRADED` puanlanmıştır ama sonucu henüz açıklanmamıştır — eğitmenin bir
+   * adım daha atması gerektiği için bekleyenler kovasındadır; yalnızca
+   * `RELEASED` gerçekten kapanmış sayılır. Kovalar birlikte TÜM durumları
+   * kapsar, hiçbir deneme iki kovanın arasında kaybolmaz.
+   *
+   * Aynı `state` alanını hem kovalar hem de bir açılır filtre yönetseydi ikisi
+   * birbirini sessizce ezerdi; bu yüzden filtre çubuğunda durum filtresi YOK,
+   * durum seçimi tek yerden (kovalardan) yapılır.
    */
   private static readonly PENDING_STATES = [
     'SUBMITTED',
     'AUTO_GRADED',
     'PENDING_MANUAL',
     'UNDER_REVIEW',
+    'GRADED',
   ] as const;
-  private static readonly GRADED_STATES = ['GRADED', 'RELEASED'] as const;
+  private static readonly RELEASED_STATES = ['RELEASED'] as const;
 
-  private readonly bucketState = signal<'all' | 'pending' | 'graded'>('all');
+  private readonly bucketState = signal<'all' | 'pending' | 'released'>('all');
   readonly bucket = this.bucketState.asReadonly();
 
-  setBucket(bucket: 'all' | 'pending' | 'graded'): void {
+  setBucket(bucket: 'all' | 'pending' | 'released'): void {
     this.bucketState.set(bucket);
 
     const states: FilterValue =
       bucket === 'pending'
         ? [...AttemptListPage.PENDING_STATES]
-        : bucket === 'graded'
-          ? [...AttemptListPage.GRADED_STATES]
+        : bucket === 'released'
+          ? [...AttemptListPage.RELEASED_STATES]
           : null;
 
     this.facade.setAttemptFilter('state', states);
+  }
+
+  /** Filtreler temizlenince kova seçimi de başa döner — ikisi tek durumdur. */
+  clearFilters(): void {
+    this.bucketState.set('all');
+    this.facade.clearAttemptFilters();
   }
 
   toneFor(state: string) {
@@ -144,15 +157,6 @@ export class AttemptListPage implements OnInit {
   ]);
 
   readonly filters = computed<readonly FilterDefinition[]>(() => [
-    {
-      key: 'state',
-      label: 'Durum',
-      kind: 'multi',
-      options: ATTEMPT_STATES.map((state) => ({
-        value: state,
-        label: ATTEMPT_STATE_LABELS[state],
-      })),
-    },
     { key: 'courseId', label: 'Ders', kind: 'single', options: this.courseOptionsState() },
     { key: 'examId', label: 'Sınav', kind: 'single', options: this.examOptionsState() },
   ]);
