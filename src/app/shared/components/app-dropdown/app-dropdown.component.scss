@@ -63,6 +63,32 @@
   }
 }
 
+/* Onay kutusu, filtre çubuğundaki işaretle aynı görsel dili kullanır. */
+.dropdown__check {
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 15px;
+  height: 15px;
+  border: var(--border-width) solid var(--color-border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--color-text-inverse);
+
+  &.is-checked {
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+  }
+}
+
+.dropdown__text {
+  display: flex;
+  flex-direction: column;
+}
+
+.dropdown__hint {
+  color: var(--color-text-tertiary);
+}
+
 .dropdown__separator {
   height: var(--border-width);
   margin: var(--space-1) 0;

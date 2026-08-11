@@ -24,6 +24,17 @@ export interface DropdownItem {
   readonly tone?: 'default' | 'danger';
   readonly disabled?: boolean;
   readonly separatorBefore?: boolean;
+  /**
+   * Anahtarlanabilir öğenin açık/kapalı durumu.
+   *
+   * Verildiğinde öğe bir aksiyon değil ONAY KUTUSU gibi çizilir. Durumu ikonla
+   * anlatmak (görünürken "check", gizliyken "eye") yanlış okunuyordu: "eye"
+   * ikonu çoğu kullanıcıya "görünür" diye okunduğu için menü hep aynı görünüp
+   * seçim işe yaramıyor sanılıyordu.
+   */
+  readonly checked?: boolean;
+  /** Öğenin altına yazılan kısa açıklama — seçimin neden etkisiz kaldığını söyler. */
+  readonly hint?: string;
 }
 
 /**
@@ -63,14 +74,26 @@ export interface DropdownItem {
             type="button"
             class="dropdown__item"
             [class.is-danger]="item.tone === 'danger'"
-            role="menuitem"
+            [attr.role]="item.checked === undefined ? 'menuitem' : 'menuitemcheckbox'"
+            [attr.aria-checked]="item.checked"
             [disabled]="item.disabled ?? false"
             (click)="select(item)"
           >
-            @if (item.icon; as icon) {
+            @if (item.checked !== undefined) {
+              <span class="dropdown__check" [class.is-checked]="item.checked">
+                @if (item.checked) {
+                  <app-icon name="check" [size]="11" [strokeWidth]="2.5" />
+                }
+              </span>
+            } @else if (item.icon; as icon) {
               <app-icon [name]="icon" [size]="14" />
             }
-            {{ item.label }}
+            <span class="dropdown__text">
+              {{ item.label }}
+              @if (item.hint; as hint) {
+                <span class="dropdown__hint text-xs">{{ hint }}</span>
+              }
+            </span>
           </button>
         }
       </div>
@@ -109,6 +132,14 @@ export class AppDropdownComponent {
   readonly triggerVariant = input<'ghost' | 'secondary'>('ghost');
   readonly triggerSize = input<'sm' | 'md'>('sm');
   readonly align = input<'start' | 'end'>('end');
+  /**
+   * Seçimden sonra menü kapansın mı?
+   *
+   * Aksiyon menülerinde kapanmalı; birden çok kolonu açıp kapatmak gibi
+   * ANAHTARLAMA menülerinde her tıklamada kapanmak, kullanıcıyı menüyü
+   * tekrar tekrar açmaya zorlar ve seçimin sonucunu görmesini engeller.
+   */
+  readonly closeOnSelect = input(true);
 
   readonly itemSelect = output<DropdownItem>();
 
@@ -171,7 +202,7 @@ export class AppDropdownComponent {
 
   select(item: DropdownItem): void {
     if (item.disabled) return;
-    this.close();
+    if (this.closeOnSelect()) this.close();
     this.itemSelect.emit(item);
   }
 

@@ -14,6 +14,7 @@ import { forkJoin } from 'rxjs';
 
 import { createPageRequest } from '../../../../core/api/page-request';
 import { PermissionService } from '../../../../core/auth/permission.service';
+import { UiStore } from '../../../../core/state/ui.store';
 import { AppButtonComponent } from '../../../../shared/components/app-button/app-button.component';
 import { DialogService } from '../../../../shared/components/app-dialog/dialog.service';
 import {
@@ -58,14 +59,20 @@ import { QuestionPreviewDialogComponent } from '../../components/question/questi
 import { CourseRepository, OutcomeRepository } from '../../data-access/catalog.repository';
 import { QuestionFacade } from '../../data-access/question.facade';
 
-/** Kolon görünürlüğü menüsündeki anahtarlanabilir kolonlar. */
+/**
+ * Kolon görünürlüğü menüsündeki anahtarlanabilir kolonlar.
+ *
+ * `hideBelow`, kolon tanımındakiyle AYNI eşiktir: tablo dar ekranda o kolonu
+ * zaten gizler. Menüde bunu söylemezsek kullanıcı kolonu açar, ekranda hiçbir
+ * şey değişmez ve menü bozuk sanılır.
+ */
 const TOGGLEABLE_COLUMNS = [
-  { key: 'badges', label: 'Rozetler' },
-  { key: 'outcome', label: 'Kazanım' },
-  { key: 'points', label: 'Puan' },
-  { key: 'estimatedSolveTimeSeconds', label: 'Süre' },
-  { key: 'usageCount', label: 'Kullanım' },
-  { key: 'updatedAt', label: 'Güncelleme' },
+  { key: 'badges', label: 'Rozetler', hideBelow: null },
+  { key: 'outcome', label: 'Kazanım', hideBelow: 'laptop' },
+  { key: 'points', label: 'Puan', hideBelow: 'tablet' },
+  { key: 'estimatedSolveTimeSeconds', label: 'Süre', hideBelow: 'tablet' },
+  { key: 'usageCount', label: 'Kullanım', hideBelow: 'laptop' },
+  { key: 'updatedAt', label: 'Güncelleme', hideBelow: 'laptop' },
 ] as const;
 
 /**
@@ -96,6 +103,7 @@ export class QuestionListPage implements OnInit {
   private readonly outcomes = inject(OutcomeRepository);
   private readonly dialogs = inject(DialogService);
   private readonly permissions = inject(PermissionService);
+  private readonly ui = inject(UiStore);
   private readonly router = inject(Router);
 
   /** Route'tan gelen ders filtresi. */
@@ -174,13 +182,24 @@ export class QuestionListPage implements OnInit {
 
   /* ── Kolonlar ────────────────────────────────────────────────────────── */
 
-  readonly columnMenu = computed<readonly DropdownItem[]>(() =>
-    TOGGLEABLE_COLUMNS.map((column) => ({
-      id: `col:${column.key}`,
-      label: column.label,
-      icon: this.hiddenColumnsState().has(column.key) ? 'eye' : 'check',
-    })),
-  );
+  readonly columnMenu = computed<readonly DropdownItem[]>(() => {
+    const breakpoint = this.ui.breakpoint();
+
+    return TOGGLEABLE_COLUMNS.map((column) => {
+      const visible = !this.hiddenColumnsState().has(column.key);
+      const suppressed =
+        column.hideBelow === 'laptop'
+          ? breakpoint !== 'laptop' && breakpoint !== 'desktop'
+          : column.hideBelow === 'tablet' && breakpoint === 'mobile';
+
+      return {
+        id: `col:${column.key}`,
+        label: column.label,
+        checked: visible,
+        hint: visible && suppressed ? 'Ekran dar olduğu için şu an gizli' : undefined,
+      };
+    });
+  });
 
   readonly columns = computed<readonly ColumnDef<Question>[]>(() => {
     const hidden = this.hiddenColumnsState();
