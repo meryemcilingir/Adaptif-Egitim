@@ -85,7 +85,7 @@
 
 /* ── Tablo ───────────────────────────────────────────────────────────────── */
 
-.grid {
+.matrix {
   width: 100%;
   border-collapse: collapse;
   min-width: 520px;
@@ -114,28 +114,34 @@
   }
 
   /* Soru istenmeyen kazanım soluk görünür — dikkat dolu satırlarda kalsın. */
-  tbody tr.is-empty .grid__outcome {
+  tbody tr.is-empty .matrix__outcome {
     opacity: 0.6;
   }
 }
 
-.grid__outcome {
-  display: flex;
-  flex-direction: column;
+.matrix__outcome {
   min-width: 0;
   font-weight: 400;
 }
 
-.grid__cell {
-  width: 88px;
+.matrix__outcome-body {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+/*
+ * Sayı sütunları başlıkta ve gövdede AYNI genişlikte ve ortalanmış olur.
+ * Seçici `.matrix` ile nitelenir: aksi hâlde yukarıdaki `.matrix th, td`
+ * kuralının `text-align: start` değeri daha güçlü kalıp başlıkları sola
+ * yapıştırıyordu.
+ */
+.matrix .matrix__cell {
+  width: 96px;
   text-align: center;
 }
 
-thead .grid__cell {
-  text-align: center;
-}
-
-.grid__total {
+.matrix__total {
   font-weight: 600;
   color: var(--color-text-primary);
 }

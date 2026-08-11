@@ -46,28 +46,43 @@
 
   <!-- Kazanım × zorluk tablosu -->
   <div class="scroll-x">
-    <table class="grid">
+    <!--
+      Sınıf adı `matrix`: global `.grid` yardımcı sınıfı `display: grid`
+      uyguluyor ve tabloyu tablo olmaktan çıkarıyordu — başlık satırı gövdeyle
+      aynı sütun genişliklerini paylaşmadığı için başlıklar sayıların üstüne
+      denk gelmiyordu.
+    -->
+    <table class="matrix">
       <caption class="sr-only">
         Kazanım başına zorluk dağılımı
       </caption>
       <thead>
         <tr>
-          <th scope="col" class="grid__outcome">Kazanım</th>
-          <th scope="col" class="grid__cell">Kolay</th>
-          <th scope="col" class="grid__cell">Orta</th>
-          <th scope="col" class="grid__cell">Zor</th>
-          <th scope="col" class="grid__cell">Toplam</th>
+          <th scope="col" class="matrix__outcome">Kazanım</th>
+          <th scope="col" class="matrix__cell">Kolay</th>
+          <th scope="col" class="matrix__cell">Orta</th>
+          <th scope="col" class="matrix__cell">Zor</th>
+          <th scope="col" class="matrix__cell">Toplam</th>
         </tr>
       </thead>
       <tbody>
         @for (outcome of outcomes(); track outcome.id) {
           <tr [class.is-empty]="isEmpty(outcome.id)">
-            <th scope="row" class="grid__outcome">
-              <span class="text-body-strong">{{ outcome.code }}</span>
-              <span class="text-xs text-subtle truncate">{{ outcome.title }}</span>
+            <!--
+              Kazanım metni hücrenin İÇİNDE bir sarmalayıcıyla dikey dizilir.
+              Sarmalayıcı olmadan `th`'nin kendisi flex kutusuna dönüşüyor,
+              tablo hücresi olmaktan çıkıyor ve sütun genişlikleri başlık
+              satırıyla tutmuyordu: başlıklar sayı sütunlarının üstüne
+              denk gelmiyordu.
+            -->
+            <th scope="row" class="matrix__outcome">
+              <span class="matrix__outcome-body">
+                <span class="text-body-strong">{{ outcome.code }}</span>
+                <span class="text-xs text-subtle truncate">{{ outcome.title }}</span>
+              </span>
             </th>
 
-            <td class="grid__cell">
+            <td class="matrix__cell">
               <input
                 type="number"
                 class="cell-input"
@@ -79,7 +94,7 @@
                 (input)="onCellInput(outcome.id, 'easy', $any($event.target).value)"
               />
             </td>
-            <td class="grid__cell">
+            <td class="matrix__cell">
               <input
                 type="number"
                 class="cell-input"
@@ -91,7 +106,7 @@
                 (input)="onCellInput(outcome.id, 'medium', $any($event.target).value)"
               />
             </td>
-            <td class="grid__cell">
+            <td class="matrix__cell">
               <input
                 type="number"
                 class="cell-input"
@@ -104,7 +119,7 @@
               />
             </td>
 
-            <td class="grid__cell grid__total tabular">{{ totalFor(outcome.id) }}</td>
+            <td class="matrix__cell grid__total tabular">{{ totalFor(outcome.id) }}</td>
           </tr>
         }
       </tbody>
