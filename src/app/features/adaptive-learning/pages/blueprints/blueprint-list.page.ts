@@ -253,7 +253,14 @@ export class BlueprintListPage implements OnInit {
 
     this.facade
       .create({
-        name: `Yeni ölçme planı ${new Date().toLocaleDateString('tr-TR')}`,
+        /* Ad ders içinde benzersiz olmalı; saat, aynı gün ikinci planın
+           çakışmasını önler. */
+        name: `Yeni ölçme planı ${new Date().toLocaleString('tr-TR', {
+          day: '2-digit',
+          month: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        })}`,
         description: '',
         courseId,
         cohortId: null,

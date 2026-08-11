@@ -231,10 +231,33 @@ function writableFields(context: MockContext) {
     description: readText(body, 'description'),
     courseId: readText(body, 'courseId'),
     cohortId: readText(body, 'cohortId') || null,
-    rows: readRows(body),
+    rows: effectiveRows(context),
     targetTotalPoints: readNumber(body, 'targetTotalPoints', 100),
     targetDurationMinutes: readNumber(body, 'targetDurationMinutes', 60),
   };
+}
+
+/**
+ * Satır göndermeyen istemciye dersin kazanımlarından SIFIRLI iskelet üretilir.
+ *
+ * Liste ekranındaki "Yeni plan" düğmesi boş bir taslak açar; o anda dersin
+ * kazanımları istemcide yoktur ve `rows: []` gönderir. Doğrulama en az bir
+ * kazanım satırı istediği için oluşturma her seferinde reddediliyordu. Satırlar
+ * zaten dersin kazanımlarıyla hizalanmak zorunda (`alignRows`), bu yüzden
+ * iskeleti üretmenin doğru yeri sunucudur — hedef sayıları kullanıcı sonra
+ * editörde doldurur, boş plan yayına ise `assertPublishable` zaten izin vermez.
+ */
+function effectiveRows(context: MockContext): BlueprintOutcomeRow[] {
+  const body = context.body as Record<string, unknown> | null;
+  const rows = readRows(body);
+  if (rows.length > 0) return rows;
+
+  const courseId = readText(body, 'courseId');
+
+  return context.db
+    .collection('outcomes')
+    .filter((outcome) => outcome.courseId === courseId)
+    .map((outcome) => ({ outcomeId: outcome.id, easy: 0, medium: 0, hard: 0 }));
 }
 
 /** Satırlar okunurken negatif ve ondalıklı değerler kırpılır. */
@@ -271,7 +294,7 @@ function validate(context: MockContext, currentId: string | null): void {
 
   const courseId = readText(body, 'courseId');
   const cohortId = readText(body, 'cohortId');
-  const rows = readRows(body);
+  const rows = effectiveRows(context);
 
   new FieldValidator(body)
     .text('name', 'Blueprint adı', BLUEPRINT_LIMITS.name)
@@ -291,7 +314,7 @@ function validate(context: MockContext, currentId: string | null): void {
     .integer('targetDurationMinutes', 'Hedef süre', BLUEPRINT_LIMITS.targetDurationMinutes)
     .custom(
       'rows',
-      'Blueprint en az bir kazanım satırı içermelidir.',
+      'Bu derse tanımlı öğrenme kazanımı yok; plan kurulabilmesi için önce kazanım eklenmelidir.',
       rows.length >= BLUEPRINT_LIMITS.rowCount.min,
     )
     .custom(
