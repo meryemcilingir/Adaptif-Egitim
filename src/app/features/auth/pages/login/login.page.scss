@@ -125,6 +125,13 @@
 .login__accounts {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
+  /*
+   * Tüm satırlar en uzun kart kadar yüksek olur. Açıklama metinleri farklı
+   * uzunlukta ("Çalışma planı ve sınav oturumu" iki satıra sarar, "İçerik,
+   * soru ve değerlendirme" bir satırda kalır); bu olmadan kartlar satır
+   * satır farklı boyda görünürdü.
+   */
+  grid-auto-rows: 1fr;
   gap: var(--space-2);
 }
 
@@ -132,8 +139,11 @@
   display: grid;
   grid-template-columns: 1fr auto;
   align-items: center;
+  /* İçerik kısa kalsa da kart hücresini doldurur — blok dikeyde ortalanır. */
+  align-content: center;
   gap: 0 var(--space-2);
   width: 100%;
+  height: 100%;
   padding: var(--space-3);
   background: var(--color-surface);
   border: var(--border-width) solid var(--color-border);
