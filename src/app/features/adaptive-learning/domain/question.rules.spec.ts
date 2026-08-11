@@ -113,6 +113,45 @@ describe('validateAnswerShape · diğer türler', () => {
     expect(issues[0]!.field).toBe('matchPairs');
   });
 
+  it('eşleştirmede tekrar eden sol veya sağ öğeyi reddeder', () => {
+    const left = validateAnswerShape(
+      answer({
+        type: 'matching',
+        matchPairs: [
+          { left: 'Ankara', right: 'Türkiye' },
+          { left: ' ankara ', right: 'Fransa' },
+        ],
+      }),
+    );
+    expect(left[0]!.message).toContain('Sol sütundaki');
+
+    const right = validateAnswerShape(
+      answer({
+        type: 'matching',
+        matchPairs: [
+          { left: 'Ankara', right: 'Türkiye' },
+          { left: 'Paris', right: 'türkiye' },
+        ],
+      }),
+    );
+    expect(right[0]!.message).toContain('Sağ sütundaki');
+  });
+
+  it('sıralamada tekrar eden öğeyi reddeder', () => {
+    const issues = validateAnswerShape(
+      answer({
+        type: 'ordering',
+        sequenceItems: [
+          { text: 'Analiz', order: 1 },
+          { text: ' analiz ', order: 2 },
+        ],
+      }),
+    );
+
+    expect(issues[0]!.field).toBe('sequenceItems');
+    expect(issues[0]!.message).toContain('farklı olmalıdır');
+  });
+
   it('sıralamada numaralar 1..n olmalıdır', () => {
     const invalid = validateAnswerShape(
       answer({

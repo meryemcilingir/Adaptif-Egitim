@@ -36,6 +36,20 @@ export interface AnswerIssue {
  * Kural tablosundan (`QUESTION_TYPE_META.answerShape`) türetilir; tür adına göre
  * dallanma yoktur, yeni tür eklemek bu fonksiyonu değiştirmez.
  */
+/**
+ * Aynı metnin iki kez girilip girilmediği.
+ *
+ * Tekrar eden bir metin, soruyu ölçme aracı olmaktan çıkarır: öğrenci
+ * hangisini seçerse seçsin aynı şeyi söylemiş olur, ama biri doğru diğeri
+ * yanlış sayılır. Boşluk ve büyük-küçük harf farkı gerçekte ayrı bir seçenek
+ * yaratmadığı için karşılaştırma bunlardan bağımsız yapılır — Türkçe yerel
+ * kuralıyla, "I" ile "ı" aynı sayılsın diye.
+ */
+function hasDuplicates(values: readonly string[]): boolean {
+  const keys = values.map((value) => value.trim().toLocaleLowerCase('tr-TR'));
+  return new Set(keys).size !== keys.length;
+}
+
 export function validateAnswerShape(question: {
   readonly type: QuestionType;
   readonly options: readonly { readonly text: string; readonly correct: boolean }[];
@@ -63,16 +77,7 @@ export function validateAnswerShape(question: {
         });
       }
 
-      /*
-       * Aynı metni taşıyan iki seçenek, soruyu ölçme aracı olmaktan çıkarır:
-       * öğrenci hangisini işaretlerse işaretlesin aynı şeyi söylemiş olur,
-       * ama biri doğru diğeri yanlış sayılır. Yazım/boşluk farkları da
-       * gerçekte aynı seçenek olduğu için karşılaştırma büyük-küçük harf ve
-       * kenar boşluklarından bağımsız yapılır (Türkçe yerel kuralıyla: "I"
-       * ile "ı" aynı seçenek sayılmalı).
-       */
-      const keys = filled.map((option) => option.text.trim().toLocaleLowerCase('tr-TR'));
-      if (new Set(keys).size !== keys.length) {
+      if (hasDuplicates(filled.map((option) => option.text))) {
         issues.push({
           field: 'options',
           message:
@@ -128,6 +133,25 @@ export function validateAnswerShape(question: {
           message: `En fazla ${QUESTION_LIMITS.pairCount.max} eşleşme tanımlanabilir.`,
         });
       }
+
+      /*
+       * İki sütun AYRI AYRI denetlenir: tekrar eden bir sol öğe hangi
+       * eşleşmenin beklendiğini, tekrar eden bir sağ öğe ise hangi hedefin
+       * seçildiğini belirsiz bırakır. İkisi de aynı cevabı iki farklı şekilde
+       * doğru/yanlış saydırabilir.
+       */
+      if (hasDuplicates(filled.map((pair) => pair.left))) {
+        issues.push({
+          field: 'matchPairs',
+          message: 'Sol sütundaki öğeler birbirinden farklı olmalıdır.',
+        });
+      }
+      if (hasDuplicates(filled.map((pair) => pair.right))) {
+        issues.push({
+          field: 'matchPairs',
+          message: 'Sağ sütundaki öğeler birbirinden farklı olmalıdır.',
+        });
+      }
       break;
     }
 
@@ -146,6 +170,17 @@ export function validateAnswerShape(question: {
           message: `En fazla ${QUESTION_LIMITS.sequenceCount.max} öğe tanımlanabilir.`,
         });
         break;
+      }
+
+      /*
+       * Aynı metinli iki öğenin sırası öğrenci için ayırt edilemez: ikisini
+       * yer değiştirse cevap görünüşte aynı kalır ama yanlış sayılır.
+       */
+      if (hasDuplicates(filled.map((item) => item.text))) {
+        issues.push({
+          field: 'sequenceItems',
+          message: 'Sıralanacak öğeler birbirinden farklı olmalıdır.',
+        });
       }
 
       // Sıra numaraları 1..n aralığında ve benzersiz olmalıdır.
