@@ -14,9 +14,11 @@
     </div>
 
     <div class="row gap-2">
-      <app-button variant="ghost" icon="database" (pressed)="openDevTools()">
-        Geliştirici paneli
-      </app-button>
+      @if (canOpenDevTools()) {
+        <app-button variant="ghost" icon="database" (pressed)="openDevTools()">
+          Geliştirici paneli
+        </app-button>
+      }
       <app-button
         variant="secondary"
         icon="refresh-cw"

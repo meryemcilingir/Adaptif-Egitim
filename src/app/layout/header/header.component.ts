@@ -161,8 +161,11 @@ export class HeaderComponent {
     })),
   );
 
+  /* Geliştirici paneli `admin:manage` ister; yetkisi olmayana hiç sunulmaz. */
   readonly userItems = computed<readonly DropdownItem[]>(() => [
-    { id: 'dev-tools', label: 'Geliştirici paneli', icon: 'database' },
+    ...(this.permissions.can('admin:manage')
+      ? [{ id: 'dev-tools', label: 'Geliştirici paneli', icon: 'database' as const }]
+      : []),
     { id: 'logout', label: 'Çıkış yap', icon: 'log-out', tone: 'danger', separatorBefore: true },
   ]);
 

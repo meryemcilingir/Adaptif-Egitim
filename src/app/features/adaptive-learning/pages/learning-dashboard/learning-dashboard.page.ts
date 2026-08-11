@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, OnInit, computed, inject } from '@a
 import { Router } from '@angular/router';
 
 import { AuthFacade } from '../../../../core/auth/auth.facade';
+import { PermissionService } from '../../../../core/auth/permission.service';
 import { ToastStore } from '../../../../core/observability/toast.store';
 import { AppButtonComponent } from '../../../../shared/components/app-button/app-button.component';
 import { AppErrorStateComponent } from '../../../../shared/components/app-error-state/app-error-state.component';
@@ -60,6 +61,15 @@ export class LearningDashboardPage implements OnInit {
   private readonly auth = inject(AuthFacade);
   private readonly toast = inject(ToastStore);
   private readonly router = inject(Router);
+
+  private readonly permissions = inject(PermissionService);
+
+  /**
+   * Geliştirici paneli veritabanını sıfırlayabildiği için `admin:manage`
+   * ister. Düğme herkese gösteriliyordu; öğrenci tıklayınca yetki uyarısıyla
+   * karşılaşıyordu — yapamayacağı bir işi ona hiç teklif etmemek doğrusu.
+   */
+  readonly canOpenDevTools = computed(() => this.permissions.can('admin:manage'));
 
   readonly roleLabel = this.auth.activeRoleLabel;
   readonly firstName = computed(() => this.auth.user()?.fullName.split(' ')[0] ?? '');
