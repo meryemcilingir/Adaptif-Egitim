@@ -47,6 +47,15 @@ describe('validateAnswerShape · seçenekli türler', () => {
     expect(issues[0]!.message).toContain('yalnızca bir seçenek');
   });
 
+  it('aynı metni taşıyan iki seçeneği reddeder', () => {
+    const issues = validateAnswerShape(
+      answer({ options: [option('Ankara', true), option('İzmir'), option('  ankara  ')] }),
+    );
+
+    expect(issues[0]!.field).toBe('options');
+    expect(issues[0]!.message).toContain('farklı olmalıdır');
+  });
+
   it('çok seçimli soruda birden fazla doğru geçerlidir', () => {
     const issues = validateAnswerShape(
       answer({

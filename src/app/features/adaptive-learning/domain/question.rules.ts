@@ -63,6 +63,23 @@ export function validateAnswerShape(question: {
         });
       }
 
+      /*
+       * Aynı metni taşıyan iki seçenek, soruyu ölçme aracı olmaktan çıkarır:
+       * öğrenci hangisini işaretlerse işaretlesin aynı şeyi söylemiş olur,
+       * ama biri doğru diğeri yanlış sayılır. Yazım/boşluk farkları da
+       * gerçekte aynı seçenek olduğu için karşılaştırma büyük-küçük harf ve
+       * kenar boşluklarından bağımsız yapılır (Türkçe yerel kuralıyla: "I"
+       * ile "ı" aynı seçenek sayılmalı).
+       */
+      const keys = filled.map((option) => option.text.trim().toLocaleLowerCase('tr-TR'));
+      if (new Set(keys).size !== keys.length) {
+        issues.push({
+          field: 'options',
+          message:
+            'Seçenekler birbirinden farklı olmalıdır; aynı metni taşıyan iki seçenek var.',
+        });
+      }
+
       const correct = filled.filter((option) => option.correct).length;
       if (correct === 0) {
         issues.push({ field: 'options', message: 'En az bir seçenek doğru işaretlenmelidir.' });
